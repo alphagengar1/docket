@@ -42,3 +42,4 @@ Format: `HH:MM  who  what changed / what's blocked / what's next`
 10:25  claude  Brand: Docket logo mark (web/src/components/Logo.tsx) in console top bar, board wordmark, phone header and favicon; starter icon sheet removed; reason-check glyphs are SVG. Session-split prompts (lanes A console-less desk / B console / C judge screens) in design/prompts-for-other-sessions.md.
 12:25  claude  CREAO client switched to the app API with per-app keys (the shape Cue used); agent prompts + samples + setup steps in design/creao/.
 12:32  claude  Console default theme is now Instrument Tag (same palette/type/geometry as the board); Dark and Light stay behind the top-bar toggle.
+12:55  claude  Decision sheet: queue click opens one applicant over a blurred desk (key points, 3 verdicts with top reason, lender cards, approve/decline); arrows walk the sidebar order, Esc closes, Enter reopens. Waterfall axis no longer grows with the human wait.
