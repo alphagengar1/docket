@@ -113,7 +113,15 @@ Open `#/borrower` on a phone and `#/board` on a second screen. Set env vars with
 - Where Claude could go wrong: inventing a reason or padding it with filler (tested and withheld), hanging or erroring (timeout, failure card), and being handed protected data (blocked by the allowlist). Claude never decides a hard stop.
 
 ### CREAO (only if entered)
-Agent IDs: [INTAKE ID], [UNDERWRITER IDS x3], [COMPLIANCE ID]. Run share links: [LINKS]. Delete this section if CREAO is not entered.
+Agent app IDs (not secret; API keys live only in the Convex env):
+- Docket Underwriter: Pacific Ridge Credit Union (cu): 39632f67-c976-4496-991d-31bdbbbec47d
+- Docket Underwriter: Northstar Lending (fintech): 58a80034-8506-43e9-9570-111b592ca11e
+- Docket Underwriter: Meridian Bank Prime (prime): 316a0337-e75e-4391-911d-b33bf67f8a97
+- Docket Underwriter: Cascade Regional Bank (regional): 5cdf5e19-8040-43ec-81f5-0ed34e643c6d
+- Docket Underwriter: Harbor Second Chance Finance (subprime): dd2bfed5-49ea-476e-8fc8-b8ef24b3b585
+- Docket Compliance: adverse-action notice: 11425cb9-95c8-49d9-b962-19ddba3cb70e
+
+Run share links: [LINKS].
 
 ## Team
 

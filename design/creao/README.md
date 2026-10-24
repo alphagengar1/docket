@@ -1,6 +1,6 @@
 # CREAO agents for Docket
 
-Four hosted agents on agent.creao.ai. The backend starts a run per lender (and one for the notice), passes one JSON object as the run input, and reads one JSON object back from the reply. Webhook + polling are already wired; you only create the agents and set env vars.
+Six hosted agents on agent.creao.ai (five underwriters, one compliance writer). The backend starts a run per lender (and one for the notice), passes one JSON object as the run input, and reads one JSON object back from the reply. Webhook + polling are already wired; you only create the agents and set env vars.
 
 ## 1. Create four agents
 | Agent name on CREAO | System prompt file (paste whole file) | Test input |
