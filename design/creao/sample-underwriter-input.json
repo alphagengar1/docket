@@ -1,0 +1,48 @@
+{
+  "lender": "cu",
+  "bundle": {
+    "credit": {
+      "fico9": 660,
+      "vantage4": 655,
+      "tradelines": [
+        {
+          "type": "credit card",
+          "balance": 1840,
+          "status": "open, paid as agreed",
+          "openedAt": "2023-02"
+        },
+        {
+          "type": "auto loan",
+          "balance": 9200,
+          "status": "open, paid as agreed",
+          "openedAt": "2022-08"
+        }
+      ],
+      "inquiries6mo": 1,
+      "utilization": 0.31
+    },
+    "identity": {
+      "verified": true,
+      "flags": []
+    },
+    "fraud": {
+      "score": 22,
+      "signals": []
+    },
+    "flags": {
+      "deceased": false,
+      "frozen": false,
+      "bankruptcy": false,
+      "eviction": false,
+      "lienOrJudgment": false
+    }
+  },
+  "statedIncome": 52000,
+  "amountRequested": 8000,
+  "purpose": "auto repair",
+  "marketAnchor": {
+    "tier": "fair",
+    "aprLow": 11.5,
+    "aprHigh": 17.9
+  }
+}

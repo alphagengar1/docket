@@ -1,0 +1,40 @@
+{
+  "applicant": {
+    "name": "{{APPLICANT_NAME}}",
+    "purpose": "furniture",
+    "amountRequested": 7000,
+    "statedIncome": 41000
+  },
+  "declines": [
+    {
+      "lender": "cu",
+      "classification": "deny",
+      "offered": null,
+      "reasons": [
+        {
+          "text": "TransUnion score 540 is below the 640 minimum.",
+          "field": "credit.fico9"
+        },
+        {
+          "text": "Revolving utilization 95% is above the 50% ceiling.",
+          "field": "credit.utilization"
+        }
+      ]
+    },
+    {
+      "lender": "fintech",
+      "classification": "counteroffer",
+      "offered": {
+        "amount": 4000,
+        "apr": 24.9,
+        "termMonths": 24
+      },
+      "reasons": [
+        {
+          "text": "Utilization 95% limits the amount to $4,000.",
+          "field": "credit.utilization"
+        }
+      ]
+    }
+  ]
+}
