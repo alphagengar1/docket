@@ -1,0 +1,72 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Lender floor: hard stop</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@62..125,400..900&amp;family=Instrument+Sans:wght@400..700&amp;family=JetBrains+Mono:wght@400;600&amp;display=swap">
+<style>
+body{margin:0;background:#E3E4DF}
+a{color:#1C46C9}a:hover{color:#141514}
+.lbl{font-family:'JetBrains Mono',ui-monospace,monospace;font-size:18px;letter-spacing:.06em;text-transform:uppercase;color:#565952}
+.disp{font-family:'Archivo','Helvetica Neue',Arial,sans-serif;font-stretch:125%;font-weight:800;text-transform:uppercase;letter-spacing:-.01em;margin:0}
+.mono{font-family:'JetBrains Mono',ui-monospace,monospace;font-variant-numeric:tabular-nums}
+.seg{font-family:'Archivo','Helvetica Neue',Arial,sans-serif;font-stretch:125%;font-weight:800;text-transform:uppercase;font-size:20px;padding:12px 20px;display:flex;align-items:center}
+.tile{background:#F5F5F1;border:1px solid #B9BBB3;padding:22px 26px;display:flex;flex-direction:column;gap:10px;min-width:0}
+.big{font-family:'JetBrains Mono',ui-monospace,monospace;font-variant-numeric:tabular-nums;font-weight:600;font-size:64px;line-height:1}
+.ev{display:flex;gap:20px;align-items:baseline;font-size:22px;line-height:1.3;padding:12px 0;border-top:1px solid #B9BBB3}
+.t{font-family:'JetBrains Mono',ui-monospace,monospace;font-size:18px;color:#565952;flex:none}
+</style>
+</helmet>
+<div style="min-height:900px;box-sizing:border-box;padding:32px 40px;background:#E3E4DF;color:#141514;font-family:'Instrument Sans','Helvetica Neue',Arial,sans-serif">
+<div style="max-width:1360px;margin:0 auto;display:flex;flex-direction:column;gap:24px">
+
+<div style="display:flex;flex-wrap:wrap;justify-content:space-between;align-items:center;gap:16px">
+<div style="display:flex;align-items:center;gap:14px"><div style="width:24px;height:24px;background:#FF5A1F"></div><span class="disp" style="font-size:30px">Underwrite</span></div>
+<div style="display:flex;flex-wrap:wrap;border:2px solid #141514">
+<span class="seg" style="background:#141514;color:#F5F5F1">Bureau</span>
+<span class="seg" style="color:#565952;border-left:1px solid #B9BBB3;text-decoration:line-through">Lenders</span>
+<span class="seg" style="background:#141514;color:#F5F5F1;border-left:1px solid #565952">Compliance</span>
+<span class="seg" style="border-left:1px solid #B9BBB3;box-shadow:inset 0 -5px 0 #141514">Human</span>
+</div>
+</div>
+
+<div style="display:flex;flex-wrap:wrap;align-items:baseline;gap:8px 28px;border-top:2px solid #141514;padding-top:20px">
+<span class="lbl">No. 20</span>
+<h1 style="margin:0;font-size:48px;line-height:1.05;font-weight:600">[Sandbox name], 106</h1>
+<span style="font-size:26px">wants <span class="mono" style="font-weight:600">$25,000</span> for a sailboat</span>
+</div>
+
+<div style="background:#FF5A1F;color:#141514;padding:28px 32px;display:flex;flex-direction:column;gap:12px">
+<span class="disp" style="font-size:96px;line-height:.95">Hard stop</span>
+<span style="font-size:34px;line-height:1.2;font-weight:600">The bureau says this person died. They just applied.</span>
+<span class="mono" style="font-size:20px;font-weight:600">RULE DEC-01 · DECIDED IN CODE, NOT BY THE MODEL · DOB 1920-01-01</span>
+</div>
+
+<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:16px">
+<div class="tile"><span class="lbl">Lenders contacted</span><span class="big">0</span></div>
+<div class="tile"><span class="lbl">Offers</span><span class="big">0</span></div>
+<div class="tile"><span class="lbl">Notice elements</span><span class="big">7/7</span></div>
+<div class="tile" style="border:3px solid #141514"><span class="lbl" style="color:#141514">Human approval</span><span class="disp" style="font-size:44px;line-height:1.1">Waiting</span></div>
+</div>
+
+<div style="display:flex;flex-direction:column">
+<div class="ev"><span class="t">01:20:03</span><span>Bureau file returned with a deceased flag. Routing to lenders cancelled.</span></div>
+<div class="ev"><span class="t">01:20:05</span><span>Compliance agent wrote the notice: reason, bureau contact, rights.</span></div>
+<div class="ev" style="border-bottom:1px solid #B9BBB3"><span class="t">01:45:12</span><span style="display:flex;align-items:baseline;gap:12px"><span style="width:12px;height:12px;background:#FF5A1F;display:inline-block;flex:none"></span>Reviewer tried to override. Blocked until a fraud review clears the file.</span></div>
+</div>
+
+</div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1440,"height":900}}'>
+class Component extends DCLogic {
+renderVals() { return {}; }
+}
+</script>
+</body>
+</html>

@@ -1,0 +1,135 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Theme sheet</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@62..125,400..900&amp;family=Instrument+Sans:wght@400..700&amp;family=JetBrains+Mono:wght@400;600&amp;display=swap">
+<style>
+body{margin:0}
+a{color:#1C46C9}a:hover{color:#141514}
+.lbl{font-family:'JetBrains Mono',ui-monospace,monospace;font-size:12px;letter-spacing:.08em;text-transform:uppercase;color:#565952}
+.disp{font-family:'Archivo','Helvetica Neue',Arial,sans-serif;font-stretch:125%;font-weight:800;text-transform:uppercase;letter-spacing:-.01em;margin:0}
+.mono{font-family:'JetBrains Mono',ui-monospace,monospace;font-variant-numeric:tabular-nums}
+.sw{display:flex;flex-direction:column;gap:6px}
+.chip{height:84px;border:1px solid #B9BBB3}
+.tile{background:#F5F5F1;border:1px solid #B9BBB3;padding:22px;display:flex;flex-direction:column;gap:14px;min-width:0}
+.note{font-size:13px;line-height:1.4;color:#565952}
+.rule{display:flex;flex-direction:column;gap:8px;padding:18px 18px 20px;border-top:2px solid #141514;min-width:0}
+.rt{font-size:16px;line-height:1.35;font-weight:600;margin:0}
+.rd{font-size:13px;line-height:1.45;color:#565952;margin:0}
+.ruler{height:10px;background-image:repeating-linear-gradient(90deg,#141514 0 1px,transparent 1px 8px)}
+</style>
+</helmet>
+<div style="width:1280px;height:1320px;box-sizing:border-box;padding:52px 64px;background:#E3E4DF;color:#141514;font-family:'Instrument Sans','Helvetica Neue',Arial,sans-serif;display:flex;flex-direction:column;gap:28px">
+
+<div style="display:flex;justify-content:space-between;align-items:flex-end;border-bottom:2px solid #141514;padding-bottom:18px">
+<div style="display:flex;align-items:center;gap:14px">
+<div style="width:28px;height:28px;background:#FF5A1F"></div>
+<h1 class="disp" style="font-size:44px">Underwrite</h1>
+</div>
+<div style="display:flex;gap:40px;align-items:flex-end">
+<div style="display:flex;flex-direction:column;gap:4px"><span class="lbl">Theme</span><span class="mono" style="font-size:14px">INSTRUMENT TAG</span></div>
+<div style="display:flex;flex-direction:column;gap:4px"><span class="lbl">Used on</span><span class="mono" style="font-size:14px">WEB · PHONE · BOARD · CARDS</span></div>
+<div style="display:flex;flex-direction:column;gap:4px"><span class="lbl">Rev</span><span class="mono" style="font-size:14px">0.2 / OCT 24</span></div>
+</div>
+</div>
+
+<div style="display:grid;grid-template-columns:repeat(6,minmax(0,1fr));gap:20px">
+<div class="sw"><div class="chip" style="background:#E3E4DF"></div><span class="lbl" style="color:#141514">Alu</span><span class="mono" style="font-size:13px">#E3E4DF</span><span class="note">Page ground. Normal state.</span></div>
+<div class="sw"><div class="chip" style="background:#F5F5F1"></div><span class="lbl" style="color:#141514">Panel</span><span class="mono" style="font-size:13px">#F5F5F1</span><span class="note">Cards, tiles, phone panels</span></div>
+<div class="sw"><div class="chip" style="background:#141514"></div><span class="lbl" style="color:#141514">Ink</span><span class="mono" style="font-size:13px">#141514</span><span class="note">Text, rules, done stages</span></div>
+<div class="sw"><div class="chip" style="background:#565952"></div><span class="lbl" style="color:#141514">Mute</span><span class="mono" style="font-size:13px">#565952</span><span class="note">Labels, idle and skipped states</span></div>
+<div class="sw"><div class="chip" style="background:#FF5A1F"></div><span class="lbl" style="color:#141514">Signal</span><span class="mono" style="font-size:13px">#FF5A1F</span><span class="note">The mark, and stop. The only alarm color. Ink text on it.</span></div>
+<div class="sw"><div class="chip" style="background:#1C46C9"></div><span class="lbl" style="color:#141514">Go</span><span class="mono" style="font-size:13px">#1C46C9</span><span class="note">Approved, picked, links. White text on it.</span></div>
+</div>
+
+<div style="display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:20px">
+<div class="tile">
+<span class="lbl">Display · Archivo 125% wide, 800</span>
+<p class="disp" style="font-size:38px;line-height:1">The first apartment</p>
+<span class="note">Headlines, persona titles, stamps. Uppercase. Never body text.</span>
+</div>
+<div class="tile">
+<span class="lbl">Body · Instrument Sans 400–600</span>
+<p style="margin:0;font-size:18px;line-height:1.45">We can't offer you a loan right now. Experian's file says the person with this identity has died.</p>
+<span class="note">Everything a borrower reads. 16px minimum on the phone.</span>
+</div>
+<div class="tile">
+<span class="lbl">Data · JetBrains Mono 400/600</span>
+<p class="mono" style="margin:0;font-size:20px;line-height:1.5">APR 9.99%<br>$77.43/MO · 36 MO<br>COST TO BORROW $387</p>
+<span class="note">Numbers, codes, rule IDs, labels. Tabular figures.</span>
+</div>
+</div>
+
+<div style="display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:20px">
+<div class="tile">
+<span class="lbl">Status stamps</span>
+<div style="display:flex;flex-wrap:wrap;gap:10px">
+<span class="disp" style="font-size:15px;padding:8px 12px;background:#1C46C9;color:#FFFFFF">Approved</span>
+<span class="disp" style="font-size:15px;padding:8px 12px;background:#FF5A1F;color:#141514">Hard stop</span>
+<span class="disp" style="font-size:15px;padding:6px 10px;border:2px solid #141514">Waiting</span>
+<span class="disp" style="font-size:15px;padding:6px 10px;border:2px dashed #565952;color:#565952">Not sent</span>
+</div>
+<span class="note">Loud only when something happened. Idle is a dashed outline.</span>
+</div>
+<div class="tile">
+<span class="lbl">Offer row</span>
+<div style="display:flex;justify-content:space-between;align-items:flex-start;border-top:2px solid #141514;padding-top:10px;gap:8px">
+<div style="display:flex;flex-direction:column;gap:4px"><span class="disp" style="font-size:14px">Lender A</span><span class="mono" style="font-size:12px;color:#565952">$77.43/mo · 36 mo</span></div>
+<span class="mono" style="font-size:24px;font-weight:600">9.99%</span>
+</div>
+<div style="display:flex;justify-content:space-between;border-top:1px solid #B9BBB3;padding-top:8px"><span style="font-size:13px">Cost to borrow</span><span class="mono" style="font-size:13px;font-weight:600">$387</span></div>
+<span class="note">APR, payment and cost to borrow on every offer.</span>
+</div>
+<div class="tile">
+<span class="lbl">Card code field</span>
+<div style="display:flex;border:2px solid #141514;background:#FFFFFF;align-self:flex-start">
+<span class="mono" style="font-size:30px;font-weight:600;width:48px;height:58px;display:flex;align-items:center;justify-content:center">4</span>
+<span class="mono" style="font-size:30px;font-weight:600;width:48px;height:58px;display:flex;align-items:center;justify-content:center;border-left:1px solid #B9BBB3">8</span>
+<span class="mono" style="font-size:30px;font-weight:600;width:48px;height:58px;display:flex;align-items:center;justify-content:center;border-left:1px solid #B9BBB3">2</span>
+<span class="mono" style="font-size:30px;font-weight:600;width:48px;height:58px;display:flex;align-items:center;justify-content:center;border-left:1px solid #B9BBB3;box-shadow:inset 0 -4px 0 #FF5A1F">1</span>
+</div>
+<span class="note">One input, 4 digits, number pad. Same field on card and phone.</span>
+</div>
+<div class="tile">
+<span class="lbl">Accents</span>
+<div style="display:flex;align-items:center;gap:14px"><div style="width:14px;height:14px;background:#FF5A1F"></div><span class="note" style="color:#141514">The mark. One per surface.</span></div>
+<div class="ruler"></div>
+<div style="display:flex;align-items:center;gap:14px"><div style="width:22px;height:4px;background:#FF5A1F"></div><span class="note" style="color:#141514">The cursor bar. Marks the next input.</span></div>
+<span class="note">Also: crop ticks, the upside-down band on cards.</span>
+</div>
+</div>
+
+<div class="tile" style="flex-direction:row;align-items:stretch;gap:0;padding:0">
+<div style="flex:1;padding:16px 20px;background:#141514;color:#F5F5F1;display:flex;flex-direction:column;gap:4px"><span class="lbl" style="color:#B9BBB3">01 · Done</span><span class="disp" style="font-size:15px">Bureau</span></div>
+<div style="flex:1;padding:16px 20px;border-right:1px solid #B9BBB3;display:flex;flex-direction:column;gap:4px;box-shadow:inset 0 -4px 0 #141514"><span class="lbl" style="color:#141514">02 · Now</span><span class="disp" style="font-size:15px">Lenders ×3</span></div>
+<div style="flex:1;padding:16px 20px;border-right:1px solid #B9BBB3;display:flex;flex-direction:column;gap:4px"><span class="lbl">03 · Next</span><span class="disp" style="font-size:15px;color:#565952">Compliance</span></div>
+<div style="flex:1;padding:16px 20px;border-right:1px solid #B9BBB3;display:flex;flex-direction:column;gap:4px"><span class="lbl">04 · Next</span><span class="disp" style="font-size:15px;color:#565952">Human</span></div>
+<div style="flex:1.4;padding:16px 20px;display:flex;flex-direction:column;gap:4px"><span class="lbl">Pipeline strip</span><span class="note">Done fills with ink. Now gets an underline. Next stays gray.</span></div>
+</div>
+
+<div style="display:flex;flex-direction:column;gap:12px">
+<span class="lbl" style="color:#141514">Five rules</span>
+<div style="display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:16px">
+<div class="rule"><span class="lbl">Color</span><p class="rt">Gray means normal. Color means something happened.</p><p class="rd">Orange is the only alarm. Blue is the only go. Everything idle stays gray, so the one red moment owns the screen.</p></div>
+<div class="rule"><span class="lbl">Distance</span><p class="rt">The board is read from 2 m away.</p><p class="rd">On the 1440 board, nothing a judge must read is under 22px. States and key numbers are 44px or more. Detail lives on the laptop.</p></div>
+<div class="rule"><span class="lbl">Offers</span><p class="rt">Rank by cost to borrow, not by payment.</p><p class="rd">Each offer shows APR, monthly payment and cost to borrow: what you repay minus the cash you get. Fees go into the cost.</p></div>
+<div class="rule"><span class="lbl">Codes</span><p class="rt">Four digits, one field, the number pad.</p><p class="rd">Digits open the number pad. One input keeps paste and delete simple. The phone sends at the fourth digit.</p></div>
+<div class="rule"><span class="lbl">Cards</span><p class="rt">The code sits in the corners.</p><p class="rd">Like playing-card corner indices: the number and code read in a fanned hand, from either end.</p></div>
+</div>
+</div>
+
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1280,"height":1320}}'>
+class Component extends DCLogic {
+renderVals() { return {}; }
+}
+</script>
+</body>
+</html>

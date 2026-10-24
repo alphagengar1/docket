@@ -1,0 +1,73 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Card backs</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@62..125,400..900&amp;family=Instrument+Sans:wght@400..700&amp;family=JetBrains+Mono:wght@400;600&amp;display=swap">
+<style>
+body{margin:0}
+a{color:#141514}a:hover{color:#565952}
+.back{width:240px;height:336px;box-sizing:border-box;padding:14px;background:#F5F5F1;border:1px solid #9A9C94;color:#141514;font-family:'Instrument Sans','Helvetica Neue',Arial,sans-serif}
+.frame{height:100%;box-sizing:border-box;border:2px solid #141514;display:flex;flex-direction:column;align-items:center;justify-content:space-between;padding:12px 10px}
+.ruler{align-self:stretch;height:10px;background-image:repeating-linear-gradient(90deg,#141514 0 1px,transparent 1px 8px)}
+.lbl{font-family:'JetBrains Mono',ui-monospace,monospace;font-size:12px;letter-spacing:.08em;text-transform:uppercase;color:#565952;text-align:center}
+.word{font-family:'Archivo','Helvetica Neue',Arial,sans-serif;font-stretch:125%;font-weight:800;text-transform:uppercase;font-size:20px;letter-spacing:-.01em}
+.sq{width:72px;height:72px;background:#FF5A1F}
+.line{font-size:12px;line-height:1.35;text-align:center;max-width:170px}
+.mid{display:flex;flex-direction:column;align-items:center;gap:12px}
+.tick{position:absolute;background:#141514}
+</style>
+</helmet>
+<div style="width:816px;height:1056px;box-sizing:border-box;background:#FFFFFF;position:relative;font-family:'Instrument Sans','Helvetica Neue',Arial,sans-serif;color:#141514">
+
+<div style="position:absolute;left:48px;right:48px;top:56px;display:flex;justify-content:space-between;align-items:flex-end;border-bottom:2px solid #141514;padding-bottom:12px">
+<div style="display:flex;align-items:center;gap:10px"><div style="width:16px;height:16px;background:#FF5A1F"></div><span style="font-family:'Archivo','Helvetica Neue',Arial,sans-serif;font-stretch:125%;font-weight:800;font-size:20px;text-transform:uppercase">Underwrite persona deck</span></div>
+<span class="lbl">Backs · print 4 copies</span>
+</div>
+<div style="position:absolute;left:48px;right:48px;top:112px;display:flex;justify-content:space-between">
+<span class="lbl">Duplex: flip on long edge</span>
+<span class="lbl">Print at 100%, no scaling</span>
+</div>
+
+<div class="tick" style="left:48px;top:160px;width:1px;height:20px"></div>
+<div class="tick" style="left:288px;top:160px;width:1px;height:20px"></div>
+<div class="tick" style="left:528px;top:160px;width:1px;height:20px"></div>
+<div class="tick" style="left:768px;top:160px;width:1px;height:20px"></div>
+<div class="tick" style="left:48px;top:876px;width:1px;height:20px"></div>
+<div class="tick" style="left:288px;top:876px;width:1px;height:20px"></div>
+<div class="tick" style="left:528px;top:876px;width:1px;height:20px"></div>
+<div class="tick" style="left:768px;top:876px;width:1px;height:20px"></div>
+<div class="tick" style="left:20px;top:192px;width:20px;height:1px"></div>
+<div class="tick" style="left:20px;top:528px;width:20px;height:1px"></div>
+<div class="tick" style="left:20px;top:864px;width:20px;height:1px"></div>
+<div class="tick" style="left:776px;top:192px;width:20px;height:1px"></div>
+<div class="tick" style="left:776px;top:528px;width:20px;height:1px"></div>
+<div class="tick" style="left:776px;top:864px;width:20px;height:1px"></div>
+
+<div style="position:absolute;left:48px;top:192px;display:grid;grid-template-columns:repeat(3,240px);grid-template-rows:repeat(2,336px)">
+<div class="back"><div class="frame"><div class="ruler"></div><div class="mid"><div class="sq"></div><span class="word">Underwrite</span><span class="line">Draw one. You are this applicant now.</span></div><span class="lbl">20 applicants · 0 real people</span></div></div>
+<div class="back"><div class="frame"><div class="ruler"></div><div class="mid"><div class="sq"></div><span class="word">Underwrite</span><span class="line">Draw one. You are this applicant now.</span></div><span class="lbl">20 applicants · 0 real people</span></div></div>
+<div class="back"><div class="frame"><div class="ruler"></div><div class="mid"><div class="sq"></div><span class="word">Underwrite</span><span class="line">Draw one. You are this applicant now.</span></div><span class="lbl">20 applicants · 0 real people</span></div></div>
+<div class="back"><div class="frame"><div class="ruler"></div><div class="mid"><div class="sq"></div><span class="word">Underwrite</span><span class="line">Draw one. You are this applicant now.</span></div><span class="lbl">20 applicants · 0 real people</span></div></div>
+<div class="back"><div class="frame"><div class="ruler"></div><div class="mid"><div class="sq"></div><span class="word">Underwrite</span><span class="line">Draw one. You are this applicant now.</span></div><span class="lbl">20 applicants · 0 real people</span></div></div>
+<div class="back"><div class="frame"><div class="ruler"></div><div class="mid"><div class="sq"></div><span class="word">Underwrite</span><span class="line">Draw one. You are this applicant now.</span></div><span class="lbl">20 applicants · 0 real people</span></div></div>
+</div>
+
+<div style="position:absolute;left:48px;right:48px;top:936px;border-top:1px solid #B9BBB3;padding-top:12px">
+<span style="font-size:12px;line-height:1.4;color:#565952">Every back is the same, so a shuffled deck gives nothing away. Print on heavy cardstock (100 lb cover or more) so the fronts do not show through.</span>
+</div>
+
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":816,"height":1056}}'>
+class Component extends DCLogic {
+renderVals() { return {}; }
+}
+</script>
+</body>
+</html>

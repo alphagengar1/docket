@@ -1,0 +1,71 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Phone: notice</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@62..125,400..900&amp;family=Instrument+Sans:wght@400..700&amp;family=JetBrains+Mono:wght@400;600&amp;display=swap">
+<style>
+body{margin:0}
+a{color:#1C46C9}a:hover{color:#141514}
+.lbl{font-family:'JetBrains Mono',ui-monospace,monospace;font-size:12px;letter-spacing:.08em;text-transform:uppercase;color:#565952}
+.disp{font-family:'Archivo','Helvetica Neue',Arial,sans-serif;font-stretch:125%;font-weight:800;text-transform:uppercase;letter-spacing:-.01em;margin:0}
+.mono{font-family:'JetBrains Mono',ui-monospace,monospace;font-variant-numeric:tabular-nums}
+.step{display:flex;gap:12px;align-items:flex-start}
+.n{font-family:'JetBrains Mono',ui-monospace,monospace;font-weight:600;font-size:13px;width:24px;height:24px;flex:none;display:flex;align-items:center;justify-content:center;border:2px solid #141514;box-sizing:border-box}
+.st{margin:0;font-size:15px;line-height:1.35}
+.sd{display:block;font-family:'JetBrains Mono',ui-monospace,monospace;font-size:12px;color:#565952;margin-top:3px}
+</style>
+</helmet>
+<div style="width:390px;height:844px;box-sizing:border-box;padding:24px 20px;background:#E3E4DF;color:#141514;font-family:'Instrument Sans','Helvetica Neue',Arial,sans-serif;display:flex;flex-direction:column;gap:14px">
+
+<div style="display:flex;justify-content:space-between;align-items:center">
+<div style="display:flex;align-items:center;gap:8px"><div style="width:14px;height:14px;background:#FF5A1F"></div><span class="disp" style="font-size:15px">Underwrite</span></div>
+<span class="lbl">No. 20 · Oct 25, 2026</span>
+</div>
+
+<div style="display:flex;flex-direction:column;gap:8px">
+<span class="disp" style="align-self:flex-start;font-size:12px;padding:5px 8px;background:#FF5A1F;color:#141514">Application stopped</span>
+<h1 style="margin:0;font-size:26px;line-height:1.15;font-weight:600">We can't offer you a loan right now.</h1>
+</div>
+
+<div style="background:#F5F5F1;border:1px solid #B9BBB3;padding:14px 16px;display:flex;flex-direction:column;gap:6px">
+<span class="lbl">Why</span>
+<p style="margin:0;font-size:17px;line-height:1.35;font-weight:600">Experian's file says the person with this identity has died.</p>
+<p style="margin:0;font-size:14px;line-height:1.35;color:#565952">No lender saw your request.</p>
+</div>
+
+<div style="display:flex;flex-direction:column;gap:12px">
+<span class="lbl">What you can do</span>
+<div class="step"><span class="n">1</span><p class="st">Get your free Experian report by Dec 24, 2026.<span class="sd">(888) 397-3742 · experian.com/disputes</span></p></div>
+<div class="step"><span class="n">2</span><p class="st">If you are alive, dispute it. Send Experian a notarized letter that says you are not deceased.</p></div>
+<div class="step"><span class="n">3</span><p class="st">If you did not apply, someone may be using this identity. Report it at IdentityTheft.gov.</p></div>
+</div>
+
+<div style="display:flex;justify-content:space-between;align-items:center;border-top:1px solid #B9BBB3;border-bottom:1px solid #B9BBB3;min-height:44px">
+<span style="font-size:14px">Your rights under federal law</span><span class="mono" style="font-size:13px">ECOA · FCRA ›</span>
+</div>
+<span style="font-size:12px;line-height:1.4;color:#565952">Sent on behalf of Lender A, Lender B and Lender C. [Creditor addresses]</span>
+
+<div style="margin-top:auto;background:#141514;color:#F5F5F1;padding:14px 16px;display:flex;flex-direction:column;gap:10px">
+<div style="display:flex;justify-content:space-between"><span class="lbl" style="color:#B9BBB3">Reviewer mode</span><span class="lbl" style="color:#B9BBB3">Logged 01:45</span></div>
+<div style="display:flex;gap:10px;align-items:flex-start"><div style="width:10px;height:10px;margin-top:5px;flex:none;background:#FF5A1F"></div><span style="font-size:15px;line-height:1.35">Override blocked. A fraud review must clear this file first.</span></div>
+<div style="display:flex;gap:10px">
+<button type="button" style="flex:1;height:48px;border:0;background:#F5F5F1;color:#141514;font-family:'Archivo','Helvetica Neue',Arial,sans-serif;font-stretch:125%;font-weight:800;text-transform:uppercase;font-size:13px;cursor:pointer">Send notice</button>
+<button type="button" disabled style="flex:1;height:48px;border:2px dashed #8E918A;background:transparent;color:#B9BBB3;font-family:'Archivo','Helvetica Neue',Arial,sans-serif;font-stretch:125%;font-weight:800;text-transform:uppercase;font-size:13px">Override</button>
+</div>
+</div>
+
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":390,"height":844}}'>
+class Component extends DCLogic {
+renderVals() { return {}; }
+}
+</script>
+</body>
+</html>
