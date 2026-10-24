@@ -2538,3 +2538,37 @@ table.grid.tl tr:last-child td {
 .st-events { margin: 0; padding: 0; list-style: none; font-family: var(--mono); font-size: 12px; color: var(--muted); display: grid; gap: 4px; }
 .st-events b { color: var(--text); font-weight: 600; }
 .st-events li > div { color: var(--text); overflow-wrap: anywhere; }
+
+/* ---------------- Texture (tag theme): the floor has grain and a faint dot grid, panels stay flat ----------------
+   Three layers tell regions apart: grained aluminium floor (work surface), flat cream panels (queue, inspector,
+   cards, sheet), hatched bands for section headers. Low contrast on purpose: it separates, it does not decorate. */
+:root[data-theme='tag'] {
+  --grain: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='160' height='160'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' stitchTiles='stitch'/><feColorMatrix values='0 0 0 0 0.08  0 0 0 0 0.08  0 0 0 0 0.08  0 0 0 0.10 0'/></filter><rect width='160' height='160' filter='url(%23n)'/></svg>");
+  --dots: radial-gradient(circle at 1px 1px, rgba(20, 21, 20, 0.07) 1px, transparent 1.2px);
+  --hatch: repeating-linear-gradient(135deg, rgba(20, 21, 20, 0.045) 0 2px, transparent 2px 9px);
+}
+:root[data-theme='tag'] .work,
+:root[data-theme='tag'] .board-scroll {
+  background-color: var(--bg);
+  background-image: var(--grain), var(--dots);
+  background-size: 160px 160px, 24px 24px;
+  background-position: 0 0, 12px 12px;
+}
+:root[data-theme='tag'] .board { background: transparent; }
+:root[data-theme='tag'] .board-head,
+:root[data-theme='tag'] .waterfall,
+:root[data-theme='tag'] .pipeline-strip,
+:root[data-theme='tag'] .pane,
+:root[data-theme='tag'] .card,
+:root[data-theme='tag'] .sheet,
+:root[data-theme='tag'] .ax-summary,
+:root[data-theme='tag'] .drawer { background-color: var(--surface); }
+:root[data-theme='tag'] .col-head { background-image: var(--hatch); background-color: transparent; }
+:root[data-theme='tag'] .columns { background: transparent; }
+:root[data-theme='tag'] .queue-section,
+:root[data-theme='tag'] .pane-head,
+:root[data-theme='tag'] .section-label.bar { background-image: var(--hatch); }
+:root[data-theme='tag'] .sheet-scrim { background: color-mix(in srgb, var(--bg) 60%, transparent); }
+:root[data-theme='tag'] .rail { background-color: var(--surface); }
+/* Board and phone floors get the same grain so the three screens read as one object. */
+:root[data-theme='tag'] .bd, .itag.bd { background-image: var(--grain, none); background-size: 160px 160px; }
