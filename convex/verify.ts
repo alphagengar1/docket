@@ -93,6 +93,8 @@ export const recordChecks = internalMutation({
         counterfactualDecision: v.union(v.literal("approve"), v.literal("decline"), v.literal("failed")),
         latencyMs: v.number(),
         note: v.string(),
+        method: v.union(v.literal("single"), v.literal("leave_one_out"), v.literal("all_fixed")),
+        verified: v.union(v.boolean(), v.null()),
       }),
     ),
     untested: v.array(v.string()),
@@ -107,9 +109,14 @@ export const recordChecks = internalMutation({
       .collect();
     for (const o of old) await ctx.db.delete(o._id);
 
-    const byField = new Map<string, boolean>();
+    // Final verdict per field: a later (leave-one-out) row overrides the single-field row.
+    const byField = new Map<string, boolean | null>();
     for (const c of checks) {
-      byField.set(c.field, c.flipped);
+      if (c.method === "all_fixed") continue;
+      if (c.verified === true || !byField.has(c.field) || c.method === "leave_one_out") byField.set(c.field, c.verified);
+      if (c.verified === true) byField.set(c.field, true);
+    }
+    for (const c of checks) {
       await ctx.db.insert("reasonChecks", {
         offerId,
         applicantId: offer.applicantId,
@@ -121,20 +128,22 @@ export const recordChecks = internalMutation({
         counterfactualDecision: c.counterfactualDecision,
         latencyMs: c.latencyMs,
         createdAt: Date.now(),
+        method: c.method,
+        verified: c.verified,
       });
       await ctx.db.insert("auditEvents", {
         applicantId: offer.applicantId,
         at: Date.now(),
         actor: `underwriter:${offer.lender}` as const,
-        action: c.flipped ? "verify.flipped" : "verify.unsupported",
+        action: c.method === "all_fixed" ? "verify.sanity" : c.verified === true ? "verify.supported" : c.verified === false ? "verify.unsupported" : "verify.inconclusive",
         ref: c.field,
-        note: `${c.field}: ${JSON.stringify(c.original)} → ${JSON.stringify(c.counterfactual)} ⇒ ${c.counterfactualDecision} (${c.latencyMs}ms) ${c.note}`,
+        note: `[${c.method}] ${c.field}: ${JSON.stringify(c.original)} → ${JSON.stringify(c.counterfactual)} ⇒ ${c.counterfactualDecision} (${c.latencyMs}ms) ${c.note}`,
       });
     }
     const reasons = offer.reasons.map((r) => {
       const f = normalizeField(r.field);
-      const flipped = byField.get(f);
-      return { ...r, verified: flipped === undefined ? null : flipped };
+      const verdict = byField.get(f);
+      return { ...r, verified: verdict === undefined ? null : verdict };
     });
     await ctx.db.patch(offerId, { reasons });
     return { verified: reasons.filter((r) => r.verified === true).length, unsupported: reasons.filter((r) => r.verified === false).length, untested: untested.length };
@@ -170,23 +179,87 @@ export const verifyReasons = internalAction({
       else untested.push(f);
     }
 
-    const results = await Promise.all(
+    type Check = {
+      field: string;
+      original: unknown;
+      counterfactual: unknown;
+      flipped: boolean;
+      counterfactualDecision: "approve" | "decline" | "failed";
+      latencyMs: number;
+      note: string;
+      method: "single" | "leave_one_out" | "all_fixed";
+      verified: boolean | null;
+    };
+    const run = async (inp: UnderwriterInput) => {
+      const r = await underwriteOnce(offer.lender, inp);
+      return { decision: r.output?.decision ?? ("failed" as const), latencyMs: r.latencyMs, note: `[provider=${r.actualProvider}]` };
+    };
+
+    // Pass 1: set ONLY this field to passing. Flip ⇒ verified.
+    const pass1: Check[] = await Promise.all(
       cfs.map(async (cf) => {
-        const r = await underwriteOnce(offer.lender, cf.input);
-        const decision = r.output?.decision ?? ("failed" as const);
+        const r = await run(cf.input);
         return {
           field: cf.field,
           original: cf.original ?? null,
           counterfactual: cf.counterfactual ?? null,
-          flipped: decision === "approve",
-          counterfactualDecision: decision,
+          flipped: r.decision === "approve",
+          counterfactualDecision: r.decision,
           latencyMs: r.latencyMs,
-          note: r.actualProvider === "stub" ? "[provider=stub]" : "[provider=claude]",
+          note: r.note,
+          method: "single",
+          verified: r.decision === "failed" ? null : r.decision === "approve",
         };
       }),
     );
+    const results: Check[] = [...pass1];
+
+    // Pass 2 (jointly sufficient reasons, e.g. fico AND utilization both failing):
+    // leave-one-out. First a sanity test with EVERY field passing; it must approve,
+    // otherwise the lender declines for something it did not list and we stay inconclusive.
+    const unflipped = pass1.filter((c) => c.verified === false);
+    if (cfs.length >= 2 && unflipped.length > 0) {
+      const applyAll = (base: UnderwriterInput, except: string | null) =>
+        cfs.reduce((inp, other) => (other.field === except ? inp : (buildCounterfactual(inp, other.field)?.input ?? inp)), base);
+      const all = await run(applyAll(input, null));
+      results.push({
+        field: "*",
+        original: null,
+        counterfactual: cfs.map((c) => c.field),
+        flipped: all.decision === "approve",
+        counterfactualDecision: all.decision,
+        latencyMs: all.latencyMs,
+        note: all.note,
+        method: "all_fixed",
+        verified: null,
+      });
+      if (all.decision === "approve") {
+        const loo: Check[] = await Promise.all(
+          unflipped.map(async (c) => {
+            const r = await run(applyAll(input, c.field));
+            return {
+              field: c.field,
+              original: c.original,
+              counterfactual: `others fixed; ${c.field} kept at ${JSON.stringify(c.original)}`,
+              flipped: r.decision === "approve",
+              counterfactualDecision: r.decision,
+              latencyMs: r.latencyMs,
+              note: r.note,
+              method: "leave_one_out",
+              verified: r.decision === "failed" ? null : r.decision === "decline", // still declines ⇒ this reason is necessary
+            };
+          }),
+        );
+        results.push(...loo);
+      } else {
+        for (const c of unflipped) {
+          results.push({ ...c, method: "leave_one_out", counterfactual: "skipped: all-fixed sanity test did not approve", verified: null, latencyMs: 0 });
+        }
+      }
+    }
+
     const summary = await ctx.runMutation(internal.verify.recordChecks, { offerId, checks: results, untested });
-    return { offerId, checked: results.length, flipped: summary.verified, unsupported: summary.unsupported, untested };
+    return { offerId, checked: cfs.length, flipped: summary.verified, unsupported: summary.unsupported, untested };
   },
 });
 

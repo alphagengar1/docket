@@ -47,12 +47,21 @@ npx convex run eval:runEval '{}'         # 20 personas → evalRuns row (add {"k
 - CREAO runs are async: the offer row is inserted `pending` with `runId`; `/creao/webhook` re-fetches `GET /runs/{id}` (webhooks are unsigned) and completes it; the workflow also polls every 5 s for up to 4 min and marks leftovers `failed`.
 - Live CRS: `CRS_PROVIDER=crs` + creds + the three paths + the persona map. Then check `normalizeCrsBundle()` in `crs.ts` against a real response.
 
+## The three differentiators (design/differentiators.md)
+1. **Reason verification** — `verify.ts`. For every decline, each reason's field is set to a passing value and that one lender is re-run (`underwriteOnce`); a second leave-one-out pass handles jointly sufficient reasons. Rows land in `reasonChecks`; `offers.reasons[].verified` is set; the notice only uses reasons with `verified !== false`. Runs automatically (`step.verify.*`, before compliance) and on demand via `verify:verifyReasonsNow {offerId}`. Query `verify:reasonChecks {applicantId|offerId}`; also included in `desk:getApplicantView` as `reasonChecks`.
+2. **ECOA classification + FCRA** — `classify.ts`. `offers.classification` is computed in code (approve / counteroffer / deny); a notice is generated for any deny or counteroffer; the FCRA paragraph (source "CRS Credit API sandbox", pull date, "the consumer reporting agency did not make the decision") is appended in code, never by the LLM. `notices.required/requiredBecause/lendersCounteroffered/droppedReasons`.
+3. **Dispute and replay** — `desk:disputeTradeline {applicantId, tradelineIndex, note?}` writes an `applicant` audit event, creates a linked applicant (`replayOf`) and re-runs the desk on a corrected bundle (mock: tradeline removed, utilization rescaled, score +5/+25; crs: re-pulled). `getApplicantView` returns `replays: Id[]` on the original.
+
+Passing values used by the counterfactuals: fico9/vantage4 → 780, utilization → 0.10, inquiries6mo → 0, fraud.score → 5, flags.* → false, identity.verified → true, statedIncome → amountRequested/0.35 rounded up, amountRequested → min(requested, 30% of income, $20k). Fields without a mapping (tradelines, fraud.signals) are "untested" (verified = null).
+
 ## Files
 | File | What |
 |---|---|
 | `schema.ts` | Every table in contracts.md, indexed by `applicantId`. Plus internal `secretsCache` and `agentRuns`. |
 | `desk.ts` | `runDeskWorkflow` (Workflow component): pull → guardrails → 3 underwriters in parallel → compliance (only if ≥1 decline) → `awaiting_human`. Public API: `createApplicant`, `listApplicants`, `board`, `getApplicantView`, `bundles`, `offers`, `notices`, `decisions`, `auditEvents`, `approveOffer` (+ alias `approve`), `declineApplicant`. |
 | `rules.ts` | Deterministic hard stops (pure). `rules.test.ts`. |
+| `verify.ts` | Counterfactual reason test (two passes), `verifyReasonsNow` button, `reasonChecks` query. |
+| `classify.ts` | approve / counteroffer / deny, notice-required rule, FCRA paragraph. `classify.test.ts`. |
 | `crs.ts`, `crs.mock.ts` | Provider switch; 20 personas P01..P20 with `defaultIntake` for the eval. |
 | `agents.ts` | `runUnderwriter` / `runCompliance` steps; Claude (structured outputs + Zod, one retry), CREAO (async), stub. |
 | `stub.ts` | Deterministic policies. Keep its numbers in sync with `policies/*.md`. |
@@ -61,4 +70,4 @@ npx convex run eval:runEval '{}'         # 20 personas → evalRuns row (add {"k
 | `eval.ts`, `evalScore.ts`, `crons.ts` | Seeds `evalCases` from `personas/map.json`, runs all personas through the real desk, writes `evalRuns`. Nightly 09:00 UTC. `eval:reseedCases` after the teammate edits the answer key. |
 | `market.ts`, `personas.ts` | `market:rates` (seeded static APR bands), `personas:deck` (id, name, hint; no outcome). |
 
-Audit convention the pipeline rail reads: actor `desk`, action `step.<pull|guardrails|underwrite|compliance|human>.start|done` (`step.compliance.skipped` when no declines).
+Audit convention the pipeline rail reads: actor `desk`, action `step.<pull|guardrails|underwrite|verify|compliance|human>.start|done` (`step.compliance.skipped` when no notice is required). Reason-test detail: actor `underwriter:<lender>`, actions `verify.supported|unsupported|inconclusive|sanity`, ref = field. Dispute: actor `applicant`, action `dispute.tradeline`, ref `credit.tradelines[i]`.

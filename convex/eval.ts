@@ -115,7 +115,17 @@ export const observe = internalQuery({
         latencyMs: o.latencyMs,
       })),
       hardStopRefs: audits.filter((e) => e.actor === "rules" && e.action === "rules.hard_stop" && e.ref).map((e) => e.ref as string),
-      reasonChecks: checks.map((c) => ({ flipped: c.flipped })),
+      // one row per reason field: verified verdict (leave-one-out overrides single)
+      reasonChecks: Object.values(
+        checks
+          .filter((c) => c.method !== "all_fixed")
+          .reduce<Record<string, { flipped: boolean }>>((acc, c) => {
+            const key = `${c.lender}:${c.field}`;
+            if (c.verified === true) acc[key] = { flipped: true };
+            else if (!(key in acc)) acc[key] = { flipped: false };
+            return acc;
+          }, {}),
+      ),
     };
   },
 });

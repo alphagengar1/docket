@@ -9,3 +9,6 @@
 - 2026-10-24 01:45 CREAO completion = webhook (re-fetch, never trust payload) AND a 5 s poll loop inside the workflow, so it works without a public URL.
 - 2026-10-24 02:05 Added three differentiators (reason verification, approve/counteroffer/deny classification + FCRA statement, dispute-and-replay). Lead with reason verification. Banned claims list in design/differentiators.md.
 - 2026-10-24 02:10 web: product name constant "Docket" (web/src/config.ts); every visual value lives in web/src/tokens.css; useDesk.ts is the only data module, mock-backed until morning wiring (useDesk.convex.ts).
+- 2026-10-24 02:30 Reason verification runs BEFORE compliance (not after) so the notice is composed only from verified reasons; single-field flip first, leave-one-out second for jointly sufficient reasons, all-fixed sanity run gates pass 2.
+- 2026-10-24 02:30 Classification and the FCRA paragraph are code, not prompt output; the compliance agent is told not to write legal boilerplate.
+- 2026-10-24 02:35 Dispute replay on mock data removes the tradeline, rescales utilization by the removed card's balance share and bumps scores +5 (+25 if derogatory); on live CRS it re-pulls.

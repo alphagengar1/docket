@@ -667,8 +667,19 @@ export const runCompliance = internalAction({
       if (cls === "approve") continue;
       // Only reasons whose counterfactual flipped the decision reach the notice.
       // Untested reasons (verified null/undefined) are kept; verified=false is dropped.
-      const kept = o.reasons.filter((r) => r.verified !== false);
+      let kept = o.reasons.filter((r) => r.verified !== false);
       for (const r of o.reasons) if (r.verified === false) dropped.push({ lender: o.lender, field: r.field, text: r.text });
+      if (cls === "deny" && kept.length === 0) {
+        // A denial notice must state reasons (ECOA). Fall back to the lender's stated reasons and say so in the audit log.
+        kept = o.reasons;
+        await ctx.runMutation(internal.audit.log, {
+          applicantId,
+          actor: "compliance",
+          action: "compliance.unverified_reasons_used",
+          ref: String(o._id),
+          note: `${o.lender}: no reason survived the counterfactual test; notice uses the lender's stated reasons`,
+        });
+      }
       declines.push({
         lender: o.lender,
         classification: cls,

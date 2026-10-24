@@ -149,10 +149,15 @@ export default defineSchema({
     field: v.string(),
     original: v.any(),
     counterfactual: v.any(),
-    flipped: v.boolean(),
+    flipped: v.boolean(), // did the decision change in THIS test
     counterfactualDecision: v.union(v.literal("approve"), v.literal("decline"), v.literal("failed")),
     latencyMs: v.number(),
     createdAt: v.number(),
+    // single: only this field set to passing (verified = flipped).
+    // leave_one_out: every OTHER reason's field set to passing, this one kept (verified = still declined).
+    // all_fixed: sanity test with every field passing; must approve for leave_one_out to count.
+    method: v.optional(v.union(v.literal("single"), v.literal("leave_one_out"), v.literal("all_fixed"))),
+    verified: v.optional(v.union(v.boolean(), v.null())),
   })
     .index("by_offerId", ["offerId"])
     .index("by_applicantId", ["applicantId"]),
