@@ -1898,3 +1898,40 @@ table.grid.tl tr:last-child td {
   from { background-position: 0 120%, 0 0; }
   to { background-position: 0 -120%, 0 0; }
 }
+
+
+/* ---------------- Instrument Tag console: structure on top of the tokens ---------------- */
+:root[data-theme='tag'] body { font-family: var(--sans); }
+:root[data-theme='tag'] .topbar { border-bottom: 2px solid var(--text); }
+:root[data-theme='tag'] .topbar .brand { font-family: var(--disp); font-stretch: 125%; font-weight: 800; text-transform: uppercase; letter-spacing: -0.01em; }
+:root[data-theme='tag'] .section-label,
+:root[data-theme='tag'] .queue-section,
+:root[data-theme='tag'] .wf-row .nm,
+:root[data-theme='tag'] .col-head .nm { font-family: var(--mono); letter-spacing: 0.08em; text-transform: uppercase; }
+:root[data-theme='tag'] .board-head h2 { font-family: var(--disp); font-stretch: 125%; font-weight: 800; text-transform: uppercase; letter-spacing: -0.01em; font-size: 26px; }
+:root[data-theme='tag'] .board-head { border-bottom: 2px solid var(--text); }
+:root[data-theme='tag'] .card { border: 1px solid var(--hair-2); }
+:root[data-theme='tag'] .card .lender { font-family: var(--disp); font-stretch: 125%; font-weight: 800; text-transform: uppercase; letter-spacing: -0.01em; }
+:root[data-theme='tag'] .card[aria-pressed='true'] { border-color: var(--text); box-shadow: inset 0 -4px 0 var(--text); }
+:root[data-theme='tag'] .col-head .letter { background: var(--text); color: var(--surface); border-radius: 0; }
+:root[data-theme='tag'] .pill,
+:root[data-theme='tag'] .chip,
+:root[data-theme='tag'] .status { border-radius: 0; font-family: var(--mono); letter-spacing: 0.06em; text-transform: uppercase; }
+:root[data-theme='tag'] button { border-radius: 0; }
+:root[data-theme='tag'] button.approve-pill { background: var(--text); color: var(--surface); }
+:root[data-theme='tag'] button.decline-pill { background: transparent; color: var(--text); border: 2px solid var(--text); }
+:root[data-theme='tag'] .queue-row::before { width: 4px; }
+:root[data-theme='tag'] .queue-row.decide .rank { border-radius: 0; background: var(--text); color: var(--surface); }
+:root[data-theme='tag'] .timeline .d { border-radius: 0; }
+:root[data-theme='tag'] .wf-row .bar { border-radius: 0; }
+:root[data-theme='tag'] .wf-row .bar::after { background: linear-gradient(100deg, transparent 20%, rgba(255, 255, 255, 0.55) 50%, transparent 80%); background-size: 220% 100%; }
+:root[data-theme='tag'] .inspector h2,
+:root[data-theme='tag'] .pane-head .section-label { font-family: var(--mono); }
+:root[data-theme='tag'] .status.live::before,
+:root[data-theme='tag'] .pill.live::before { background: var(--hard); border-radius: 0; }
+:root[data-theme='tag'] { --wf-label-w: 176px; }
+:root[data-theme='tag'] .wf-row.child .nm { text-transform: none; font-family: var(--sans); letter-spacing: 0; }
+:root[data-theme='tag'] .card .lender { font-size: 13px; white-space: normal; line-height: 1.15; }
+:root[data-theme='tag'] .pane-foot { font-size: 11px; white-space: nowrap; gap: var(--sp-2); }
+:root[data-theme='tag'] .pane-foot span { overflow: hidden; text-overflow: ellipsis; }
+:root[data-theme='tag'] .board-head h2 { font-size: 22px; }

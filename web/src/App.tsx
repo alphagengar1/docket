@@ -16,7 +16,7 @@ import { Inspector, type InspectorTab } from './components/Inspector'
 import { Drawer } from './components/Drawer'
 import { ApplicantView } from './components/ApplicantView'
 
-type Theme = 'dark' | 'light'
+type Theme = 'tag' | 'dark' | 'light'
 
 export default function App() {
   const desk = useDesk()
@@ -27,7 +27,7 @@ export default function App() {
   const [deckOpen, setDeckOpen] = useState(false)
   const [applicantView, setApplicantView] = useState(false)
   const [tab, setTab] = useState<InspectorTab>('offer')
-  const [theme, setTheme] = useState<Theme>('dark')
+  const [theme, setTheme] = useState<Theme>('tag')
 
   useEffect(() => {
     document.documentElement.dataset.theme = theme
@@ -161,7 +161,7 @@ export default function App() {
           desk.stopReplay()
         }}
         theme={theme}
-        onTheme={() => setTheme((t) => (t === 'dark' ? 'light' : 'dark'))}
+        onTheme={() => setTheme((t) => (t === 'tag' ? 'dark' : t === 'dark' ? 'light' : 'tag'))}
       />
       <div className="main">
         <Queue

@@ -11,7 +11,7 @@ interface Props {
   onDeck: () => void
   onReplay: () => void
   onStopReplay: () => void
-  theme: 'dark' | 'light'
+  theme: 'tag' | 'dark' | 'light'
   onTheme: () => void
   sandbox?: boolean
   onReset?: () => void
@@ -70,7 +70,7 @@ export function TopBar({ connection, inFlight, replaying, view, onView, onDeck, 
         </button>
       )}
       <button type="button" className="ghost" onClick={onTheme} aria-label={`Theme: ${theme}`} title="Toggle theme">
-        {theme === 'dark' ? 'Dark' : 'Light'}
+        {theme === 'tag' ? 'Tag' : theme === 'dark' ? 'Dark' : 'Light'}
       </button>
     </header>
   )

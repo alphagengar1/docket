@@ -157,6 +157,61 @@
   --actor-human: #15803d;
 }
 
+/* Instrument Tag console theme (same palette and type as #/board and #/borrower). Default. */
+:root[data-theme='tag'] {
+  --bg: #e3e4df;
+  --surface: #f5f5f1;
+  --panel: #ecece8;
+  --card: #f5f5f1;
+  --card-2: #ecece8;
+  --hair: #cfd1c9;
+  --hair-2: #b9bbb3;
+  --text: #141514;
+  --muted: #565952;
+  --muted-2: #7a7d75;
+  --accent: #1c46c9;
+  --accent-ink: #ffffff;
+  --selection: #c9d3f3;
+  --selected: rgba(28, 70, 201, 0.08);
+  --hover: rgba(20, 21, 20, 0.05);
+  --skeleton: #dcddd7;
+  --scrim: rgba(20, 21, 20, 0.4);
+  color-scheme: light;
+  --approve: #1c46c9;
+  --approve-pill: #dde4f8;
+  --decline: #8a4b00;
+  --decline-pill: #f3e3cf;
+  --hard: #ff5a1f;
+  --hard-pill: #ffe1d5;
+  --info-pill: #e6e7e1;
+  --actor-desk: #141514;
+  --actor-crs: #1c46c9;
+  --actor-rules: #ff5a1f;
+  --actor-underwriter: #565952;
+  --actor-compliance: #1c46c9;
+  --actor-human: #141514;
+  --actor-applicant: #8a4b00;
+  --doc-bg: #f5f5f1;
+  --doc-panel: #ffffff;
+  --doc-text: #141514;
+  --doc-muted: #565952;
+  --doc-rule: #cfd1c9;
+  --doc-rule-2: #b9bbb3;
+  --doc-link: #1c46c9;
+  --doc-ok: #1c46c9;
+  --doc-bad: #ff5a1f;
+  --sans: 'Instrument Sans', 'Helvetica Neue', Arial, sans-serif;
+  --disp: 'Archivo', 'Helvetica Neue', Arial, sans-serif;
+  --radius: 0;
+  --radius-lg: 0;
+  --radius-card: 0;
+  --radius-bar: 0;
+  --fs-body: 14px;
+  --fs-small: 13px;
+  --fs-label: 12px;
+  --fs-tag: 11px;
+}
+
 @media (max-width: 1439px) {
   :root {
     --queue-w: 240px;
