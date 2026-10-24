@@ -304,3 +304,5 @@
   font-variant-numeric: tabular-nums;
   letter-spacing: 0.01em;
 }
+/* Tone word for screen readers only on quiet rows (info, OK, idle); Flag and Human keep the visible tag. */
+.disclose__sr { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }

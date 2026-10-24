@@ -225,7 +225,11 @@ export function Disclose({
             <path d="M4 2.5 7.5 6 4 9.5" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="square" />
           </svg>
         </span>
-        <span className="disclose__tone">{toneWord ?? TONE_WORD[tone]}</span>
+        {(toneWord != null || tone === 'bad' || tone === 'human') ? (
+          <span className="disclose__tone">{toneWord ?? TONE_WORD[tone]}</span>
+        ) : (
+          <span className="disclose__sr">{TONE_WORD[tone]}</span>
+        )}
         <span className="disclose__summary">{summary}</span>
         {meta != null && <span className="disclose__meta mono">{meta}</span>}
       </button>

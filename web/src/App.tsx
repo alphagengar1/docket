@@ -398,7 +398,6 @@ export default function App() {
                   const sm = summarize(applicant, offers, hs, desk.reasonChecks)
                   return (
                     <section className="lg" aria-label="Lender decisions">
-                      <p className="lg-glance">{sm.lenderGlance}</p>
                       <DiscloseGroup title="Lender decisions">
                         {original && (
                           <div className="diff-label section-label">

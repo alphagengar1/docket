@@ -257,7 +257,6 @@ function StopDetail({ s, hs, a, events }: { s: Summary; hs: AuditEvent | undefin
 export function DecisionSummary({ applicant: a, offers, hardStop, canDecide, onApprove, onDecline, checks, bundle, notice, events }: Props) {
   const s = summarize(a, offers, hardStop, checks)
   const hard = s.kind === 'hard'
-  const tail = canDecide ? (s.kind === 'offers' ? ' Approve or decline below.' : s.kind === 'none' ? ' Decline is the only action.' : '') : ''
   const moreParts = [`${s.lenders.length} lender verdicts with reasons`]
   if (bundle) moreParts.push('bureau facts')
   if (notice) moreParts.push('the notice')
@@ -289,11 +288,10 @@ export function DecisionSummary({ applicant: a, offers, hardStop, canDecide, onA
         )}
         {!hard && (
           <div className="sum-more-row">
-            <p className="sum-glance">{s.glance}{tail}</p>
             <Disclose
-              tone="human"
+              tone="info"
               className="sum-more-disclose"
-              summary={`More: ${moreLine}${canDecide ? ', to read before you act' : ''}.`}
+              summary={`More: ${moreLine}.`}
               meta={`${s.answered} of ${s.total} answered`}
               detail={<MoreDetail s={s} bundle={bundle} notice={notice} canDecide={canDecide} />}
             />
