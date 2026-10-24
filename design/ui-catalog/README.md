@@ -33,3 +33,87 @@ Twenty shipped-product screens worth borrowing from, and one demo front page per
 | 20 | `ui-ref/opik` | Opik trace view |
 
 To look at one: `git switch ui-refs/<slug>`, then open `web/public/demos/<slug>.html` in a browser, or with the web dev server running from `web/`, visit `http://localhost:5173/demos/<slug>.html`. Each page is one self-contained HTML file with the data inlined; nothing in the real app changes on these branches.
+
+## Snapshots
+
+Each study rendered with headless Chrome at 1440 wide (top 1600px). Click a heading to open the branch; the page itself is `web/public/demos/<slug>.html` there.
+
+### 01 · [Lendflow](https://github.com/alphagengar1/docket/blob/ui-ref/lendflow/web/public/demos/lendflow.html) · `ui-ref/lendflow`
+
+![Lendflow study](snapshots/lendflow.jpg)
+
+### 02 · [Alloy](https://github.com/alphagengar1/docket/blob/ui-ref/alloy/web/public/demos/alloy.html) · `ui-ref/alloy`
+
+![Alloy study](snapshots/alloy.jpg)
+
+### 03 · [Sardine](https://github.com/alphagengar1/docket/blob/ui-ref/sardine/web/public/demos/sardine.html) · `ui-ref/sardine`
+
+![Sardine study](snapshots/sardine.jpg)
+
+### 04 · [Method](https://github.com/alphagengar1/docket/blob/ui-ref/method/web/public/demos/method.html) · `ui-ref/method`
+
+![Method study](snapshots/method.jpg)
+
+### 05 · [Evidence](https://github.com/alphagengar1/docket/blob/ui-ref/evidence/web/public/demos/evidence.html) · `ui-ref/evidence`
+
+![Evidence study](snapshots/evidence.jpg)
+
+### 06 · [Mercury](https://github.com/alphagengar1/docket/blob/ui-ref/mercury/web/public/demos/mercury.html) · `ui-ref/mercury`
+
+![Mercury study](snapshots/mercury.jpg)
+
+### 07 · [Ramp](https://github.com/alphagengar1/docket/blob/ui-ref/ramp/web/public/demos/ramp.html) · `ui-ref/ramp`
+
+![Ramp study](snapshots/ramp.jpg)
+
+### 08 · [Fey](https://github.com/alphagengar1/docket/blob/ui-ref/fey/web/public/demos/fey.html) · `ui-ref/fey`
+
+![Fey study](snapshots/fey.jpg)
+
+### 09 · [Hyperexpense](https://github.com/alphagengar1/docket/blob/ui-ref/hyperexpense/web/public/demos/hyperexpense.html) · `ui-ref/hyperexpense`
+
+![Hyperexpense study](snapshots/hyperexpense.jpg)
+
+### 10 · [Finary](https://github.com/alphagengar1/docket/blob/ui-ref/finary/web/public/demos/finary.html) · `ui-ref/finary`
+
+![Finary study](snapshots/finary.jpg)
+
+### 11 · [Lightyear](https://github.com/alphagengar1/docket/blob/ui-ref/lightyear/web/public/demos/lightyear.html) · `ui-ref/lightyear`
+
+![Lightyear study](snapshots/lightyear.jpg)
+
+### 12 · [Cobalt](https://github.com/alphagengar1/docket/blob/ui-ref/cobalt/web/public/demos/cobalt.html) · `ui-ref/cobalt`
+
+![Cobalt study](snapshots/cobalt.jpg)
+
+### 13 · [Stripe](https://github.com/alphagengar1/docket/blob/ui-ref/stripe/web/public/demos/stripe.html) · `ui-ref/stripe`
+
+![Stripe study](snapshots/stripe.jpg)
+
+### 14 · [Respan](https://github.com/alphagengar1/docket/blob/ui-ref/respan/web/public/demos/respan.html) · `ui-ref/respan`
+
+![Respan study](snapshots/respan.jpg)
+
+### 15 · [Laminar](https://github.com/alphagengar1/docket/blob/ui-ref/laminar/web/public/demos/laminar.html) · `ui-ref/laminar`
+
+![Laminar study](snapshots/laminar.jpg)
+
+### 16 · [Arize Phoenix](https://github.com/alphagengar1/docket/blob/ui-ref/arize-phoenix/web/public/demos/arize-phoenix.html) · `ui-ref/arize-phoenix`
+
+![Arize Phoenix study](snapshots/arize-phoenix.jpg)
+
+### 17 · [Axiom](https://github.com/alphagengar1/docket/blob/ui-ref/axiom/web/public/demos/axiom.html) · `ui-ref/axiom`
+
+![Axiom study](snapshots/axiom.jpg)
+
+### 18 · [Dash0](https://github.com/alphagengar1/docket/blob/ui-ref/dash0/web/public/demos/dash0.html) · `ui-ref/dash0`
+
+![Dash0 study](snapshots/dash0.jpg)
+
+### 19 · [Linear](https://github.com/alphagengar1/docket/blob/ui-ref/linear/web/public/demos/linear.html) · `ui-ref/linear`
+
+![Linear study](snapshots/linear.jpg)
+
+### 20 · [Opik](https://github.com/alphagengar1/docket/blob/ui-ref/opik/web/public/demos/opik.html) · `ui-ref/opik`
+
+![Opik study](snapshots/opik.jpg)
