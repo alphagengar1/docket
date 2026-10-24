@@ -1857,3 +1857,44 @@ table.grid.tl tr:last-child td {
 .check-mark svg {
   flex: none;
 }
+
+/* Waterfall bars always carry the ripple (a sheen travelling left to right); it was only on running bars before.
+   Running bars ripple faster and brighter, finished bars keep a slow, quiet one. */
+.wf-row .bar {
+  overflow: hidden;
+}
+.wf-row .bar::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(100deg, transparent 20%, rgba(255, 255, 255, 0.28) 50%, transparent 80%);
+  background-size: 220% 100%;
+  animation: ripple 3.6s linear infinite;
+  pointer-events: none;
+}
+.wf-row.running .bar {
+  animation: none;
+}
+.wf-row.running .bar::after {
+  animation-duration: 1.4s;
+  background: linear-gradient(100deg, transparent 15%, rgba(255, 255, 255, 0.45) 50%, transparent 85%);
+  background-size: 220% 100%;
+}
+.wf-row.failed .bar::after,
+.wf-row.queued .bar::after {
+  animation: none;
+  background: none;
+}
+.queue-row.live::before {
+  background-image: linear-gradient(to bottom, transparent 10%, rgba(255, 255, 255, 0.5) 50%, transparent 90%), linear-gradient(var(--row-tone), var(--row-tone));
+  background-size: 100% 220%, 100% 100%;
+  animation: ripple-y 1.6s linear infinite;
+}
+@keyframes ripple {
+  from { background-position: 120% 0; }
+  to { background-position: -120% 0; }
+}
+@keyframes ripple-y {
+  from { background-position: 0 120%, 0 0; }
+  to { background-position: 0 -120%, 0 0; }
+}
