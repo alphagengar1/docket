@@ -4,6 +4,7 @@ import { LENDERS, type IntakeInput } from './types'
 import { useNow } from './hooks/useNow'
 import { eventsFor, hardStopEvent, offersFor, originalOf, stepTimings } from './lib/select'
 import { IN_FLIGHT, STATUS_TONE, STATUS_WORD } from './lib/status'
+import { rankDecisions } from './lib/rank'
 import { TopBar } from './components/TopBar'
 import { Queue } from './components/Queue'
 import { IntakePane } from './components/IntakePane'
@@ -86,6 +87,54 @@ export default function App() {
 
   const hs = applicant?.status === 'hard_stop' ? hardStopEvent(events) : undefined
 
+  // Ranked decision queue: after a quick approve/decline, move to the next applicant waiting on a human.
+  const ranked = useMemo(() => rankDecisions(desk.applicants, desk.offers), [desk.applicants, desk.offers])
+  const advanceFrom = useCallback(
+    (id: string) => {
+      const rest = ranked.filter((r) => r.applicant._id !== id)
+      if (rest.length) {
+        setSelectedId(rest[0].applicant._id)
+        setSelectedOfferId(null)
+        setTab('offer')
+      }
+    },
+    [ranked],
+  )
+  const quickApprove = useCallback(
+    async (applicantId: string, offerId: string) => {
+      await desk.approveOffer(applicantId, offerId, 'approved from queue (best APR)')
+      advanceFrom(applicantId)
+    },
+    [desk, advanceFrom],
+  )
+  const quickDecline = useCallback(
+    async (applicantId: string) => {
+      await desk.declineApplicant(applicantId, 'declined from queue')
+      advanceFrom(applicantId)
+    },
+    [desk, advanceFrom],
+  )
+
+  // Keyboard: A approves the best offer for the selected applicant, X declines, N jumps to the top of the queue.
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      if (intakeOpen || deckOpen || desk.replaying || e.metaKey || e.ctrlKey || e.altKey) return
+      const t = e.target as HTMLElement | null
+      if (t && (t.tagName === 'INPUT' || t.tagName === 'TEXTAREA' || t.tagName === 'SELECT' || t.isContentEditable)) return
+      const k = e.key.toLowerCase()
+      if (k === 'n') {
+        if (ranked[0]) select(ranked[0].applicant._id)
+        return
+      }
+      const cur = ranked.find((r) => r.applicant._id === selectedId)
+      if (!cur) return
+      if (k === 'a' && cur.best) void quickApprove(cur.applicant._id, cur.best._id)
+      if (k === 'x') void quickDecline(cur.applicant._id)
+    }
+    window.addEventListener('keydown', onKey)
+    return () => window.removeEventListener('keydown', onKey)
+  })
+
   if (applicantView) {
     return <ApplicantView applicant={applicant} offers={offers} notice={notice} decision={decision} onBack={() => setApplicantView(false)} />
   }
@@ -115,7 +164,16 @@ export default function App() {
         onTheme={() => setTheme((t) => (t === 'dark' ? 'light' : 'dark'))}
       />
       <div className="main">
-        <Queue applicants={desk.applicants} selectedId={intakeOpen ? null : selectedId} onSelect={select} onNew={() => openIntake(null)} disabled={desk.replaying} />
+        <Queue
+          applicants={desk.applicants}
+          offers={desk.offers}
+          selectedId={intakeOpen ? null : selectedId}
+          onSelect={select}
+          onNew={() => openIntake(null)}
+          onApproveBest={(aid, oid) => void quickApprove(aid, oid)}
+          onDecline={(aid) => void quickDecline(aid)}
+          disabled={desk.replaying}
+        />
 
         <main className="pane work" aria-label="Work surface">
           {intakeOpen ? (

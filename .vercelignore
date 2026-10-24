@@ -1,0 +1,16 @@
+.git
+node_modules
+**/node_modules
+web/dist
+design
+docs
+policies
+personas
+.claude
+.agents
+.env
+.env.local
+.env.example
+*.md
+convex/_generated/ai
+.convex

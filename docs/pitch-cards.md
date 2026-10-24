@@ -36,7 +36,7 @@ If the judge draws the deceased card first, run the 1:10 to 2:05 beats first and
 Backup lines: Is the data real? CRS sandbox test identities, no real consumers. Soft or hard pull? Soft, the prequal endpoints. Median speed? Underwriter p50 about 3 s. Who would buy this? Small credit unions that want a compliance record and tested reasons.
 
 ## Placeholders still open
-- [DEPLOY URL] for the web app (only the Convex dev URL is recorded)
+- https://docket-sepia-ten.vercel.app for the web app (only the Convex dev URL is recorded)
 - [LICENSE] file and line
 - [CREAO agent IDs and run share links] if entered
 - Eval commit hash and run time to read off the board (GIT_SHA must be set on the deployment)

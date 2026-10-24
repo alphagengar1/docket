@@ -1761,3 +1761,80 @@ table.grid.tl tr:last-child td {
 .wf-row .bar .t { color: var(--text); }
 .wf-row.failed .bar .t { color: var(--hard); }
 .wf-row.child .bar .t { color: var(--muted); }
+
+/* ---------------- Queue: ranked decision rows ---------------- */
+.queue-section {
+  position: sticky;
+  top: 0;
+  z-index: 1;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: var(--sp-2);
+  padding: 6px var(--sp-3);
+  background: var(--surface);
+  border-bottom: 1px solid var(--hair);
+  font-size: var(--fs-label);
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+.queue-section .mono {
+  text-transform: none;
+  letter-spacing: 0;
+  color: var(--muted-2);
+  font-size: var(--fs-tag);
+}
+.queue-row.decide {
+  height: auto;
+  grid-template-rows: auto auto auto;
+  padding: 8px var(--sp-3) 8px var(--sp-3);
+  cursor: pointer;
+  background: color-mix(in srgb, var(--row-tone) 5%, transparent);
+}
+.queue-row.decide[aria-selected='true'] {
+  background: var(--selected);
+}
+.queue-row.decide .rank {
+  display: inline-block;
+  min-width: 18px;
+  margin-right: 8px;
+  padding: 0 5px;
+  border-radius: 3px;
+  background: var(--row-tone);
+  color: var(--bg, #000);
+  font-size: var(--fs-tag);
+  font-weight: var(--wt-semibold);
+  text-align: center;
+  line-height: 16px;
+}
+.queue-row.decide .best {
+  grid-column: 2;
+  grid-row: 2;
+  font-size: var(--fs-label);
+  color: var(--text);
+  text-align: right;
+  white-space: nowrap;
+}
+.queue-row.decide.no-offer .best {
+  color: var(--decline);
+}
+.queue-actions {
+  grid-column: 1 / -1;
+  grid-row: 3;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-top: 6px;
+}
+.queue-actions button.approve-pill,
+.queue-actions button.decline-pill {
+  height: 24px;
+  padding: 0 10px;
+  font-size: var(--fs-label);
+  font-weight: var(--wt-medium);
+}
+.queue-actions button.link {
+  margin-left: auto;
+  font-size: var(--fs-label);
+}

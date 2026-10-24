@@ -91,7 +91,7 @@ Open `#/borrower` on a phone and `#/board` on a second screen. Set env vars with
 ### CRS
 - Endpoints used: `/transunion/credit-report/standard/tu-prequal-fico9`, `/equifax/credit-report/standard/efx-prequal-vantage4`, `/experian/credit-report/standard/exp-prequal-vantage4`, `/transunion/identity-manager-verification/basic`, `/fraud-finder/fraud-finder`, `/pp/fcrablj/data`.
 - Personas: CRS test personas P01 to P20, including a deceased file, frozen file, no-file and thin-file cases.
-- Live demo: [DEPLOY URL]. Judge draws a card and types its 4-digit code on the phone. Live pulls need `CRS_PROVIDER=crs`; say out loud which mode is on.
+- Live demo: https://docket-sepia-ten.vercel.app. Judge draws a card and types its 4-digit code on the phone. Live pulls need `CRS_PROVIDER=crs`; say out loud which mode is on.
 
 ### Convex
 - Tables: applicants, bundles, offers, notices, reasonChecks, decisions, auditEvents, evalCases, evalRuns, recordings, marketRates, plus internal agentRuns and secretsCache.
@@ -106,7 +106,7 @@ Open `#/borrower` on a phone and `#/board` on a second screen. Set env vars with
 
 ### Microsoft (Built for the Real World)
 - Production path: eval harness (20 personas, nightly), per-lender 20 s timeout with a "No response" state, structured audit logging, guardrails (consent, hard stops, PII allowlist, human approval), replay fallback, warm-up call.
-- Deploy URL: [DEPLOY URL].
+- Deploy URL: https://docket-sepia-ten.vercel.app.
 
 ### Anthropic
 - Named community: loan officers at small credit unions who give a "no" with no usable reason.

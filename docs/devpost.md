@@ -66,4 +66,4 @@ convex, convex-workflow, typescript, react, vite, zod, anthropic-claude, claude-
 - [ ] 3-minute video demo
 - [ ] Deadline: Sun Oct 25, 09:00 PDT. Edits lock at 10:30.
 - [ ] Check-in at the venue (required to submit)
-- [ ] Deploy URL pasted in README and Devpost: [DEPLOY URL]
+- [x] Deploy URL pasted in README and Devpost: https://docket-sepia-ten.vercel.app
