@@ -23,3 +23,4 @@ Format: `HH:MM  who  what changed / what's blocked / what's next`
 02:55  claude  web done (donor re-skin, screenshots in design/screenshots). Pushed through e45e677.
 03:10  claude  rules: single-bureau freeze is a flag, not a stop (P15). Teammate taemwht (Matthew Pun) invited to the repo. Wiring + deck agents running.
 02:23  deck-agent  Persona deck done: design/deck/persona-deck.{html,pdf} (20 cards, 8-up, 3 pages) + presenter-sheet.{html,pdf} (1 page answer key). Cards carry no outcome; counteroffer-sized asks on P01 P02 P17 P19.
+03:20  claude  Deck PDFs done (design/deck). Presenter sheet is stale for P15 (rule changed to approve-path after generation); regenerate once Matthew finalizes policies.
