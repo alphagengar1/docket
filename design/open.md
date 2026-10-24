@@ -17,7 +17,7 @@
 - (crs-agent) Contract proposal (additive): `bundles.bureaus?: {tu,efx,exp:{status:"ok"|"no_file"|"frozen"|"error", score:number|null, model?:string, note?:string}}` and `bundles.notes?: string[]`. Today they live in `bundles.raw.bureaus` / `raw.notes` (and raw.extras holds liens/judgments/criminal). Also consider `flags.lienOrJudgment` and `flags.criminalFelony` if policies should use them.
 - (crs-agent) Sandbox quirks: tu-prequal-fico9 returns VantageScore 4.0 (fico9 is a proxy); EFX also lists FICO Score 5; fraud alert (P16) comes back as identity code 2401 "verified, step-up recommended" so identity.verified stays true (flag only); criminal/eviction get-response endpoints 404 (results are inline in new-request).
 - Regenerate design/deck/presenter-sheet after policies are final (P15 now underwrites; P08 liens flag pending).
-- Theme: console is dark (Laminar/Fey donors). The Kit proposes one light theme everywhere (aluminum gray, black ink, signal orange hard-stop, blue approved, wide uppercase headlines). Decision pending Swaraj; borrower phone view and cards use the Kit theme meanwhile; status colors aligned (orange = hard stop, blue = approved).
+- RESOLVED 04:40: theme split. Console dark (laptop, driver); phone, board and cards use Instrument Tag (judges).
 - Fill before judging: lender timeout N, eval pass X/20 + commit hash, lender display names + one-line policies, "who would buy this".
 
 ## wire-agent (web <-> convex) notes
@@ -33,3 +33,8 @@
 - Hard-stop event list shows only the last 3 audit events; override line can push out rule lines.
 - Set GIT_SHA on the Convex deployment so the eval panel shows a real commit hash.
 - (backend2) New table `recordings {personaId, recordedAt, data:any}` (index by_personaId): replay snapshots written by eval:recordAll, served by desk:recordedRun, preserved by desk:resetBoard (resetBoard deletes applicants only).
+
+## Deployment (04:40)
+- Cloud dev deployment: dev:warmhearted-seahorse-595, https://warmhearted-seahorse-595.convex.cloud (dashboard: https://dashboard.convex.dev/t/swaraj-adhikari/agent). Env set: ANTHROPIC_API_KEY, OPENAI_API_KEY, CREAO_*_KEY (Cue agents, need new IDs if CREAO is in), CRS_USERNAME/PASSWORD, CRS_PROVIDER=mock (fixtures; flip to crs for live pulls), GIT_SHA.
+- web/.env.local points at the cloud URL. Eval on cloud: 20/20 agreement, reasons verified 81%, p50 underwriter ~3.0 s. Recordings for all 20 personas being written on cloud.
+- P15 resolved: policies carry a frozen-file exception (underwrite on VantageScore when TU is frozen, add "lift the freeze" condition).
