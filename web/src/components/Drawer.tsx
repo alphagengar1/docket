@@ -124,6 +124,12 @@ function EvalPanel({ last, cases, running }: { last: EvalRun | undefined; cases:
         <div className="v mono">{pending ? sk(40) : last.avgReasonsPerDenial.toFixed(2)}</div>
         <div className="k">Reasons / denial</div>
       </div>
+      <div className="stat">
+        <div className={`v mono ${!pending && last.reasonsVerified != null && last.reasonsVerified < 0.8 ? 'tone-decline' : ''}`}>
+          {pending ? sk(56) : last.reasonsVerified == null ? '—' : pct(last.reasonsVerified)}
+        </div>
+        <div className="k">Reasons verified</div>
+      </div>
       <div className="stat" style={{ padding: 0, border: 'none' }}>
         <div className="k" style={{ padding: '0 0 4px' }}>
           Failures {last && !pending ? `· ${last.failures.length}` : ''}

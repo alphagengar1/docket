@@ -6,13 +6,14 @@ interface Props {
   inFlight: number
   replaying: boolean
   onDeck: () => void
+  onApplicantView: () => void
   onReplay: () => void
   onStopReplay: () => void
   theme: 'auto' | 'light' | 'dark'
   onTheme: () => void
 }
 
-export function TopBar({ connection, inFlight, replaying, onDeck, onReplay, onStopReplay, theme, onTheme }: Props) {
+export function TopBar({ connection, inFlight, replaying, onDeck, onApplicantView, onReplay, onStopReplay, theme, onTheme }: Props) {
   const word = inFlight > 0 ? `Running ${inFlight}` : 'Idle'
   return (
     <header className="topbar">
@@ -29,6 +30,9 @@ export function TopBar({ connection, inFlight, replaying, onDeck, onReplay, onSt
       <span className="spacer" />
       <button type="button" onClick={onDeck}>
         Persona deck
+      </button>
+      <button type="button" className="ghost" onClick={onApplicantView} title="What the applicant sees">
+        Applicant view
       </button>
       {replaying ? (
         <button type="button" onClick={onStopReplay}>

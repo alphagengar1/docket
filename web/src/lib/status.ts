@@ -28,9 +28,12 @@ export const STATUS_TONE: Record<ApplicantStatus, Tone> = {
 
 export const IN_FLIGHT: ApplicantStatus[] = ['intake', 'pulling', 'guardrails', 'underwriting', 'compliance']
 
+/** Status word from offers.classification (ECOA framing); falls back to decision when the backend has not set it. */
 export function offerWord(o: Offer): { word: string; tone: Tone } {
   if (o.status === 'pending') return { word: 'Quoting', tone: 'accent' }
   if (o.status === 'failed') return { word: 'Failed', tone: 'hard' }
-  if (o.decision === 'approve') return { word: 'Offer', tone: 'approve' }
+  const c = o.classification ?? (o.decision === 'approve' ? 'approve' : 'deny')
+  if (c === 'approve') return { word: 'Offer', tone: 'approve' }
+  if (c === 'counteroffer') return { word: 'Counteroffer', tone: 'approve' }
   return { word: 'Declined', tone: 'decline' }
 }

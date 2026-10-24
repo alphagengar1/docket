@@ -87,9 +87,6 @@ export const FIXTURE: Fixture = {
       "op": {
         "kind": "bundle.insert",
         "row": {
-          "_id": "bun_replay",
-          "applicantId": "app_replay",
-          "pulledAt": 1792834201700,
           "source": "mock",
           "credit": {
             "fico9": 760,
@@ -134,7 +131,10 @@ export const FIXTURE: Fixture = {
           "raw": {
             "provider": "mock",
             "personaId": "P17"
-          }
+          },
+          "_id": "bun_replay",
+          "applicantId": "app_replay",
+          "pulledAt": 1792834201700
         }
       }
     },

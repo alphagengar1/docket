@@ -18,6 +18,8 @@ export interface Desk extends DeskState {
   createApplicant: (input: IntakeInput) => Promise<string>
   approveOffer: (applicantId: string, offerId: string, note?: string) => Promise<void>
   declineApplicant: (applicantId: string, note?: string) => Promise<void>
+  /** Applicant disputes a tradeline: re-pull + re-run as a linked replay applicant. Returns the replay's id. */
+  disputeTradeline: (applicantId: string, tradelineIndex: number) => Promise<string>
   runEval: () => Promise<void>
   startReplay: () => void
   stopReplay: () => void
@@ -49,6 +51,10 @@ export function useDesk(): Desk {
     async (applicantId: string, note?: string) => mock.declineApplicant(store, applicantId, note),
     [store],
   )
+  const disputeTradeline = useCallback(
+    async (applicantId: string, tradelineIndex: number) => mock.disputeTradeline(store, applicantId, tradelineIndex),
+    [store],
+  )
   const runEval = useCallback(() => mock.runEval(store), [store])
   const startReplay = useCallback(() => setReplaying(true), [])
   const stopReplay = useCallback(() => setReplaying(false), [])
@@ -62,10 +68,11 @@ export function useDesk(): Desk {
       createApplicant,
       approveOffer,
       declineApplicant,
+      disputeTradeline,
       runEval,
       startReplay,
       stopReplay,
     }),
-    [state, replaying, createApplicant, approveOffer, declineApplicant, runEval, startReplay, stopReplay],
+    [state, replaying, createApplicant, approveOffer, declineApplicant, disputeTradeline, runEval, startReplay, stopReplay],
   )
 }

@@ -72,7 +72,8 @@ export function disputeTradeline(store: DeskStore, applicantId: string, index: n
     createdAt: now,
     replayOf: original._id,
   }
-  const next: PersonaBundle = { ...bundleAfterDispute(bundle, index), source: bundle.source, raw: { ...(bundle.raw as object), dispute: index } }
+  const re = bundleAfterDispute(bundle, index)
+  const next: PersonaBundle = { credit: re.credit, identity: re.identity, fraud: re.fraud, flags: re.flags, source: bundle.source, raw: { ...(bundle.raw as object), dispute: index } }
   const ops = simulateDesk(replay, { t0: now, ids: ids(store), bundle: next })
   ops.push({
     atMs: 0,

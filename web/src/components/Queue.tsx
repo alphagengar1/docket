@@ -36,6 +36,7 @@ export function Queue({ applicants, selectedId, onSelect, onNew, disabled }: Pro
               {STATUS_WORD[a.status]}
             </span>
             <span className="sub">
+              {a.replayOf && <span className="tone-accent">replay · </span>}
               {a.purpose} · <span className="mono">{usd(a.amountRequested)}</span> · <span className="mono">{a.personaId}</span>
             </span>
           </button>

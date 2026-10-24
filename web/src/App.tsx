@@ -2,17 +2,18 @@ import { useCallback, useEffect, useMemo, useState } from 'react'
 import { useDesk } from './hooks/useDesk'
 import { LENDERS, type IntakeInput } from './types'
 import { useNow } from './hooks/useNow'
-import { eventsFor, hardStopEvent, offersFor, stepTimings } from './lib/select'
+import { eventsFor, hardStopEvent, offersFor, originalOf, stepTimings } from './lib/select'
 import { IN_FLIGHT, STATUS_TONE, STATUS_WORD } from './lib/status'
 import { TopBar } from './components/TopBar'
 import { Queue } from './components/Queue'
 import { IntakePane } from './components/IntakePane'
 import { PersonaDeck } from './components/PersonaDeck'
 import { PipelineRail } from './components/PipelineRail'
-import { OfferCard } from './components/OfferCard'
+import { BeforeCard, OfferCard } from './components/OfferCard'
 import { HardStopCard } from './components/HardStopCard'
 import { Inspector, type InspectorTab } from './components/Inspector'
 import { Drawer } from './components/Drawer'
+import { ApplicantView } from './components/ApplicantView'
 
 type Theme = 'auto' | 'light' | 'dark'
 
@@ -23,6 +24,7 @@ export default function App() {
   const [intakeOpen, setIntakeOpen] = useState(false)
   const [intakePersona, setIntakePersona] = useState<string | null>(null)
   const [deckOpen, setDeckOpen] = useState(false)
+  const [applicantView, setApplicantView] = useState(false)
   const [tab, setTab] = useState<InspectorTab>('offer')
   const [theme, setTheme] = useState<Theme>('auto')
 
@@ -44,8 +46,10 @@ export default function App() {
   }, [desk.applicants, selectedId])
 
   const applicant = desk.applicants.find((a) => a._id === selectedId)
+  const original = originalOf(desk.applicants, applicant)
   const bundle = desk.bundles.find((b) => b.applicantId === selectedId)
   const offers = useMemo(() => offersFor(desk.offers, selectedId), [desk.offers, selectedId])
+  const beforeOffers = useMemo(() => offersFor(desk.offers, original?._id ?? null), [desk.offers, original])
   const events = useMemo(() => eventsFor(desk.auditEvents, selectedId), [desk.auditEvents, selectedId])
   const notice = desk.notices.find((n) => n.applicantId === selectedId)
   const decision = desk.decisions.find((d) => d.applicantId === selectedId)
@@ -82,6 +86,10 @@ export default function App() {
 
   const hs = applicant?.status === 'hard_stop' ? hardStopEvent(events) : undefined
 
+  if (applicantView) {
+    return <ApplicantView applicant={applicant} offers={offers} notice={notice} decision={decision} onBack={() => setApplicantView(false)} />
+  }
+
   return (
     <div className="app">
       <TopBar
@@ -89,6 +97,7 @@ export default function App() {
         inFlight={inFlight}
         replaying={desk.replaying}
         onDeck={() => setDeckOpen(true)}
+        onApplicantView={() => setApplicantView(true)}
         onReplay={() => {
           setSelectedId(null)
           setSelectedOfferId(null)
@@ -124,6 +133,14 @@ export default function App() {
                       <span className="muted">
                         {applicant.purpose} · <span className="mono">${applicant.amountRequested.toLocaleString('en-US')}</span>
                       </span>
+                      {original && (
+                        <span className="muted">
+                          · replay after dispute ·{' '}
+                          <button type="button" className="link" onClick={() => select(original._id)}>
+                            view original
+                          </button>
+                        </span>
+                      )}
                     </>
                   ) : (
                     <>
@@ -132,7 +149,16 @@ export default function App() {
                     </>
                   )}
                 </div>
-                <div className="columns">
+                <div className={`columns ${original ? 'diff' : ''}`}>
+                  {original && (
+                    <>
+                      <div className="diff-label section-label">Before dispute · {original.name}</div>
+                      {LENDERS.map((l) => (
+                        <BeforeCard key={`b-${l.id}`} lender={l.id} offer={beforeOffers.find((x) => x.lender === l.id)} />
+                      ))}
+                      <div className="diff-label section-label">After re-pull · changed values highlighted</div>
+                    </>
+                  )}
                   {applicant?.status === 'hard_stop' ? (
                     <HardStopCard event={hs} />
                   ) : (
@@ -144,6 +170,8 @@ export default function App() {
                           key={l.id}
                           lender={l.id}
                           offer={o}
+                          checks={desk.reasonChecks}
+                          before={original ? beforeOffers.find((x) => x.lender === l.id) : undefined}
                           underwriteStartedAt={underwriteStart}
                           now={now}
                           selected={!!o && o._id === selectedOfferId}
@@ -176,11 +204,13 @@ export default function App() {
 
         <Inspector
           applicant={applicant}
+          original={original}
           bundle={bundle}
           offers={offers}
           notice={notice}
           decision={decision}
           events={events}
+          checks={desk.reasonChecks}
           selectedOffer={selectedOffer}
           tab={tab}
           onTab={setTab}
@@ -189,6 +219,13 @@ export default function App() {
           }}
           onDecline={async (note) => {
             if (applicant) await desk.declineApplicant(applicant._id, note)
+          }}
+          onDispute={async (index) => {
+            if (!applicant) return
+            const id = await desk.disputeTradeline(applicant._id, index)
+            setSelectedId(id)
+            setSelectedOfferId(null)
+            setTab('offer')
           }}
         />
       </div>

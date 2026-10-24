@@ -42,7 +42,7 @@ export function simulateDesk(applicant: Applicant, o: SimulateOptions): TimedOp[
   audit(250, { actor: 'desk', action: 'step.pull.start', ref: null, note: 'Requesting prequal, identity and fraud products.' })
 
   const pulledAt = 1700
-  const bundle: Bundle = { _id: o.ids.bundle, applicantId: applicant._id, pulledAt: t0 + pulledAt, ...o.bundle }
+  const bundle: Bundle = { ...o.bundle, _id: o.ids.bundle, applicantId: applicant._id, pulledAt: t0 + pulledAt }
   ops.push({ atMs: pulledAt, op: { kind: 'bundle.insert', row: bundle } })
   audit(pulledAt, {
     actor: 'crs',

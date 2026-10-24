@@ -2,13 +2,21 @@
 //  MORNING WIRING STUB — NOT COMPILED YET (not imported anywhere).
 //  When convex/ is ready: `npm i convex`, wrap <App/> in <ConvexProvider client={new ConvexReactClient(import.meta.env.VITE_CONVEX_URL)}>,
 //  then rename this file to useDesk.ts (keep the mock one as useDesk.mock.ts). Components do not change.
-//  Expected convex/ exports (see design/architecture.md):
-//    api.desk.listApplicants, api.desk.board (bundles/offers/notices/decisions for one applicant or all),
-//    api.desk.auditEvents, api.eval.cases, api.eval.runs, api.market.rates,
-//    api.desk.createApplicant (mutation → schedules runDesk), api.desk.approveOffer, api.desk.declineApplicant,
-//    api.eval.runEval (action), api.personas.deck (query or a static import from personas/map.json).
-//  The pipeline rail needs auditEvents with actions `step.<pull|guardrails|underwrite|compliance|human>.start|done`
-//  (actor "desk"); keep those names in convex/desk.ts so timing renders for free.
+//  convex/ exports as of Sat 02:30 (convex/desk.ts, eval.ts, market.ts, personas.ts):
+//    queries   api.desk.listApplicants, api.desk.bundles, api.desk.offers, api.desk.notices, api.desk.decisions,
+//              api.desk.auditEvents({limit?, applicantId?}), api.eval.cases, api.eval.runs, api.market.rates, api.personas.deck
+//    mutations api.desk.createApplicant({personaId, purpose, amountRequested, statedIncome, name?}) → applicantId
+//              api.desk.approveOffer({applicantId, offerId, note?}), api.desk.declineApplicant({applicantId, note})
+//    actions   api.eval.runEval()
+//  Differentiators (design/differentiators.md) still to land in convex/ — the UI already reads these shapes:
+//    offers.classification: "approve"|"counteroffer"|"deny"       (status word on the card, notice-required line)
+//    applicants.replayOf: Id<"applicants"> | null                 (dispute replay; before/after columns)
+//    reasonChecks table {offerId, applicantId, field, original, counterfactual, flipped, latencyMs, createdAt}
+//              query api.desk.reasonChecks (or include in board); action api.desk.verifyReasons({offerId})
+//    mutation  api.desk.disputeTradeline({applicantId, tradelineIndex}) → replay applicantId; audit actor "applicant"
+//    evalRuns.reasonsVerified: number | null                     (eval tile)
+//  The pipeline rail reads audit actions `step.<pull|guardrails|underwrite|compliance|human>.start|done` (actor "desk"),
+//  the hard-stop card reads `rules.hard_stop` (ref = triggering field). Both already match convex/desk.ts.
 // ============================================================================================
 /* eslint-disable */
 // @ts-nocheck
@@ -36,13 +44,15 @@ export function useDesk(): Desk {
   // const evalCases   = useQuery(api.eval.cases) ?? []
   // const evalRuns    = useQuery(api.eval.runs) ?? []
   // const marketRates = useQuery(api.market.rates) ?? []
-  // const personas    = useQuery(api.personas.deck) ?? mock.DECK
+  // const reasonChecks = useQuery(api.desk.reasonChecks) ?? []
+  // const personas    = useQuery(api.personas.deck) ?? mock.DECK   // deck rows lack `defaults`; merge from mock.DECK by personaId
 
   // --- live mutations / actions ---
   // const createApplicantMut  = useMutation(api.desk.createApplicant)   // args: IntakeInput & { name } → returns applicantId; schedules runDesk
   // const approveOfferMut     = useMutation(api.desk.approveOffer)      // args: { applicantId, offerId, note } → decisions row, status "approved", human audit event
   // const declineApplicantMut = useMutation(api.desk.declineApplicant)  // args: { applicantId, note }
   // const runEvalAction       = useAction(api.eval.runEval)             // no args → evalRuns row
+  // const disputeMut          = useMutation(api.desk.disputeTradeline)  // args: { applicantId, tradelineIndex } → replay applicantId
 
   const createApplicant = useCallback(async (input: IntakeInput) => {
     // return await createApplicantMut(input)
@@ -60,11 +70,16 @@ export function useDesk(): Desk {
     if (replaying) return mock.runEval(mock.replayStore)
     // await runEvalAction()
   }, [replaying])
+  const disputeTradeline = useCallback(async (applicantId: string, tradelineIndex: number) => {
+    if (replaying) return mock.disputeTradeline(mock.replayStore, applicantId, tradelineIndex)
+    // return await disputeMut({ applicantId, tradelineIndex })
+    return ''
+  }, [replaying])
 
   return useMemo<Desk>(() => {
     const live = {
-      applicants: [], bundles: [], offers: [], notices: [], decisions: [], auditEvents: [], evalCases: [], evalRuns: [], marketRates: [],
-      // applicants, bundles, offers, notices, decisions, auditEvents, evalCases, evalRuns, marketRates,
+      applicants: [], bundles: [], offers: [], notices: [], decisions: [], auditEvents: [], reasonChecks: [], evalCases: [], evalRuns: [], marketRates: [],
+      // applicants, bundles, offers, notices, decisions, auditEvents, reasonChecks, evalCases, evalRuns, marketRates,
     }
     return {
       ...(replaying ? replayState : live),
@@ -74,9 +89,10 @@ export function useDesk(): Desk {
       createApplicant,
       approveOffer,
       declineApplicant,
+      disputeTradeline,
       runEval,
       startReplay: () => setReplaying(true),
       stopReplay: () => setReplaying(false),
     }
-  }, [replaying, replayState, createApplicant, approveOffer, declineApplicant, runEval])
+  }, [replaying, replayState, createApplicant, approveOffer, declineApplicant, disputeTradeline, runEval])
 }
