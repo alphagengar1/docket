@@ -1,0 +1,1515 @@
+<!-- Reference: Opik by Comet (LLM evaluation, trace view) - https://www.comet.com/site/products/opik/ -->
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Docket · Opik study</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#f3f4f7; --panel:#fff; --side:#eeeff3; --line:#e2e5ea; --line2:#eceef2;
+  --text:#161c2a; --text2:#38425a; --muted:#68738a; --muted2:#97a1b3;
+  --accent:#5155d5; --accent-bg:#eff1ff; --accent-line:#d3d6fa; --accent-ink:#3c40b8;
+  --ok:#14753c; --ok-bg:#e8f6ee; --ok-line:#bde3cc; --ok-solid:#1a8a4a;
+  --warn:#9a5b06; --warn-bg:#fef4df; --warn-line:#f4d9a0;
+  --bad:#b4261e; --bad-bg:#fdecea; --bad-line:#f3c3bf;
+  --mono:'JetBrains Mono',ui-monospace,SFMono-Regular,Menlo,monospace;
+  --sidew:196px;
+  --s1:4px; --s2:8px; --s3:12px; --s4:16px; --s5:24px;
+}
+*{box-sizing:border-box}
+html,body{height:100%}
+body{margin:0;background:var(--bg);color:var(--text);font:400 13px/1.45 'Inter',system-ui,-apple-system,'Segoe UI',sans-serif;overflow:hidden;-webkit-font-smoothing:antialiased}
+button{font:inherit;color:inherit}
+svg{flex:none;display:block}
+.num,.tnum{font-variant-numeric:tabular-nums;font-feature-settings:'tnum' 1}
+.mono{font-family:var(--mono);font-size:11.5px}
+:focus-visible{outline:2px solid var(--accent);outline-offset:2px;border-radius:4px}
+.sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
+
+/* shell */
+.app{display:grid;grid-template-columns:var(--sidew) minmax(0,1fr);height:100vh;width:100vw;overflow:hidden}
+.side{background:var(--side);border-right:1px solid var(--line);display:flex;flex-direction:column;min-height:0;padding:var(--s3) var(--s2) var(--s2);overflow:hidden}
+.brand{display:flex;align-items:center;gap:var(--s2);padding:2px 6px 14px;height:36px}
+.brand .word{font-weight:600;font-size:16px;letter-spacing:-.01em}
+.brand .tag{margin-left:auto;color:var(--muted);border:0;background:transparent;padding:0;height:auto}
+.proj{display:flex;align-items:center;gap:var(--s2);background:var(--panel);border:1px solid var(--line);border-radius:8px;padding:6px 8px;margin-bottom:var(--s4)}
+.proj .av{width:26px;height:26px;border-radius:6px;background:var(--accent-bg);color:var(--accent);display:grid;place-items:center}
+.proj small{display:block;color:var(--muted);font-size:11px;line-height:1.2}
+.proj b{display:block;font-weight:500;line-height:1.3}
+.navgroup{margin-bottom:var(--s4)}
+.navgroup h6{margin:0 0 4px;padding:0 8px;font-size:11.5px;font-weight:400;color:var(--muted)}
+.nav{display:flex;align-items:center;gap:var(--s2);width:100%;height:30px;padding:0 8px;border:0;background:transparent;border-radius:6px;color:var(--text2);cursor:pointer;text-align:left}
+.nav svg{color:var(--muted)}
+.nav:hover{background:#e4e6ee}
+.nav.on{background:#e1e3f6;color:var(--accent-ink)}
+.nav.on svg{color:var(--accent)}
+.nav .cnt{margin-left:auto;font-size:11px;background:var(--accent);color:#fff;border-radius:9px;padding:0 6px;line-height:16px}
+.side .foot{margin-top:auto;padding:var(--s2) 8px 0;color:var(--muted);font-size:11.5px;border-top:1px solid var(--line)}
+.side .foot b{color:var(--text2);font-weight:500;display:block}
+
+.main{display:grid;grid-template-rows:48px minmax(0,1fr);min-width:0;min-height:0}
+.top{display:flex;align-items:center;gap:var(--s4);padding:0 var(--s4);background:var(--panel);border-bottom:1px solid var(--line);min-width:0}
+.crumb{display:flex;align-items:center;gap:6px;color:var(--muted);white-space:nowrap}
+.crumb b{font-weight:500;color:var(--text)}
+.stats{display:flex;align-items:center;gap:var(--s4);margin-left:auto;min-width:0}
+.stat{display:inline-flex;align-items:center;gap:6px;white-space:nowrap;color:var(--text2)}
+.stat svg{color:var(--muted)}
+.stat .sl{color:var(--muted)}
+.stat b{font-weight:600;color:var(--text)}
+.topbtns{display:flex;gap:var(--s2)}
+
+.panes{display:grid;grid-template-columns:320px minmax(0,1fr) 344px;min-height:0;min-width:0}
+.pane{display:flex;flex-direction:column;min-height:0;min-width:0;background:var(--bg)}
+.pane.left{background:var(--panel);border-right:1px solid var(--line)}
+.pane.right{border-left:1px solid var(--line)}
+.phead{display:flex;align-items:center;gap:var(--s2);height:40px;flex:none;padding:0 var(--s3);background:var(--panel);border-bottom:1px solid var(--line);font-weight:500}
+.phead .sp{margin-left:auto;display:flex;gap:2px}
+.scroll{overflow-y:auto;overflow-x:hidden;min-height:0;flex:1}
+.ibtn{width:26px;height:26px;display:grid;place-items:center;border:0;background:transparent;border-radius:6px;color:var(--muted);cursor:pointer}
+.ibtn:hover{background:#eef0f4;color:var(--text)}
+.ibtn[aria-pressed=true]{background:var(--accent-bg);color:var(--accent)}
+
+/* buttons, pills */
+.btn{height:28px;padding:0 10px;border:1px solid var(--line);background:#fff;border-radius:6px;font-size:12px;font-weight:500;display:inline-flex;align-items:center;gap:6px;cursor:pointer;white-space:nowrap}
+.btn:hover:not(:disabled){background:#f5f6f9}
+.btn.sm{height:24px;padding:0 8px;font-size:11.5px}
+.btn.ok{background:var(--ok-solid);border-color:var(--ok-solid);color:#fff}
+.btn.ok:hover:not(:disabled){background:#157a40}
+.btn.bad{color:var(--bad);border-color:var(--bad-line)}
+.btn.bad:hover:not(:disabled){background:var(--bad-bg)}
+.btn.link{border-color:transparent;background:transparent;color:var(--accent-ink);padding:0 6px}
+.btn.link:hover:not(:disabled){background:var(--accent-bg)}
+.btn:disabled{opacity:.42;cursor:not-allowed}
+kbd{font:500 10.5px/1 'Inter',sans-serif;color:var(--muted);background:#f0f1f5;border:1px solid var(--line);border-radius:3px;padding:2px 4px}
+.pill{display:inline-flex;align-items:center;gap:4px;height:18px;padding:0 7px;border-radius:4px;font-size:11px;font-weight:500;line-height:1;border:1px solid transparent;white-space:nowrap}
+.pill.up{text-transform:uppercase;letter-spacing:.04em;font-size:10.5px;font-weight:600}
+.pill.ok{color:var(--ok);background:var(--ok-bg);border-color:var(--ok-line)}
+.pill.warn{color:var(--warn);background:var(--warn-bg);border-color:var(--warn-line)}
+.pill.bad{color:var(--bad);background:var(--bad-bg);border-color:var(--bad-line)}
+.pill.info{color:var(--accent-ink);background:var(--accent-bg);border-color:var(--accent-line)}
+.pill.neutral{color:var(--text2);background:#f0f2f6;border-color:var(--line)}
+
+/* left: queue as span list */
+.qlist{list-style:none;margin:0;padding:0}
+.qrow{position:relative;border-bottom:1px solid var(--line2)}
+.qrow.sel{background:var(--accent-bg)}
+.qrow.sel::before{content:'';position:absolute;left:0;top:0;bottom:0;width:3px;background:var(--accent)}
+.qmain{display:flex;gap:var(--s2);width:100%;text-align:left;border:0;background:transparent;padding:10px var(--s3) 4px 14px;cursor:pointer;align-items:flex-start}
+.qmain:hover{background:rgba(81,85,213,.04)}
+.qic{width:18px;height:18px;border-radius:5px;display:grid;place-items:center;margin-top:1px}
+.qic.info{background:var(--accent-bg);color:var(--accent);box-shadow:inset 0 0 0 1px var(--accent-line)}
+.qic.ok{background:var(--ok-bg);color:var(--ok);box-shadow:inset 0 0 0 1px var(--ok-line)}
+.qic.bad{background:var(--bad-bg);color:var(--bad);box-shadow:inset 0 0 0 1px var(--bad-line)}
+.qbody{min-width:0;flex:1;display:flex;flex-direction:column;gap:3px}
+.l1{display:flex;align-items:center;gap:var(--s2)}
+.qname{font-weight:500;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.qrank{margin-left:auto;font-size:11px;color:var(--muted);font-variant-numeric:tabular-nums}
+.l2,.l3,.l4{display:flex;align-items:center;gap:6px;color:var(--muted);font-size:12px;flex-wrap:wrap}
+.l2 b,.l4 b{color:var(--text2);font-weight:500}
+.l3 .num{display:inline-flex;align-items:center;gap:3px}
+.l3 .sep{width:3px;height:3px;border-radius:50%;background:var(--muted2)}
+.hs{margin-top:4px;border:1px solid var(--bad-line);background:var(--bad-bg);color:var(--bad);border-radius:6px;padding:6px 8px;font-size:11.5px;line-height:1.4}
+.hs b{display:flex;align-items:center;gap:5px;font-weight:600;margin-bottom:2px}
+.hs .mono{background:#fff;border:1px solid var(--bad-line);border-radius:3px;padding:0 4px;font-size:10.5px}
+.qact{display:flex;gap:6px;padding:4px var(--s3) 10px 44px}
+.tree{list-style:none;margin:0;padding:2px var(--s3) 10px 44px}
+.tree li{position:relative;padding-left:14px}
+.tree li::before{content:'';position:absolute;left:0;top:-4px;bottom:50%;width:8px;border-left:1px solid #c5cad6;border-bottom:1px solid #c5cad6;border-bottom-left-radius:5px}
+.tree li::after{content:'';position:absolute;left:0;top:50%;bottom:-4px;border-left:1px solid #c5cad6}
+.tree li:last-child::after{display:none}
+.tbtn{display:flex;align-items:center;gap:6px;width:100%;height:26px;border:0;background:transparent;border-radius:5px;padding:0 6px;cursor:pointer;text-align:left;font-size:12px}
+.tbtn:hover{background:rgba(81,85,213,.08)}
+.tbtn.on{background:#fff;box-shadow:inset 0 0 0 1px var(--accent-line)}
+.tbtn .tn{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;flex:1;min-width:0}
+.tbtn .tv{color:var(--muted);font-variant-numeric:tabular-nums;font-size:11.5px}
+.dot{width:8px;height:8px;border-radius:50%;flex:none}
+.dot.ok{background:var(--ok-solid)}.dot.warn{background:#d98a0b}.dot.bad{background:#d6453d}
+.empty{padding:var(--s5) var(--s4);color:var(--muted);text-align:center}
+
+.pipe{flex:none;border-top:1px solid var(--line);background:var(--panel);max-height:40%;display:flex;flex-direction:column;min-height:0}
+.pipe>summary{list-style:none;display:flex;align-items:center;gap:var(--s2);height:38px;padding:0 var(--s3);font-weight:500;cursor:pointer;flex:none}
+.pipe>summary::-webkit-details-marker{display:none}
+.pipe>summary .chev{transition:transform .12s;color:var(--muted)}
+.pipe[open]>summary .chev{transform:rotate(0)}
+.pipe:not([open])>summary .chev{transform:rotate(-90deg)}
+.plist{list-style:none;margin:0;padding:2px var(--s3) var(--s3) var(--s4);overflow-y:auto;position:relative}
+.pstep{display:flex;gap:10px;align-items:flex-start;position:relative;padding-bottom:6px}
+.pstep>span:last-child{display:flex;flex-wrap:wrap;align-items:center;gap:2px 8px;min-width:0}
+.pstep:not(:last-child)::before{content:'';position:absolute;left:8px;top:20px;bottom:-2px;width:1px;background:#cdd2f3}
+.pdot{width:17px;height:17px;border-radius:50%;display:grid;place-items:center;background:#fff;border:1px solid var(--line);color:var(--muted2);z-index:1;margin-top:3px}
+.pstep.done .pdot{background:var(--ok-bg);border-color:var(--ok-line);color:var(--ok)}
+.pstep.running .pdot{border-color:var(--accent);color:var(--accent)}
+.pstep.running .pdot i{width:9px;height:9px;border-radius:50%;border:2px solid var(--accent);border-right-color:transparent;animation:spin .9s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+@media (prefers-reduced-motion:reduce){.pstep.running .pdot i{animation:none}}
+.pnode{display:block;background:#f3f4ff;border:1px solid #dcdffa;border-radius:5px;padding:2px 8px;font-size:12px;font-weight:500;color:#2f3470;width:max-content;max-width:100%}
+.pstep.running .pnode{background:var(--accent-bg);border-color:var(--accent)}
+.pmet{display:block;font-size:11.5px;color:var(--muted);font-variant-numeric:tabular-nums}
+
+/* middle */
+.mid-in{padding:var(--s4);display:flex;flex-direction:column;gap:var(--s3);min-width:0}
+.mhead{background:var(--panel);border:1px solid var(--line);border-radius:8px;padding:var(--s3) var(--s4);display:flex;flex-direction:column;gap:var(--s2)}
+.mtitle{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+.mtitle h1{margin:0;font-size:16px;font-weight:600;letter-spacing:-.005em}
+.mtitle .acts{margin-left:auto;display:flex;gap:var(--s2)}
+.chips{display:flex;flex-wrap:wrap;gap:6px var(--s4);align-items:center;color:var(--text2)}
+.chip{display:inline-flex;align-items:center;gap:5px}
+.chip svg{color:var(--muted)}
+.tags{display:flex;flex-wrap:wrap;gap:6px;align-items:center}
+.tag{display:inline-flex;align-items:center;gap:5px;height:20px;padding:0 7px;border-radius:4px;background:#f0f2f6;border:1px solid var(--line);font-size:11.5px;color:var(--text2)}
+.tabs{display:flex;gap:2px;background:var(--panel);border:1px solid var(--line);border-radius:8px;padding:0 6px}
+.tabs button{height:34px;padding:0 10px;border:0;background:transparent;color:var(--text2);cursor:pointer;position:relative;display:inline-flex;align-items:center;gap:6px;font-weight:500}
+.tabs button:hover{color:var(--text)}
+.tabs button[aria-selected=true]{color:var(--accent)}
+.tabs button[aria-selected=true]::after{content:'';position:absolute;left:8px;right:8px;bottom:-1px;height:2px;background:var(--accent);border-radius:2px}
+.tabs .n{font-size:11px;color:var(--muted);background:#eef0f4;border-radius:8px;padding:0 6px;line-height:16px;font-weight:500}
+
+.lender{background:var(--panel);border:1px solid var(--line);border-radius:8px;overflow:hidden;scroll-margin-top:var(--s2);min-width:0}
+.lender.active{box-shadow:inset 3px 0 0 var(--accent)}
+.lhead{display:flex;align-items:center;gap:var(--s2);padding:10px var(--s3);border-bottom:1px solid var(--line);flex-wrap:wrap}
+.lic{width:20px;height:20px;border-radius:5px;display:grid;place-items:center}
+.lic.ok{background:var(--ok-bg);color:var(--ok);box-shadow:inset 0 0 0 1px var(--ok-line)}
+.lic.warn{background:var(--warn-bg);color:var(--warn);box-shadow:inset 0 0 0 1px var(--warn-line)}
+.lic.bad{background:var(--bad-bg);color:var(--bad);box-shadow:inset 0 0 0 1px var(--bad-line)}
+.lname{font-weight:600;font-size:13px}
+.lmeta{margin-left:auto;display:flex;align-items:center;gap:var(--s3);color:var(--muted);font-size:12px}
+.lmeta .chip{gap:4px}
+.sub{border-bottom:1px solid var(--line2)}
+.sub:last-child{border-bottom:0}
+.sub>summary{list-style:none;display:flex;align-items:center;gap:6px;height:32px;padding:0 var(--s3);cursor:pointer;font-weight:500;background:#fafbfc;color:var(--text2)}
+.sub>summary::-webkit-details-marker{display:none}
+.sub>summary .chev{color:var(--muted);transition:transform .12s}
+.sub:not([open])>summary .chev{transform:rotate(-90deg)}
+.sub>summary .fmt{margin-left:auto;color:var(--muted);font-size:11.5px;font-weight:400}
+.sub-b{padding:10px var(--s3) var(--s3)}
+.yaml{margin:0;font:400 12px/1.65 var(--mono);white-space:pre-wrap;word-break:break-word;color:#1d2433}
+.yk{color:#3a45b5}.yn{color:#0f766e}.yb{color:#a3328a}.ys{color:#1d2433}.yd{color:var(--muted2)}
+.dec{display:flex;align-items:center;gap:var(--s2);margin-bottom:10px;flex-wrap:wrap}
+.dec .why{color:var(--muted);font-size:12px}
+.terms{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:1px;background:var(--line);border:1px solid var(--line);border-radius:6px;overflow:hidden;margin:0 0 12px}
+.terms>div{background:#fff;padding:7px 10px}
+.terms dt{font-size:11px;color:var(--muted);margin:0}
+.terms dd{margin:2px 0 0;font-size:15px;font-weight:600;font-variant-numeric:tabular-nums;letter-spacing:-.01em}
+.terms dd small{display:block;font-size:11px;font-weight:400;color:var(--muted);letter-spacing:0}
+.terms .best dd{color:var(--ok)}
+.blk{margin:0 0 12px}
+.blk:last-child{margin-bottom:0}
+.blk h4{margin:0 0 6px;font-size:11.5px;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:.05em;display:flex;align-items:center;gap:var(--s2)}
+.blk h4 .lg{margin-left:auto;text-transform:none;letter-spacing:0;font-weight:400;display:flex;gap:10px}
+.cond{margin:0;padding:0;list-style:none;display:flex;flex-direction:column;gap:5px}
+.cond li{display:flex;gap:8px;align-items:flex-start;color:var(--text2)}
+.cond li::before{content:'';width:5px;height:5px;border-radius:50%;background:var(--muted2);margin-top:7px;flex:none}
+.reasons{margin:0;padding:0;list-style:none;display:flex;flex-direction:column;gap:6px}
+.reason{display:flex;gap:8px;align-items:flex-start;border:1px solid var(--line2);border-radius:6px;padding:7px 8px;background:#fcfcfd}
+.vm{width:16px;height:16px;border-radius:50%;display:grid;place-items:center;margin-top:1px;flex:none}
+.vm.t{background:var(--ok-bg);color:var(--ok);box-shadow:inset 0 0 0 1px var(--ok-line)}
+.vm.f{background:var(--bad-bg);color:var(--bad);box-shadow:inset 0 0 0 1px var(--bad-line)}
+.vm.n{background:#fff;color:var(--muted2);border:1px dashed #b7bfce}
+.reason p{margin:0 0 3px}
+.reason .meta{display:flex;gap:8px;align-items:center;color:var(--muted);font-size:11.5px;flex-wrap:wrap}
+.reason .meta .mono{background:#f0f2f6;border-radius:3px;padding:0 5px}
+.lgi{display:inline-flex;align-items:center;gap:4px}
+
+.card{background:var(--panel);border:1px solid var(--line);border-radius:8px;min-width:0}
+.notice{padding:var(--s4) var(--s5) var(--s5)}
+.notice h2{margin:0 0 4px;font-size:14px}
+.notice .hd{display:flex;align-items:center;gap:var(--s2);margin-bottom:var(--s3);padding-bottom:var(--s3);border-bottom:1px solid var(--line2);flex-wrap:wrap}
+.notice p{margin:0 0 12px;max-width:68ch;color:var(--text2);line-height:1.6;font-size:13px}
+.notice p:first-of-type{color:var(--text)}
+.audit{width:100%;border-collapse:collapse;table-layout:fixed}
+.audit th{font-size:11px;font-weight:500;color:var(--muted);text-align:left;padding:8px 10px;border-bottom:1px solid var(--line);background:#fafbfc}
+.audit td{padding:8px 10px;border-bottom:1px solid var(--line2);vertical-align:top;overflow-wrap:anywhere}
+.audit tr:last-child td{border-bottom:0}
+.audit .t{color:var(--muted);white-space:nowrap}
+.actor{display:inline-flex;align-items:center;gap:5px;font-size:12px;color:var(--text2)}
+.act{font-family:var(--mono);font-size:11.5px;color:var(--accent-ink)}
+.ref{display:block;margin-top:2px;color:var(--muted);font-family:var(--mono);font-size:10.5px}
+.callout{padding:var(--s4);display:flex;flex-direction:column;gap:var(--s2)}
+.callout.bad{border-color:var(--bad-line);background:var(--bad-bg);color:var(--bad)}
+
+/* right */
+.rin{padding:var(--s3);display:flex;flex-direction:column;gap:var(--s3)}
+.rtabs{display:flex;background:var(--panel);border:1px solid var(--line);border-radius:6px;padding:0 4px}
+.rtabs button{height:30px;padding:0 10px;border:0;background:transparent;color:var(--text2);cursor:pointer;font-size:12.5px;position:relative;font-weight:500}
+.rtabs button[aria-selected=true]{color:var(--accent)}
+.rtabs button[aria-selected=true]::after{content:'';position:absolute;left:8px;right:8px;bottom:-1px;height:2px;background:var(--accent);border-radius:2px}
+.rhead{display:flex;flex-wrap:wrap;gap:6px 12px;align-items:center;color:var(--text2)}
+.rhead .chip{font-size:12px}
+.panel>summary{list-style:none;display:flex;align-items:center;gap:6px;height:34px;padding:0 var(--s3);cursor:pointer;font-weight:500;border-bottom:1px solid transparent}
+.panel>summary::-webkit-details-marker{display:none}
+.panel[open]>summary{border-bottom-color:var(--line)}
+.panel>summary .chev{color:var(--muted);transition:transform .12s}
+.panel:not([open])>summary .chev{transform:rotate(-90deg)}
+.panel>summary .r{margin-left:auto;color:var(--muted);font-weight:400;font-size:11.5px}
+.panel-b{padding:var(--s3)}
+.tiles{display:grid;grid-template-columns:1fr 1fr;gap:1px;background:var(--line);border:1px solid var(--line);border-radius:6px;overflow:hidden}
+.tile{background:#fff;padding:8px 10px;min-width:0}
+.tile .k{font-size:11px;color:var(--muted)}
+.tile .v{font-size:16px;font-weight:600;font-variant-numeric:tabular-nums;letter-spacing:-.01em;display:flex;align-items:center;gap:6px}
+.tile .v.sm{font-size:13px}
+.bar{height:4px;background:#eceef2;border-radius:2px;overflow:hidden;margin-top:5px}
+.bar i{display:block;height:100%;background:var(--accent);border-radius:2px}
+.flags{display:flex;flex-wrap:wrap;gap:6px;margin-top:10px}
+.flag{display:inline-flex;align-items:center;gap:4px;height:20px;padding:0 7px;border-radius:4px;font-size:11.5px;border:1px solid var(--line);color:var(--muted);background:#fafbfc}
+.flag.on{color:var(--bad);background:var(--bad-bg);border-color:var(--bad-line);font-weight:500}
+.sech{font-size:11.5px;color:var(--muted);margin:12px 0 0}
+.tl{list-style:none;margin:0;padding:0}
+.tl li{display:grid;grid-template-columns:minmax(0,1fr) auto auto auto;gap:6px;align-items:center;padding:7px var(--s3);border-bottom:1px solid var(--line2)}
+.tl li:last-child{border-bottom:0}
+.tl .ty{font-weight:500}
+.tl .op{display:block;color:var(--muted);font-size:11.5px}
+.tl .bal{text-align:right;font-variant-numeric:tabular-nums;min-width:48px}
+.fs{display:flex;flex-direction:column}
+.fsr{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:2px 10px;padding:8px 0;border-bottom:1px solid var(--line2)}
+.fsr:last-child{border-bottom:0}
+.fsr .k{color:var(--text2)}
+.fsr .v{font-weight:600;font-variant-numeric:tabular-nums}
+.fsr .bar{grid-column:1/-1;margin-top:2px}
+.fsr .bar i.ok{background:var(--ok-solid)}
+
+.toast{position:fixed;left:50%;bottom:20px;transform:translateX(-50%);background:#1c2233;color:#fff;border-radius:8px;padding:8px 14px;font-size:12.5px;box-shadow:0 6px 20px rgba(20,25,45,.25);max-width:70vw;opacity:0;pointer-events:none;transition:opacity .15s;z-index:20}
+.toast.show{opacity:1}
+
+/* 1280 and below: collapse sidebar to icons */
+@media (max-width:1399px){
+  :root{--sidew:52px}
+  .side .lbl,.proj>div:not(.av),.brand .word,.brand .tag,.navgroup h6,.side .foot,.nav .cnt{display:none}
+  .side{padding:var(--s3) 8px}
+  .brand,.proj{justify-content:center;padding-left:0;padding-right:0}
+  .proj{border:0;background:transparent}
+  .nav{justify-content:center;padding:0}
+  .stats{gap:var(--s3)}
+}
+@media (max-width:1320px){
+  .panes{grid-template-columns:304px minmax(0,1fr) 336px}
+  .stats{gap:10px}
+}
+@media (max-width:1279px){ .stat .sl{display:none} }
+</style>
+</head>
+<body>
+<div class="app">
+  <aside class="side" id="side" aria-label="Docket navigation"></aside>
+  <div class="main">
+    <header class="top" id="top"></header>
+    <div class="panes">
+      <section class="pane left" aria-label="Queue" id="left"></section>
+      <section class="pane mid" aria-label="Selected applicant" id="mid"></section>
+      <section class="pane right" aria-label="Snapshot and evaluation" id="right"></section>
+    </div>
+  </div>
+</div>
+<div class="toast" id="toast" role="status" aria-live="polite"></div>
+
+<script type="application/json" id="data">{
+  "_about": "Shared demo data for the UI reference mock pages (design/ui-catalog). Numbers come from the deterministic stub over the real CRS sandbox fixtures. Every mock renders the same information so the designs can be compared.",
+  "product": {
+    "name": "Docket",
+    "tagline": "A one-person credit union",
+    "sandbox": true,
+    "lenders": [
+      {
+        "id": "cu",
+        "name": "Pacific Ridge Credit Union",
+        "label": "Credit Union",
+        "policy": "Conservative"
+      },
+      {
+        "id": "fintech",
+        "name": "Northstar Lending",
+        "label": "Fintech",
+        "policy": "Growth"
+      },
+      {
+        "id": "prime",
+        "name": "Meridian Bank Prime",
+        "label": "Prime",
+        "policy": "Prime bank"
+      },
+      {
+        "id": "regional",
+        "name": "Cascade Regional Bank",
+        "label": "Regional",
+        "policy": "Relationship bank"
+      },
+      {
+        "id": "subprime",
+        "name": "Harbor Second Chance Finance",
+        "label": "Second Chance",
+        "policy": "Subprime"
+      }
+    ]
+  },
+  "desk": {
+    "waitingOnYou": 2,
+    "inFlight": 0,
+    "decidedToday": 7,
+    "dollarsApprovedToday": 86500,
+    "medianDecisionSeconds": 41
+  },
+  "queue": [
+    {
+      "rank": 1,
+      "applicantId": "j979y0sy3z4f8cjqpxnvxkhw7s8gxayy",
+      "name": "Priya Venkatesan",
+      "purpose": "home improvement",
+      "amountRequested": 25000,
+      "status": "awaiting_human",
+      "approvals": 2,
+      "lenders": 5,
+      "best": {
+        "lender": "fintech",
+        "apr": 15.9
+      }
+    },
+    {
+      "rank": 2,
+      "applicantId": "j97ax4sq05acgehadj4hqavnzn8gwseq",
+      "name": "Angela Morrissey",
+      "purpose": "debt consolidation",
+      "amountRequested": 7500,
+      "status": "awaiting_human",
+      "approvals": 1,
+      "lenders": 5,
+      "best": {
+        "lender": "subprime",
+        "apr": 31.9
+      }
+    },
+    {
+      "applicantId": "j97c3n2l0e1f5s8u4z7v9j1p3q5b7t9e",
+      "name": "Marcus Delgado",
+      "purpose": "auto repair",
+      "amountRequested": 18000,
+      "status": "hard_stop",
+      "approvals": 0,
+      "lenders": 0,
+      "hardStop": {
+        "field": "identity.verified",
+        "note": "TU identity returned 2201 SSN not associated with name and 2202 DOB mismatch"
+      }
+    },
+    {
+      "applicantId": "j97d4o3m1f2g6t9v5a8w0k2q4r6c8u0f",
+      "name": "Hannah Park",
+      "purpose": "medical expenses",
+      "amountRequested": 8000,
+      "status": "approved",
+      "approvals": 4,
+      "lenders": 5,
+      "best": {
+        "lender": "cu",
+        "apr": 12.9
+      }
+    }
+  ],
+  "selected": {
+    "applicantId": "j979y0sy3z4f8cjqpxnvxkhw7s8gxayy",
+    "personaId": "P08",
+    "name": "Priya Venkatesan",
+    "purpose": "home improvement",
+    "amountRequested": 25000,
+    "statedIncome": 120000,
+    "status": "awaiting_human",
+    "createdAt": 1792870851000,
+    "cardCode": null,
+    "bundle": {
+      "source": "crs",
+      "pulledAt": 1792870851910,
+      "score": 690,
+      "vantage4": 690,
+      "utilization": 0.38,
+      "inquiries6mo": 1,
+      "identityVerified": true,
+      "fraudScore": 10,
+      "flags": {
+        "deceased": false,
+        "frozen": false,
+        "bankruptcy": false,
+        "eviction": false,
+        "lienOrJudgment": true
+      },
+      "tradelines": [
+        {
+          "type": "credit_card",
+          "balance": 1900,
+          "status": "open",
+          "openedAt": "2014-10-19"
+        },
+        {
+          "type": "credit_card",
+          "balance": 1900,
+          "status": "open",
+          "openedAt": "2023-04-20"
+        },
+        {
+          "type": "credit_card",
+          "balance": 1900,
+          "status": "open",
+          "openedAt": "2021-10-19"
+        },
+        {
+          "type": "credit_card",
+          "balance": 1900,
+          "status": "open",
+          "openedAt": "2020-04-19"
+        },
+        {
+          "type": "credit_card",
+          "balance": 1900,
+          "status": "open",
+          "openedAt": "2018-10-19"
+        },
+        {
+          "type": "auto",
+          "balance": 12600,
+          "status": "open",
+          "openedAt": "2025-04-20"
+        },
+        {
+          "type": "credit_card",
+          "balance": 0,
+          "status": "closed",
+          "openedAt": "2020-10-19"
+        },
+        {
+          "type": "auto",
+          "balance": 0,
+          "status": "closed",
+          "openedAt": "2019-10-20"
+        }
+      ]
+    },
+    "pipeline": [
+      {
+        "id": "pull",
+        "label": "Pull",
+        "state": "done",
+        "startedAt": 1792870851000,
+        "finishedAt": 1792870851910,
+        "metric": "0.91s \u00b7 crs"
+      },
+      {
+        "id": "guardrails",
+        "label": "Guardrails",
+        "state": "done",
+        "startedAt": 1792870851910,
+        "finishedAt": 1792870852840,
+        "metric": "0.93s \u00b7 0 rules fired"
+      },
+      {
+        "id": "underwrite",
+        "label": "Underwrite",
+        "state": "done",
+        "startedAt": 1792870852840,
+        "finishedAt": 1792870856100,
+        "metric": "3.26s \u00b7 5/5 done"
+      },
+      {
+        "id": "verify",
+        "label": "Reason verification",
+        "state": "done",
+        "startedAt": 1792870856100,
+        "finishedAt": 1792870858400,
+        "metric": "2.30s \u00b7 5/7 reasons verified"
+      },
+      {
+        "id": "compliance",
+        "label": "Compliance",
+        "state": "done",
+        "startedAt": 1792870858400,
+        "finishedAt": 1792870859800,
+        "metric": "1.40s \u00b7 notice drafted"
+      },
+      {
+        "id": "human",
+        "label": "Human",
+        "state": "running",
+        "startedAt": 1792870859800,
+        "finishedAt": null,
+        "metric": "waiting"
+      }
+    ],
+    "offers": [
+      {
+        "lender": "cu",
+        "name": "Pacific Ridge Credit Union",
+        "label": "Credit Union",
+        "policy": "Conservative",
+        "provider": "claude",
+        "latencyMs": 2600,
+        "decision": "decline",
+        "classification": "deny",
+        "apr": null,
+        "termMonths": null,
+        "amount": null,
+        "monthlyPayment": null,
+        "conditions": [],
+        "reasons": [
+          {
+            "text": "An unsatisfied lien or judgment is in the public records; this policy declines any unsatisfied lien or judgment.",
+            "field": "flags.lienOrJudgment",
+            "verified": true
+          },
+          {
+            "text": "Score 690 sits in the good band, which does not offset the finding above under this policy.",
+            "field": "credit.fico9",
+            "verified": true
+          }
+        ]
+      },
+      {
+        "lender": "fintech",
+        "name": "Northstar Lending",
+        "label": "Fintech",
+        "policy": "Growth",
+        "provider": "claude",
+        "latencyMs": 3200,
+        "decision": "approve",
+        "classification": "approve",
+        "apr": 15.9,
+        "termMonths": 48,
+        "amount": 25000,
+        "monthlyPayment": 707.23,
+        "conditions": [
+          "E-sign the loan agreement; funds arrive in 1-2 business days.",
+          "Provide proof of a payment plan or satisfaction for the lien/judgment before funding."
+        ],
+        "reasons": [
+          {
+            "text": "Score 690 meets the 600 minimum.",
+            "field": "credit.fico9",
+            "verified": null
+          },
+          {
+            "text": "Utilization 38% and 1 inquiries are within policy.",
+            "field": "credit.utilization",
+            "verified": null
+          }
+        ]
+      },
+      {
+        "lender": "prime",
+        "name": "Meridian Bank Prime",
+        "label": "Prime",
+        "policy": "Prime bank",
+        "provider": "claude",
+        "latencyMs": 1900,
+        "decision": "decline",
+        "classification": "deny",
+        "apr": null,
+        "termMonths": null,
+        "amount": null,
+        "monthlyPayment": null,
+        "conditions": [],
+        "reasons": [
+          {
+            "text": "Score 690 is below the 720 minimum.",
+            "field": "credit.fico9",
+            "verified": true
+          },
+          {
+            "text": "Revolving utilization of 38% exceeds the 30% limit.",
+            "field": "credit.utilization",
+            "verified": false
+          },
+          {
+            "text": "An unsatisfied lien or judgment is in the public records; this policy declines any unsatisfied lien or judgment.",
+            "field": "flags.lienOrJudgment",
+            "verified": true
+          }
+        ]
+      },
+      {
+        "lender": "regional",
+        "name": "Cascade Regional Bank",
+        "label": "Regional",
+        "policy": "Relationship bank",
+        "provider": "claude",
+        "latencyMs": 2400,
+        "decision": "decline",
+        "classification": "deny",
+        "apr": null,
+        "termMonths": null,
+        "amount": null,
+        "monthlyPayment": null,
+        "conditions": [],
+        "reasons": [
+          {
+            "text": "An unsatisfied lien or judgment is in the public records; this policy declines any unsatisfied lien or judgment.",
+            "field": "flags.lienOrJudgment",
+            "verified": true
+          },
+          {
+            "text": "Score 690 sits in the good band, which does not offset the finding above under this policy.",
+            "field": "credit.fico9",
+            "verified": true
+          }
+        ]
+      },
+      {
+        "lender": "subprime",
+        "name": "Harbor Second Chance Finance",
+        "label": "Second Chance",
+        "policy": "Subprime",
+        "provider": "claude",
+        "latencyMs": 2100,
+        "decision": "approve",
+        "classification": "counteroffer",
+        "apr": 23.9,
+        "termMonths": 36,
+        "amount": 20000,
+        "monthlyPayment": 783.61,
+        "conditions": [
+          "Enroll in autopay from a verified bank account.",
+          "Complete a 15-minute financial coaching call before funding.",
+          "Provide proof of a payment plan for the lien or judgment before funding.",
+          "Approved at the policy maximum of $20,000 instead of the $25,000 requested."
+        ],
+        "reasons": [
+          {
+            "text": "Score 690 meets the 560 minimum.",
+            "field": "credit.fico9",
+            "verified": null
+          },
+          {
+            "text": "Utilization 38% and 1 inquiries are within policy.",
+            "field": "credit.utilization",
+            "verified": null
+          }
+        ]
+      }
+    ],
+    "notice": "Dear Priya Venkatesan, thank you for applying for a $25,000 loan for home improvement. This notice explains which lenders declined your request or offered different terms, and exactly why.\n\nPacific Ridge Credit Union declined because: An unsatisfied lien or judgment is in the public records; this policy declines any unsatisfied lien or judgment; Score 690 sits in the good band, which does not offset the finding above under this policy.\n\nMeridian Bank Prime declined because: Score 690 is below the 720 minimum; An unsatisfied lien or judgment is in the public records; this policy declines any unsatisfied lien or judgment.\n\nCascade Regional Bank declined because: An unsatisfied lien or judgment is in the public records; this policy declines any unsatisfied lien or judgment; Score 690 sits in the good band, which does not offset the finding above under this policy.\n\nHarbor Second Chance Finance did not approve the terms you requested but offered $20,000 at 23.9% APR for 36 months instead, because: Score 690 meets the 560 minimum; Utilization 38% and 1 inquiries are within policy.\n\nFixing the items named above, or applying for a smaller amount, would change the outcome at one or more of these lenders.\n\nThe consumer reporting agency (CRS Credit API sandbox, pulled October 24, 2026) did not make this decision and cannot explain it. You have the right to a free copy of your report within 60 days and to dispute any inaccurate information."
+  },
+  "second": {
+    "applicantId": "j97ax4sq05acgehadj4hqavnzn8gwseq",
+    "personaId": "P06",
+    "name": "Angela Morrissey",
+    "purpose": "debt consolidation",
+    "amountRequested": 7500,
+    "statedIncome": 54000,
+    "status": "awaiting_human",
+    "createdAt": 1792870791000,
+    "cardCode": null,
+    "bundle": {
+      "source": "crs",
+      "pulledAt": 1792870791910,
+      "score": 580,
+      "vantage4": 580,
+      "utilization": 0.2,
+      "inquiries6mo": 1,
+      "identityVerified": true,
+      "fraudScore": 12,
+      "flags": {
+        "deceased": false,
+        "frozen": false,
+        "bankruptcy": true,
+        "eviction": false,
+        "lienOrJudgment": false
+      },
+      "tradelines": [
+        {
+          "type": "credit_card",
+          "balance": 0,
+          "status": "charge_off",
+          "openedAt": "2017-04-12"
+        },
+        {
+          "type": "credit_card",
+          "balance": 0,
+          "status": "charge_off",
+          "openedAt": "2017-04-12"
+        },
+        {
+          "type": "credit_card",
+          "balance": 0,
+          "status": "charge_off",
+          "openedAt": "2017-04-12"
+        },
+        {
+          "type": "credit_card",
+          "balance": 0,
+          "status": "charge_off",
+          "openedAt": "2017-04-12"
+        },
+        {
+          "type": "credit_card",
+          "balance": 300,
+          "status": "open",
+          "openedAt": "2012-10-19"
+        },
+        {
+          "type": "credit_card",
+          "balance": 0,
+          "status": "closed",
+          "openedAt": "2020-10-19"
+        },
+        {
+          "type": "auto",
+          "balance": 0,
+          "status": "closed",
+          "openedAt": "2019-10-20"
+        },
+        {
+          "type": "credit_card",
+          "balance": 0,
+          "status": "closed",
+          "openedAt": "2018-10-19"
+        },
+        {
+          "type": "auto",
+          "balance": 0,
+          "status": "closed",
+          "openedAt": "2017-10-19"
+        },
+        {
+          "type": "credit_card",
+          "balance": 0,
+          "status": "closed",
+          "openedAt": "2016-10-19"
+        },
+        {
+          "type": "auto",
+          "balance": 0,
+          "status": "closed",
+          "openedAt": "2015-10-20"
+        }
+      ]
+    },
+    "pipeline": [
+      {
+        "id": "pull",
+        "label": "Pull",
+        "state": "done",
+        "startedAt": 1792870791000,
+        "finishedAt": 1792870791910,
+        "metric": "0.91s \u00b7 crs"
+      },
+      {
+        "id": "guardrails",
+        "label": "Guardrails",
+        "state": "done",
+        "startedAt": 1792870791910,
+        "finishedAt": 1792870792840,
+        "metric": "0.93s \u00b7 0 rules fired"
+      },
+      {
+        "id": "underwrite",
+        "label": "Underwrite",
+        "state": "done",
+        "startedAt": 1792870792840,
+        "finishedAt": 1792870796100,
+        "metric": "3.26s \u00b7 5/5 done"
+      },
+      {
+        "id": "verify",
+        "label": "Reason verification",
+        "state": "done",
+        "startedAt": 1792870796100,
+        "finishedAt": 1792870798400,
+        "metric": "2.30s \u00b7 5/7 reasons verified"
+      },
+      {
+        "id": "compliance",
+        "label": "Compliance",
+        "state": "done",
+        "startedAt": 1792870798400,
+        "finishedAt": 1792870799800,
+        "metric": "1.40s \u00b7 notice drafted"
+      },
+      {
+        "id": "human",
+        "label": "Human",
+        "state": "running",
+        "startedAt": 1792870799800,
+        "finishedAt": null,
+        "metric": "waiting"
+      }
+    ],
+    "offers": [
+      {
+        "lender": "cu",
+        "name": "Pacific Ridge Credit Union",
+        "label": "Credit Union",
+        "policy": "Conservative",
+        "provider": "claude",
+        "latencyMs": 2600,
+        "decision": "decline",
+        "classification": "deny",
+        "apr": null,
+        "termMonths": null,
+        "amount": null,
+        "monthlyPayment": null,
+        "conditions": [],
+        "reasons": [
+          {
+            "text": "Score 580 is below the 660 minimum.",
+            "field": "credit.fico9",
+            "verified": true
+          },
+          {
+            "text": "A bankruptcy is on file; this policy declines any bankruptcy.",
+            "field": "flags.bankruptcy",
+            "verified": true
+          }
+        ]
+      },
+      {
+        "lender": "fintech",
+        "name": "Northstar Lending",
+        "label": "Fintech",
+        "policy": "Growth",
+        "provider": "claude",
+        "latencyMs": 3200,
+        "decision": "decline",
+        "classification": "deny",
+        "apr": null,
+        "termMonths": null,
+        "amount": null,
+        "monthlyPayment": null,
+        "conditions": [],
+        "reasons": [
+          {
+            "text": "Score 580 is below the 600 minimum.",
+            "field": "credit.fico9",
+            "verified": true
+          },
+          {
+            "text": "A bankruptcy is on file and the score 580 is below the 640 post-bankruptcy floor.",
+            "field": "flags.bankruptcy",
+            "verified": true
+          }
+        ]
+      },
+      {
+        "lender": "prime",
+        "name": "Meridian Bank Prime",
+        "label": "Prime",
+        "policy": "Prime bank",
+        "provider": "claude",
+        "latencyMs": 1900,
+        "decision": "decline",
+        "classification": "deny",
+        "apr": null,
+        "termMonths": null,
+        "amount": null,
+        "monthlyPayment": null,
+        "conditions": [],
+        "reasons": [
+          {
+            "text": "Score 580 is below the 720 minimum.",
+            "field": "credit.fico9",
+            "verified": true
+          },
+          {
+            "text": "A bankruptcy is on file; this policy declines any bankruptcy.",
+            "field": "flags.bankruptcy",
+            "verified": true
+          }
+        ]
+      },
+      {
+        "lender": "regional",
+        "name": "Cascade Regional Bank",
+        "label": "Regional",
+        "policy": "Relationship bank",
+        "provider": "claude",
+        "latencyMs": 2400,
+        "decision": "decline",
+        "classification": "deny",
+        "apr": null,
+        "termMonths": null,
+        "amount": null,
+        "monthlyPayment": null,
+        "conditions": [],
+        "reasons": [
+          {
+            "text": "Score 580 is below the 680 minimum.",
+            "field": "credit.fico9",
+            "verified": true
+          },
+          {
+            "text": "A bankruptcy is on file; this policy declines any bankruptcy.",
+            "field": "flags.bankruptcy",
+            "verified": true
+          }
+        ]
+      },
+      {
+        "lender": "subprime",
+        "name": "Harbor Second Chance Finance",
+        "label": "Second Chance",
+        "policy": "Subprime",
+        "provider": "claude",
+        "latencyMs": 2100,
+        "decision": "approve",
+        "classification": "approve",
+        "apr": 31.9,
+        "termMonths": 36,
+        "amount": 7500,
+        "monthlyPayment": 326.24,
+        "conditions": [
+          "Enroll in autopay from a verified bank account.",
+          "Complete a 15-minute financial coaching call before funding.",
+          "Provide the bankruptcy discharge order; an open case is not eligible."
+        ],
+        "reasons": [
+          {
+            "text": "Score 580 meets the 560 minimum.",
+            "field": "credit.fico9",
+            "verified": null
+          },
+          {
+            "text": "Utilization 20% and 1 inquiries are within policy.",
+            "field": "credit.utilization",
+            "verified": null
+          }
+        ]
+      }
+    ],
+    "notice": "Dear Angela Morrissey, thank you for applying for a $7,500 loan for debt consolidation. This notice explains which lenders declined your request or offered different terms, and exactly why.\n\nPacific Ridge Credit Union declined because: Score 580 is below the 660 minimum; A bankruptcy is on file; this policy declines any bankruptcy.\n\nNorthstar Lending declined because: Score 580 is below the 600 minimum; A bankruptcy is on file and the score 580 is below the 640 post-bankruptcy floor.\n\nMeridian Bank Prime declined because: Score 580 is below the 720 minimum; A bankruptcy is on file; this policy declines any bankruptcy.\n\nCascade Regional Bank declined because: Score 580 is below the 680 minimum; A bankruptcy is on file; this policy declines any bankruptcy.\n\nFixing the items named above, or applying for a smaller amount, would change the outcome at one or more of these lenders.\n\nThe consumer reporting agency (CRS Credit API sandbox, pulled October 24, 2026) did not make this decision and cannot explain it. You have the right to a free copy of your report within 60 days and to dispute any inaccurate information."
+  },
+  "audit": [
+    {
+      "at": 1792870859800,
+      "actor": "desk",
+      "action": "step.human.start",
+      "ref": null,
+      "note": "awaiting a loan officer"
+    },
+    {
+      "at": 1792870859795,
+      "actor": "compliance",
+      "action": "compliance.notice",
+      "ref": "notices.k57anj1xxvyc457hpdbc959cs8gxaud",
+      "note": "notice drafted from 5 verified reasons; 2 unsupported reasons withheld"
+    },
+    {
+      "at": 1792870858400,
+      "actor": "desk",
+      "action": "step.verify.done",
+      "ref": null,
+      "note": "7 reasons tested: 5 supported, 2 unsupported"
+    },
+    {
+      "at": 1792870857900,
+      "actor": "underwriter:regional",
+      "action": "verify.supported",
+      "ref": "flags.lienOrJudgment",
+      "note": "fixing this field alone flips the decline"
+    },
+    {
+      "at": 1792870857400,
+      "actor": "underwriter:prime",
+      "action": "verify.unsupported",
+      "ref": "credit.utilization",
+      "note": "fixing utilization alone does not flip the decline; withheld from the notice"
+    },
+    {
+      "at": 1792870856100,
+      "actor": "desk",
+      "action": "step.underwrite.done",
+      "ref": null,
+      "note": "3 approve (1 counteroffer), 2 decline, 0 failed"
+    },
+    {
+      "at": 1792870856040,
+      "actor": "underwriter:fintech",
+      "action": "underwrite.approve",
+      "ref": "offers.k97lxv5",
+      "note": "approve: 15.9% APR, 48 mo, $25,000. 3200 ms."
+    },
+    {
+      "at": 1792870855240,
+      "actor": "underwriter:regional",
+      "action": "underwrite.decline",
+      "ref": "offers.k974az5",
+      "note": "2 reasons: flags.lienOrJudgment, credit.fico9. 2400 ms."
+    },
+    {
+      "at": 1792870854940,
+      "actor": "underwriter:subprime",
+      "action": "underwrite.approve",
+      "ref": "offers.k97b9d2",
+      "note": "counteroffer: 23.9% APR, 36 mo, $20,000. 2100 ms."
+    },
+    {
+      "at": 1792870852840,
+      "actor": "rules",
+      "action": "rules.pass",
+      "ref": null,
+      "note": "deceased no, frozen no, identity verified, fraud 10 < 80"
+    },
+    {
+      "at": 1792870851910,
+      "actor": "crs",
+      "action": "crs.pull",
+      "ref": "bundles.b97x",
+      "note": "TransUnion, Equifax, Experian prequal; identity; FraudFinder; public records. 6 calls, 2.9 s sandbox"
+    },
+    {
+      "at": 1792870851000,
+      "actor": "intake",
+      "action": "applicant.created",
+      "ref": "P08",
+      "note": "card code entered on the phone; consent recorded"
+    }
+  ],
+  "eval": {
+    "cases": 20,
+    "agreement": 1,
+    "perLenderAgreement": 0.98,
+    "reasonsVerified": 0.81,
+    "fraudZeroOffers": true,
+    "avgReasonsPerDenial": 2.22,
+    "latencyP50Ms": {
+      "cu": 2600,
+      "fintech": 3200,
+      "prime": 1900,
+      "regional": 2400,
+      "subprime": 2100
+    },
+    "lastRun": "2026-10-24T09:33:00-07:00"
+  }
+}
+</script>
+<script>
+(function(){
+'use strict';
+const D = JSON.parse(document.getElementById('data').textContent);
+
+/* ---------- helpers ---------- */
+const esc = s => String(s == null ? '' : s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const usd0 = new Intl.NumberFormat('en-US',{style:'currency',currency:'USD',maximumFractionDigits:0});
+const usd2 = new Intl.NumberFormat('en-US',{style:'currency',currency:'USD',minimumFractionDigits:2,maximumFractionDigits:2});
+const money = n => n == null ? '—' : usd0.format(n);
+const money2 = n => n == null ? '—' : usd2.format(n);
+const pct = (x,d) => (x*100).toFixed(d||0) + '%';
+const secs = ms => (ms/1000).toFixed(1) + 's';
+const TZ = 'America/Los_Angeles';
+function fmtDate(ms){
+  try{
+    const p = new Intl.DateTimeFormat('en-GB',{timeZone:TZ,day:'numeric',month:'short',year:'numeric',hour:'numeric',minute:'2-digit',hour12:true}).formatToParts(new Date(ms));
+    const g = t => (p.find(x => x.type === t) || {}).value || '';
+    return g('day')+' '+g('month')+' '+g('year')+', '+g('hour')+':'+g('minute')+' '+g('dayPeriod').toUpperCase();
+  }catch(e){ return new Date(ms).toISOString(); }
+}
+function fmtClock(ms){
+  try{
+    return new Intl.DateTimeFormat('en-GB',{timeZone:TZ,hour:'2-digit',minute:'2-digit',second:'2-digit',fractionalSecondDigits:3,hour12:false}).format(new Date(ms));
+  }catch(e){ return new Date(ms).toISOString().slice(11,23); }
+}
+const MON = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+function fmtDay(s){
+  const m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(s || '');
+  return m ? (+m[3]) + ' ' + MON[+m[2]-1] + ' ' + m[1] : String(s || '');
+}
+function fmtRun(s){
+  const d = new Date(s);
+  return isNaN(d) ? String(s) : fmtDate(d.getTime()) + ' PT';
+}
+const titleCase = s => String(s).replace(/_/g,' ');
+
+const IC = {
+  clock:'<circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/>',
+  dollar:'<path d="M12 3v18M16 7.5c0-1.7-1.8-3-4-3s-4 1.1-4 2.9c0 4 8 2 8 6 0 1.8-1.8 3.1-4 3.1s-4-1.3-4-3"/>',
+  hash:'<path d="M5 9h14M5 15h14M10 4L8 20M16 4l-2 16"/>',
+  tag:'<path d="M3 12V4h8l10 10-8 8L3 12z"/><circle cx="7.5" cy="8.5" r="1"/>',
+  cal:'<rect x="4" y="5" width="16" height="15" rx="2"/><path d="M4 10h16M9 3v4M15 3v4"/>',
+  down:'<path d="M6 9l6 6 6-6"/>',
+  right:'<path d="M9 6l6 6-6 6"/>',
+  check:'<path d="M5 12.5l4.5 4.5L19 7.5"/>',
+  x:'<path d="M6 6l12 12M18 6L6 18"/>',
+  minus:'<path d="M7 12h10"/>',
+  filter:'<path d="M4 5h16l-6 8v6l-4-2v-4L4 5z"/>',
+  flag:'<path d="M5 21V4h11l-2 4 2 4H5"/>',
+  shield:'<path d="M12 3l8 3v6c0 5-3.5 8-8 9-4.5-1-8-4-8-9V6l8-3z"/>',
+  user:'<circle cx="12" cy="8" r="4"/><path d="M4 21c0-4 4-6 8-6s8 2 8 6"/>',
+  list:'<path d="M8 6h12M8 12h12M8 18h12M4 6h.01M4 12h.01M4 18h.01"/>',
+  bank:'<path d="M3 10l9-6 9 6M5 10v8M9.5 10v8M14.5 10v8M19 10v8M3 20h18"/>',
+  doc:'<path d="M7 3h8l4 4v14H7z"/><path d="M14 3v5h5M10 13h6M10 17h6"/>',
+  panel:'<rect x="3" y="4" width="18" height="16" rx="2"/><path d="M9 4v16"/>',
+  chart:'<path d="M4 20V10M10 20V4M16 20v-7M22 20H2"/>',
+  stop:'<path d="M8 3h8l5 5v8l-5 5H8l-5-5V8z"/><path d="M12 8v5M12 16h.01"/>',
+  star:'<path d="M12 3l2.7 5.6 6.1.9-4.4 4.3 1 6.1L12 17l-5.4 2.9 1-6.1L3.2 9.5l6.1-.9L12 3z"/>',
+  bolt:'<path d="M13 3L5 13h6l-1 8 8-10h-6l1-8z"/>',
+  swap:'<path d="M7 4L3 8l4 4M3 8h14M17 20l4-4-4-4M21 16H7"/>'
+};
+function ic(n,s){ s = s || 14; return '<svg width="'+s+'" height="'+s+'" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">'+(IC[n]||'')+'</svg>'; }
+const MARK = '<svg width="22" height="22" viewBox="0 0 24 24" aria-hidden="true"><rect width="24" height="24" rx="6" fill="#5155d5"/><path d="M7 8h10M7 12h10M7 16h5" stroke="#fff" stroke-width="2" stroke-linecap="round"/><path d="M14.5 16.2l1.8 1.8 3-3.4" stroke="#bfe3ff" stroke-width="1.8" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg>';
+
+/* ---------- data lookups ---------- */
+const LENDER = {}; D.product.lenders.forEach(l => { LENDER[l.id] = l; });
+const lname = id => (LENDER[id] || {}).name || id;
+const DET = {}; [D.selected, D.second].forEach(a => { if(a) DET[a.applicantId] = a; });
+
+const STATUS = {
+  awaiting_human:{label:'Awaiting you', cls:'info', icon:'clock'},
+  approved:{label:'Approved', cls:'ok', icon:'check'},
+  hard_stop:{label:'Hard stop', cls:'bad', icon:'stop'},
+  declined:{label:'Declined', cls:'bad', icon:'x'}
+};
+const CLASSIF = {
+  approve:{word:'OFFER', cls:'ok', icon:'check'},
+  counteroffer:{word:'COUNTEROFFER', cls:'warn', icon:'swap'},
+  deny:{word:'DECLINED', cls:'bad', icon:'x'}
+};
+const stOf = s => STATUS[s] || {label:titleCase(s), cls:'neutral', icon:'clock'};
+
+const state = {
+  sel: D.selected.applicantId, mid:'lenders', right:'snap', lender:null,
+  over:{}, onlyWaiting:false, pipeOpen:true, closed:{}, disputed:{}, toastT:null
+};
+const qrow = id => D.queue.find(q => q.applicantId === id);
+const statusOf = id => state.over[id] || (qrow(id) || {}).status;
+const visibleQueue = () => D.queue.filter(q => !state.onlyWaiting || statusOf(q.applicantId) === 'awaiting_human');
+
+function bestOffer(det){
+  let b = null;
+  (det.offers || []).forEach(o => { if(o.apr != null && (b === null || o.apr < b.apr)) b = o; });
+  return b;
+}
+const detailsAttr = (key, def) => 'data-key="'+key+'" ' + ((state.closed[key] === undefined ? def : !state.closed[key]) ? 'open' : '');
+
+/* ---------- sidebar ---------- */
+function renderSide(){
+  const waiting = D.queue.filter(q => statusOf(q.applicantId) === 'awaiting_human').length;
+  const nav = (icon, label, on, cnt) => '<button class="nav'+(on?' on':'')+'" type="button" '+(on?'aria-current="page"':'')+' title="'+esc(label)+'">'+ic(icon,16)+'<span class="lbl">'+esc(label)+'</span>'+(cnt?'<span class="cnt">'+cnt+'</span>':'')+'</button>';
+  document.getElementById('side').innerHTML =
+    '<div class="brand">'+MARK+'<span class="word">'+esc(D.product.name.toLowerCase())+'</span><span class="tag">'+ic('panel',16)+'</span></div>'
+    +'<div class="proj"><div class="av">'+ic('bank',15)+'</div><div><small>Project</small><b>'+esc(D.product.name)+' desk</b></div></div>'
+    +'<nav>'
+    +'<div class="navgroup"><h6>Desk</h6>'+nav('list','Queue',true,waiting)+nav('user','Applicants')+nav('doc','Notices')+nav('clock','Audit log')+'</div>'
+    +'<div class="navgroup"><h6>Underwriting</h6>'+nav('bank','Lenders')+nav('shield','Policies')+nav('flag','Hard stops')+'</div>'
+    +'<div class="navgroup"><h6>Evaluation</h6>'+nav('chart','Eval runs')+nav('check','Reason checks')+'</div>'
+    +'</nav>'
+    +'<div class="foot"><span class="pill up warn" style="margin-bottom:6px">'+(D.product.sandbox?'Sandbox':'Live')+'</span><b>'+esc(D.product.tagline)+'</b>CRS sandbox data, personas only.</div>';
+}
+
+/* ---------- top bar ---------- */
+function renderTop(){
+  const d = D.desk;
+  const stat = (icon,label,val) => '<span class="stat">'+ic(icon,14)+'<span class="sl">'+label+'</span><b class="num">'+val+'</b></span>';
+  const waiting = D.queue.filter(q => statusOf(q.applicantId) === 'awaiting_human').length;
+  document.getElementById('top').innerHTML =
+    '<div class="crumb"><span>'+esc(D.product.name)+'</span><span>/</span><span>Desk</span><span>/</span><b>Queue</b>'
+    +(D.product.sandbox?'<span class="pill up warn" style="margin-left:6px">Sandbox</span>':'')+'</div>'
+    +'<div class="stats" aria-label="Desk summary">'
+    + stat('user','Waiting on you', waiting)
+    + stat('bolt','In flight', d.inFlight)
+    + stat('check','Decided today', d.decidedToday)
+    + stat('dollar','Approved today', money(d.dollarsApprovedToday))
+    + stat('clock','Median decision', d.medianDecisionSeconds+'s')
+    +'</div>'
+    +'<div class="topbtns"><button class="btn" type="button" data-act="prev" data-fk="prev">Previous <kbd>J</kbd></button><button class="btn" type="button" data-act="next" data-fk="next">Next <kbd>K</kbd></button></div>';
+}
+
+/* ---------- left pane: queue as span list + pipeline ---------- */
+function actionButtons(q, big){
+  const s = statusOf(q.applicantId);
+  const canApprove = s === 'awaiting_human' && !!q.best;
+  const canDecline = s === 'awaiting_human' || s === 'hard_stop';
+  const sm = big ? '' : ' sm';
+  return '<button class="btn ok'+sm+'" type="button" data-act="approve" data-id="'+esc(q.applicantId)+'" data-fk="ap-'+esc(q.applicantId)+(big?'-h':'')+'" '+(canApprove?'':'disabled')+' aria-label="Approve best offer for '+esc(q.name)+'">'+ic('check',12)+'Approve best</button>'
+    +'<button class="btn bad'+sm+'" type="button" data-act="decline" data-id="'+esc(q.applicantId)+'" data-fk="de-'+esc(q.applicantId)+(big?'-h':'')+'" '+(canDecline?'':'disabled')+' aria-label="Decline '+esc(q.name)+'">'+ic('x',12)+'Decline</button>';
+}
+function lenderTree(det){
+  const best = bestOffer(det);
+  return '<ul class="tree" aria-label="Lenders for '+esc(det.name)+'">'+det.offers.map(o => {
+    const c = CLASSIF[o.classification] || CLASSIF.deny;
+    const isBest = best && best.lender === o.lender;
+    return '<li><button class="tbtn'+(state.lender === o.lender ? ' on' : '')+'" type="button" data-act="lender" data-lender="'+esc(o.lender)+'" data-fk="tr-'+esc(o.lender)+'" title="'+esc(o.name)+' · '+c.word+'">'
+      +'<span class="dot '+c.cls+'"></span><span class="tn">'+esc(o.name)+'</span>'
+      +'<span class="tv">'+(o.apr != null ? o.apr.toFixed(1)+'%' : 'decl.')+'</span>'+(isBest?'<span class="pill ok" style="height:16px;padding:0 4px">'+ic('star',10)+'</span>':'')
+      +'</button></li>';
+  }).join('')+'</ul>';
+}
+function renderLeft(){
+  const rows = visibleQueue();
+  const total = D.queue.length;
+  const list = rows.length ? '<ul class="qlist">'+rows.map(q => {
+    const s = statusOf(q.applicantId), st = stOf(s);
+    const sel = q.applicantId === state.sel;
+    const det = DET[q.applicantId];
+    const best = q.best ? '<div class="l4">'+ic('star',12)+'<span>Best</span><b>'+esc(lname(q.best.lender))+' \u00b7 <span class="num">'+q.best.apr.toFixed(1)+'% APR</span></b></div>' : (q.hardStop ? '' : '<div class="l4">No offer</div>');
+    const hs = q.hardStop ? '<div class="hs"><b>'+ic('stop',13)+'Hard stop <span class="mono">'+esc(q.hardStop.field)+'</span></b>'+esc(q.hardStop.note)+'</div>' : '';
+    return '<li class="qrow'+(sel?' sel':'')+'">'
+      +'<button class="qmain" type="button" data-act="select" data-id="'+esc(q.applicantId)+'" data-fk="q-'+esc(q.applicantId)+'" '+(sel?'aria-current="true"':'')+'>'
+      +'<span class="qic '+st.cls+'">'+ic(st.icon,11)+'</span>'
+      +'<span class="qbody">'
+        +'<span class="l1"><span class="qname">'+esc(q.name)+'</span>'+(q.rank != null ? '<span class="qrank">#'+q.rank+'</span>' : '')+'</span>'
+        +'<span class="l2">'+esc(q.purpose)+'<span class="sep">·</span><b class="num">'+money(q.amountRequested)+'</b></span>'
+        +'<span class="l3"><span class="pill up '+st.cls+'">'+esc(st.label)+'</span><span class="num">'+ic('check',12)+' '+q.approvals+'/'+q.lenders+' approve</span></span>'
+        + best + hs
+      +'</span></button>'
+      +'<div class="qact">'+actionButtons(q,false)+'</div>'
+      +(sel && det ? lenderTree(det) : '')
+      +'</li>';
+  }).join('')+'</ul>' : '<div class="empty">Nothing is waiting on you.</div>';
+
+  const det = DET[state.sel];
+  let pipe = '';
+  if(det){
+    pipe = '<details class="pipe" data-key="pipe" '+detailsAttr('pipe', true)+'><summary><span class="chev">'+ic('down',14)+'</span>Pipeline <span class="tag">'+det.pipeline.length+' steps</span></summary>'
+      +'<ol class="plist">'+det.pipeline.map(p => {
+        const icon = p.state === 'done' ? ic('check',10) : (p.state === 'running' ? '<i></i>' : '');
+        return '<li class="pstep '+esc(p.state)+'"><span class="pdot">'+icon+'</span><span><span class="pnode">'+esc(p.label)+'</span><span class="pmet">'+esc(p.metric)+'</span></span></li>';
+      }).join('')+'</ol></details>';
+  } else {
+    pipe = '<details class="pipe" data-key="pipe" '+detailsAttr('pipe', true)+'><summary><span class="chev">'+ic('down',14)+'</span>Pipeline</summary><div class="empty" style="padding:12px">No pipeline trace in this study’s data.</div></details>';
+  }
+  document.getElementById('left').innerHTML =
+    '<div class="phead">Queue <span class="tag num">'+rows.length+(rows.length!==total?' of '+total:'')+'</span>'
+    +'<span class="sp"><button class="ibtn" type="button" data-act="filter" data-fk="filter" aria-pressed="'+state.onlyWaiting+'" title="Only applicants waiting on you" aria-label="Only applicants waiting on you">'+ic('filter',15)+'</button></span></div>'
+    +'<div class="scroll" id="qscroll">'+list+'</div>'+pipe;
+}
+
+/* ---------- middle pane ---------- */
+const yk = k => '<span class="yk">'+esc(k)+':</span>';
+function yv(v){
+  if(typeof v === 'number') return '<span class="yn">'+v+'</span>';
+  if(typeof v === 'boolean') return '<span class="yb">'+v+'</span>';
+  return '<span class="ys">'+esc(v)+'</span>';
+}
+function inputYaml(o, det){
+  const b = det.bundle, flags = Object.keys(b.flags).filter(k => b.flags[k]);
+  const L = [];
+  L.push(yk('policy')+' '+yv(o.policy));
+  L.push(yk('provider')+' '+yv(o.provider));
+  L.push(yk('request'));
+  L.push('  '+yk('amount')+' '+yv(det.amountRequested));
+  L.push('  '+yk('purpose')+' '+yv(det.purpose));
+  L.push('  '+yk('statedIncome')+' '+yv(det.statedIncome));
+  L.push(yk('snapshot'));
+  L.push('  '+yk('score')+' '+yv(b.score)+'  '+'<span class="yd"># vantage4 '+b.vantage4+'</span>');
+  L.push('  '+yk('utilization')+' '+yv(b.utilization));
+  L.push('  '+yk('inquiries6mo')+' '+yv(b.inquiries6mo));
+  L.push('  '+yk('identityVerified')+' '+yv(b.identityVerified));
+  L.push('  '+yk('fraudScore')+' '+yv(b.fraudScore));
+  if(flags.length){ L.push('  '+yk('flags')); flags.forEach(f => L.push('    <span class="yd">-</span> '+yv(f)+': '+yv(true))); }
+  else L.push('  '+yk('flags')+' '+yv('none'));
+  return L.join('\n');
+}
+function vmark(v){
+  if(v === true) return '<span class="vm t" title="Verified: fixing this field alone flips the decision">'+ic('check',10)+'</span>';
+  if(v === false) return '<span class="vm f" title="Unsupported: fixing this field alone does not flip the decision">'+ic('x',10)+'</span>';
+  return '<span class="vm n" title="Not tested">'+ic('minus',10)+'</span>';
+}
+const vword = v => v === true ? 'verified' : (v === false ? 'unsupported' : 'not tested');
+function outputBlock(o, det, isBest){
+  const c = CLASSIF[o.classification] || CLASSIF.deny;
+  const isOffer = o.apr != null;
+  let h = '<div class="dec"><span class="pill up '+c.cls+'">'+ic(c.icon,11)+c.word+'</span>'
+    +'<span class="why">'+(isOffer ? 'decision: approve' : 'decision: decline · no offer made')+'</span>'
+    +(isBest ? '<span class="pill ok">'+ic('star',11)+'Best APR</span>' : '')+'</div>';
+  if(isOffer){
+    h += '<dl class="terms">'
+      +'<div class="'+(isBest?'best':'')+'"><dt>APR</dt><dd>'+o.apr.toFixed(1)+'%</dd></div>'
+      +'<div><dt>Monthly payment</dt><dd>'+money2(o.monthlyPayment)+'</dd></div>'
+      +'<div><dt>Term</dt><dd>'+o.termMonths+' mo</dd></div>'
+      +'<div><dt>Amount</dt><dd>'+money(o.amount)+(o.amount !== det.amountRequested ? '<small>of '+money(det.amountRequested)+' requested</small>' : '')+'</dd></div>'
+      +'</dl>';
+  }
+  if(o.conditions && o.conditions.length){
+    h += '<div class="blk"><h4>Conditions <span class="num">'+o.conditions.length+'</span></h4><ul class="cond">'+o.conditions.map(x => '<li>'+esc(x)+'</li>').join('')+'</ul></div>';
+  }
+  h += '<div class="blk"><h4>Reasons <span class="num">'+o.reasons.length+'</span><span class="lg"><span class="lgi">'+vmark(true)+'verified</span><span class="lgi">'+vmark(false)+'unsupported</span><span class="lgi">'+vmark(null)+'not tested</span></span></h4>'
+    +'<ul class="reasons">'+o.reasons.map(r => '<li class="reason">'+vmark(r.verified)+'<div><p>'+esc(r.text)+'</p><div class="meta"><span class="mono">'+esc(r.field)+'</span><span>'+vword(r.verified)+'</span></div></div></li>').join('')+'</ul></div>';
+  return h;
+}
+function lenderCard(o, det, best){
+  const c = CLASSIF[o.classification] || CLASSIF.deny;
+  const isBest = !!best && best.lender === o.lender;
+  const k = 'L-'+det.applicantId+'-'+o.lender;
+  return '<article class="lender'+(state.lender === o.lender ? ' active' : '')+'" id="lender-'+esc(o.lender)+'" aria-label="'+esc(o.name)+'">'
+    +'<div class="lhead"><span class="lic '+c.cls+'">'+ic(c.icon,12)+'</span><span class="lname">'+esc(o.name)+'</span>'
+    +'<span class="pill neutral">'+esc(o.label)+'</span><span class="pill up '+c.cls+'">'+c.word+'</span>'+(isBest ? '<span class="pill ok">'+ic('star',11)+'Best APR</span>' : '')
+    +'<span class="lmeta"><span class="chip num" title="Underwriter latency">'+ic('clock',13)+secs(o.latencyMs)+'</span><span class="chip">'+ic('bolt',13)+esc(o.provider)+'</span></span></div>'
+    +'<details class="sub" '+detailsAttr(k+'-in', true)+'><summary><span class="chev">'+ic('down',14)+'</span>Input<span class="fmt">policy + snapshot · YAML</span></summary><div class="sub-b"><pre class="yaml">'+inputYaml(o, det)+'</pre></div></details>'
+    +'<details class="sub" '+detailsAttr(k+'-out', true)+'><summary><span class="chev">'+ic('down',14)+'</span>Output<span class="fmt">offer or decline with reasons</span></summary><div class="sub-b">'+outputBlock(o, det, isBest)+'</div></details>'
+    +'</article>';
+}
+function noticeView(det){
+  const paras = String(det.notice || '').split(/\n\s*\n/).filter(Boolean);
+  return '<div class="card notice"><div class="hd"><h2>Adverse-action notice</h2><span class="pill info">Draft</span><span class="pill neutral">for '+esc(det.name)+'</span></div>'
+    + paras.map(p => '<p>'+esc(p)+'</p>').join('')+'</div>';
+}
+function auditView(){
+  return '<div class="card" style="overflow:hidden"><table class="audit"><colgroup><col style="width:96px"><col style="width:132px"><col style="width:140px"><col></colgroup>'
+    +'<thead><tr><th scope="col">Time (PT)</th><th scope="col">Actor</th><th scope="col">Action</th><th scope="col">Note / ref</th></tr></thead><tbody>'
+    + D.audit.map(a => '<tr><td class="t mono num">'+esc(fmtClock(a.at))+'</td><td><span class="actor"><span class="dot" style="background:'+actorColor(a.actor)+'"></span>'+esc(a.actor)+'</span></td><td><span class="act">'+esc(a.action)+'</span></td><td>'+esc(a.note)+'<span class="ref">'+(a.ref ? esc(a.ref) : '—')+'</span></td></tr>').join('')
+    +'</tbody></table></div>';
+}
+function actorColor(a){
+  if(/^underwriter/.test(a)) return '#5155d5';
+  if(a === 'compliance') return '#1a8a4a';
+  if(a === 'rules') return '#d98a0b';
+  if(a === 'crs') return '#0e8aa8';
+  return '#97a1b3';
+}
+
+function renderMid(){
+  const q = qrow(state.sel), det = DET[state.sel];
+  const s = statusOf(state.sel), st = stOf(s);
+  const chips = [];
+  if(det) chips.push('<span class="chip num">'+ic('cal',14)+esc(fmtDate(det.createdAt))+'</span>');
+  chips.push('<span class="chip">'+ic('tag',14)+esc(q.purpose)+'</span>');
+  chips.push('<span class="chip num">'+ic('dollar',14)+money(q.amountRequested)+' requested</span>');
+  if(det) chips.push('<span class="chip">'+ic('hash',14)+'card code: '+(det.cardCode == null ? '<span style="color:var(--muted)">not entered</span>' : '<b class="num">'+esc(det.cardCode)+'</b>')+'</span>');
+  const tags = det ? '<div class="tags"><span class="tag">persona <b class="mono" style="font-weight:500">'+esc(det.personaId)+'</b></span><span class="tag">stated income <b class="num" style="font-weight:500">'+money(det.statedIncome)+'</b></span><span class="tag" title="'+esc(det.applicantId)+'">id <span class="mono">'+esc(det.applicantId.slice(0,8))+'…</span></span></div>' : '';
+  const head = '<div class="mhead"><div class="mtitle"><span class="qic '+st.cls+'" style="width:22px;height:22px">'+ic(st.icon,13)+'</span><h1>'+esc(q.name)+'</h1><span class="pill up '+st.cls+'">'+esc(st.label)+'</span><span class="acts">'+actionButtons(q,true)+'</span></div>'
+    +'<div class="chips">'+chips.join('')+'</div>'+tags+'</div>';
+
+  let body = '';
+  if(det){
+    const best = bestOffer(det);
+    const tabs = [['lenders','Lenders',det.offers.length],['notice','Notice',null],['audit','Audit log',D.audit.length]];
+    const tabbar = '<div class="tabs" role="tablist" aria-label="Applicant detail">'+tabs.map(t => '<button type="button" role="tab" id="tab-'+t[0]+'" aria-selected="'+(state.mid===t[0])+'" data-act="midtab" data-tab="'+t[0]+'" data-fk="mt-'+t[0]+'">'+t[1]+(t[2]!=null?' <span class="n">'+t[2]+'</span>':'')+'</button>').join('')+'</div>';
+    let content;
+    if(state.mid === 'notice') content = noticeView(det);
+    else if(state.mid === 'audit') content = auditView();
+    else content = det.offers.map(o => lenderCard(o, det, best)).join('');
+    body = tabbar + '<div role="tabpanel" aria-labelledby="tab-'+state.mid+'" style="display:flex;flex-direction:column;gap:12px;min-width:0">'+content+'</div>';
+  } else if(q.hardStop){
+    body = '<div class="card callout bad"><div class="pill up bad" style="width:max-content">'+ic('stop',11)+'Hard stop</div><b style="font-size:14px">Underwriters did not run for '+esc(q.name)+'.</b><div>Rule field <span class="mono" style="background:#fff;border:1px solid var(--bad-line);border-radius:3px;padding:0 5px">'+esc(q.hardStop.field)+'</span></div><div>'+esc(q.hardStop.note)+'</div><div style="color:var(--text2)">0 of 0 lenders ran. Declining sends an adverse-action notice with the hard-stop reason and a second reason; a loan officer decides.</div></div>';
+  } else {
+    body = '<div class="card callout"><b style="font-size:14px">Decision recorded</b>'
+      +(q.best ? '<div>Best offer was '+esc(lname(q.best.lender))+' at <b class="num">'+q.best.apr.toFixed(1)+'% APR</b>; '+q.approvals+' of '+q.lenders+' lenders approved.</div>' : '')
+      +'<div style="color:var(--muted)">Lender inputs, outputs and the audit log for this applicant are not part of this study’s sample data.</div></div>';
+  }
+  document.getElementById('mid').innerHTML = '<div class="phead">'+esc(q.name)+'<span class="tag">'+esc(st.label)+'</span></div><div class="scroll" id="mscroll"><div class="mid-in">'+head+body+'</div></div>';
+}
+
+/* ---------- right pane ---------- */
+function tile(k,v,cls){ return '<div class="tile"><div class="k">'+k+'</div><div class="v '+(cls||'')+'">'+v+'</div></div>'; }
+function snapView(det){
+  const b = det.bundle;
+  const flagNames = Object.keys(b.flags);
+  const credit = '<details class="card panel" '+detailsAttr('credit', true)+'><summary><span class="chev">'+ic('down',14)+'</span>Credit snapshot<span class="r">'+esc(b.source)+'</span></summary><div class="panel-b">'
+    +'<div class="tiles">'
+    + tile('Score', b.score)
+    + tile('VantageScore 4', b.vantage4)
+    + tile('Utilization', pct(b.utilization), '') .replace('</div></div>','<span></span></div><div class="bar"><i style="width:'+Math.min(100,Math.round(b.utilization*100))+'%"></i></div></div>')
+    + tile('Inquiries (6 mo)', b.inquiries6mo)
+    + tile('Identity', b.identityVerified ? '<span style="color:var(--ok)">'+ic('check',14)+'</span>Verified' : '<span style="color:var(--bad)">'+ic('x',14)+'</span>Not verified','sm')
+    + tile('Fraud score', b.fraudScore)
+    +'</div>'
+    +'<div class="sech">Flags</div><div class="flags">'+flagNames.map(f => '<span class="flag'+(b.flags[f]?' on':'')+'">'+(b.flags[f]?ic('flag',11):'')+esc(f)+'<span style="opacity:.7">'+(b.flags[f]?'yes':'no')+'</span></span>').join('')+'</div>'
+    +'</div></details>';
+  const tl = '<details class="card panel" '+detailsAttr('tl', true)+'><summary><span class="chev">'+ic('down',14)+'</span>Tradelines<span class="r num">'+b.tradelines.length+'</span></summary>'
+    +'<ul class="tl">'+b.tradelines.map((t,i) => {
+      const key = det.applicantId+':'+i, done = !!state.disputed[key];
+      const scls = t.status === 'open' ? 'ok' : (t.status === 'closed' ? 'neutral' : 'bad');
+      return '<li><span><span class="ty">'+esc(titleCase(t.type).replace(/^./,c => c.toUpperCase()))+'</span><span class="op">opened '+esc(fmtDay(t.openedAt))+'</span></span>'
+        +'<span class="bal">'+money(t.balance)+'</span><span class="pill '+scls+'">'+esc(titleCase(t.status))+'</span>'
+        +'<button class="btn sm link" type="button" data-act="dispute" data-key="'+esc(key)+'" data-fk="dp-'+i+'" '+(done?'disabled':'')+' aria-label="Dispute '+esc(titleCase(t.type))+' opened '+esc(fmtDay(t.openedAt))+'">'+(done?'Disputed':'Dispute')+'</button></li>';
+    }).join('')+'</ul></details>';
+  return '<div class="rhead"><span class="chip num">'+ic('cal',13)+'Pulled '+esc(fmtDate(b.pulledAt))+'</span><span class="chip">'+ic('shield',13)+'source '+esc(b.source)+'</span></div>'+credit+tl;
+}
+function evalView(){
+  const e = D.eval;
+  const row = (k,v,w,ok) => '<div class="fsr"><span class="k">'+k+'</span><span class="v">'+v+'</span>'+(w != null ? '<div class="bar"><i class="'+(ok?'ok':'')+'" style="width:'+Math.round(w*100)+'%"></i></div>' : '')+'</div>';
+  const maxL = Math.max.apply(null, Object.keys(e.latencyP50Ms).map(k => e.latencyP50Ms[k]));
+  return '<div class="rhead"><span class="chip num">'+ic('clock',13)+'Last run '+esc(fmtRun(e.lastRun))+'</span><span class="chip num">'+ic('list',13)+e.cases+' cases</span></div>'
+    +'<div class="card panel" style="padding:0"><div class="panel-b" style="padding-top:4px;padding-bottom:4px"><div class="fs">'
+    + row('Decision agreement', pct(e.agreement), e.agreement, true)
+    + row('Per-lender agreement', pct(e.perLenderAgreement), e.perLenderAgreement, true)
+    + row('Reasons verified', pct(e.reasonsVerified), e.reasonsVerified, false)
+    + row('Fraud cases with zero offers', e.fraudZeroOffers ? '<span style="color:var(--ok)">Yes</span>' : '<span style="color:var(--bad)">No</span>')
+    + row('Avg reasons per denial', e.avgReasonsPerDenial.toFixed(2))
+    +'</div></div></div>'
+    +'<details class="card panel" '+detailsAttr('p50', true)+'><summary><span class="chev">'+ic('down',14)+'</span>Latency p50<span class="r">per lender</span></summary><div class="panel-b" style="padding-top:4px;padding-bottom:4px"><div class="fs">'
+    + Object.keys(e.latencyP50Ms).map(id => row(esc(lname(id)), secs(e.latencyP50Ms[id]), e.latencyP50Ms[id]/maxL, false)).join('')
+    +'</div></div></details>';
+}
+function renderRight(){
+  const det = DET[state.sel], q = qrow(state.sel);
+  const tabs = [['snap','Snapshot'],['eval','Eval scores']];
+  const tabbar = '<div class="rtabs" role="tablist" aria-label="Metadata">'+tabs.map(t => '<button type="button" role="tab" aria-selected="'+(state.right===t[0])+'" data-act="rtab" data-tab="'+t[0]+'" data-fk="rt-'+t[0]+'">'+t[1]+'</button>').join('')+'</div>';
+  let body;
+  if(state.right === 'eval') body = evalView();
+  else if(det) body = snapView(det);
+  else body = '<div class="card callout"><b>No credit snapshot</b><div style="color:var(--muted)">'+(q.hardStop ? 'The pull stopped at the guardrails for this applicant.' : 'Snapshot data for this applicant is not part of this study’s sample.')+'</div></div>';
+  document.getElementById('right').innerHTML = '<div class="phead">Details</div><div class="scroll" id="rscroll"><div class="rin">'+tabbar+body+'</div></div>';
+}
+
+/* ---------- orchestration ---------- */
+function render(opts){
+  opts = opts || {};
+  const ae = document.activeElement;
+  const fk = ae && ae.dataset ? ae.dataset.fk : null;
+  const sc = {};
+  ['qscroll','mscroll','rscroll'].forEach(id => { const el = document.getElementById(id); sc[id] = el ? el.scrollTop : 0; });
+  renderSide(); renderTop(); renderLeft(); renderMid(); renderRight();
+  if(!opts.resetScroll){ ['qscroll','mscroll','rscroll'].forEach(id => { const el = document.getElementById(id); if(el) el.scrollTop = sc[id]; }); }
+  if(fk){ const el = document.querySelector('[data-fk="'+fk+'"]'); if(el && !el.disabled) el.focus({preventScroll:true}); }
+}
+function toast(msg){
+  const t = document.getElementById('toast');
+  t.textContent = msg; t.classList.add('show');
+  clearTimeout(state.toastT);
+  state.toastT = setTimeout(() => t.classList.remove('show'), 3400);
+}
+function select(id, reset){
+  if(!qrow(id)) return;
+  state.sel = id; state.lender = null; state.mid = 'lenders';
+  render({resetScroll:reset !== false});
+}
+function step(dir){
+  const rows = visibleQueue(); if(!rows.length) return;
+  let i = rows.findIndex(q => q.applicantId === state.sel);
+  i = i < 0 ? 0 : (i + dir + rows.length) % rows.length;
+  select(rows[i].applicantId);
+}
+
+document.addEventListener('click', ev => {
+  const b = ev.target.closest('[data-act]'); if(!b || b.disabled) return;
+  const a = b.dataset.act, id = b.dataset.id;
+  if(a === 'select') select(id);
+  else if(a === 'prev') step(-1);
+  else if(a === 'next') step(1);
+  else if(a === 'filter'){ state.onlyWaiting = !state.onlyWaiting; render(); }
+  else if(a === 'midtab'){ state.mid = b.dataset.tab; render({resetScroll:true}); }
+  else if(a === 'rtab'){ state.right = b.dataset.tab; render({resetScroll:true}); }
+  else if(a === 'lender'){
+    state.lender = b.dataset.lender; state.mid = 'lenders'; render();
+    const el = document.getElementById('lender-'+state.lender);
+    if(el) el.scrollIntoView({block:'start', behavior:'smooth'});
+  }
+  else if(a === 'approve'){
+    const q = qrow(id);
+    state.over[id] = 'approved'; render();
+    toast('Approved '+lname(q.best.lender)+' at '+q.best.apr.toFixed(1)+'% APR for '+q.name+'. Sandbox demo: nothing is sent.');
+  }
+  else if(a === 'decline'){
+    const q = qrow(id);
+    state.over[id] = 'declined'; render();
+    toast('Declined '+q.name+'. Sandbox demo: no notice is sent.');
+  }
+  else if(a === 'dispute'){
+    state.disputed[b.dataset.key] = true; render();
+    toast('Dispute drafted for this tradeline. Sandbox demo: nothing is filed.');
+  }
+});
+document.addEventListener('toggle', ev => {
+  const d = ev.target;
+  if(d && d.tagName === 'DETAILS' && d.dataset.key) state.closed[d.dataset.key] = !d.open;
+}, true);
+document.addEventListener('keydown', ev => {
+  if(ev.metaKey || ev.ctrlKey || ev.altKey) return;
+  const t = ev.target && ev.target.tagName;
+  if(t === 'INPUT' || t === 'TEXTAREA' || t === 'SELECT') return;
+  if(ev.key === 'j' || ev.key === 'J') step(-1);
+  else if(ev.key === 'k' || ev.key === 'K') step(1);
+});
+
+render({resetScroll:true});
+})();
+</script>
+</body>
+</html>
