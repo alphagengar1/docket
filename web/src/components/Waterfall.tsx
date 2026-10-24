@@ -67,7 +67,8 @@ export function Waterfall({ applicant, steps, offers, checks, now }: Props) {
       }
     }
   }
-  const lastEnd = rows.reduce((m, r) => Math.max(m, r.end ?? (r.start != null ? now : 0)), 0)
+  // The human step can wait for minutes; it must not stretch the axis. Its bar is clipped by the lane instead.
+  const lastEnd = rows.reduce((m, r) => (r.key === 'human' ? Math.max(m, r.start ?? 0) : Math.max(m, r.end ?? (r.start != null ? now : 0))), 0)
   const span = Math.max(10000, t0 == null ? 10000 : lastEnd - t0 + 2600)
   const tickMs = span > 20000 ? 5000 : 2000
   const ticks: number[] = []

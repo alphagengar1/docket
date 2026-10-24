@@ -164,18 +164,10 @@ const validateCompliance = (raw: unknown) => {
 // CREAO provider (async: start a run, finish on webhook or poll)
 // ---------------------------------------------------------------------------
 const CREAO_BASE = () => (process.env.CREAO_BASE_URL ?? "https://agent.creao.ai/api/v1").replace(/\/$/, "");
-// The task spec: POST {base}/runs with appId in the body. The CREAO app API
-// seen elsewhere uses POST {base}/apps/{appId}/runs with no appId in the body.
-// Flip with CREAO_RUNS_STYLE=app-path if the first form 404s.
-function creaoRunsUrl(appId: string): { url: string; includeAppId: boolean } {
-  if (process.env.CREAO_RUNS_STYLE === "app-path") return { url: `${CREAO_BASE()}/apps/${appId}/runs`, includeAppId: false };
-  return { url: `${CREAO_BASE()}/runs`, includeAppId: true };
-}
-function creaoHeaders() {
-  const key = process.env.CREAO_API_KEY;
-  if (!key) throw new Error("CREAO_API_KEY not set");
-  return { authorization: `Bearer ${key}`, "content-type": "application/json", accept: "application/json" };
-}
+// App API (the shape that worked for Cue at LA Hacks): POST {base}/apps/{appId}/runs with a per-app
+// `capi_` key, GET {base}/apps/{appId}/runs/{runId}. Set CREAO_RUNS_STYLE=body to POST {base}/runs
+// with appId in the body (and GET {base}/runs/{runId}) if an app is exposed that way instead.
+const appPath = () => process.env.CREAO_RUNS_STYLE !== "body";
 function creaoAppId(role: Role, lender: Lender | null): string {
   const id =
     role === "compliance"
@@ -184,15 +176,29 @@ function creaoAppId(role: Role, lender: Lender | null): string {
   if (!id) throw new Error(`No CREAO app id for ${role}${lender ? ":" + lender : ""} (CREAO_UNDERWRITER_APP_ID / CREAO_APP_ID_<LENDER> / CREAO_COMPLIANCE_APP_ID)`);
   return id;
 }
+// Per-app key first (CREAO_KEY_CU|FINTECH|PRIME, CREAO_COMPLIANCE_KEY, CREAO_UNDERWRITER_KEY), then the shared CREAO_API_KEY.
+function creaoKey(role: Role, lender: Lender | null): string {
+  const key =
+    (role === "compliance"
+      ? process.env.CREAO_COMPLIANCE_KEY
+      : (lender ? process.env[`CREAO_KEY_${lender.toUpperCase()}`] : undefined) ?? process.env.CREAO_UNDERWRITER_KEY) ??
+    process.env.CREAO_API_KEY;
+  if (!key) throw new Error(`No CREAO key for ${role}${lender ? ":" + lender : ""} (CREAO_KEY_<LENDER> / CREAO_COMPLIANCE_KEY / CREAO_API_KEY)`);
+  return key;
+}
+function creaoHeaders(key: string) {
+  return { authorization: `Bearer ${key}`, "content-type": "application/json", accept: "application/json" };
+}
 
 async function creaoStart(role: Role, lender: Lender | null, inputs: unknown, idempotencyKey: string): Promise<string> {
   const appId = creaoAppId(role, lender);
-  const { url, includeAppId } = creaoRunsUrl(appId);
+  const key = creaoKey(role, lender);
+  const url = appPath() ? `${CREAO_BASE()}/apps/${encodeURIComponent(appId)}/runs` : `${CREAO_BASE()}/runs`;
   const webhookUrl = process.env.CONVEX_SITE_URL ? `${process.env.CONVEX_SITE_URL}/creao/webhook` : undefined;
   const body: Record<string, unknown> = { inputs, idempotencyKey };
-  if (includeAppId) body.appId = appId;
+  if (!appPath()) body.appId = appId;
   if (webhookUrl && !/127\.0\.0\.1|localhost/.test(webhookUrl)) body.webhookUrl = webhookUrl;
-  const res = await fetch(url, { method: "POST", headers: creaoHeaders(), body: JSON.stringify(body) });
+  const res = await fetch(url, { method: "POST", headers: creaoHeaders(key), body: JSON.stringify(body) });
   if (!res.ok) throw new Error(`CREAO start ${res.status}: ${(await res.text()).slice(0, 300)}`);
   const json: any = await res.json();
   const runId = json?.id ?? json?.runId ?? json?.run_id;
@@ -200,8 +206,12 @@ async function creaoStart(role: Role, lender: Lender | null, inputs: unknown, id
   return String(runId);
 }
 
-export async function creaoFetchRun(runId: string): Promise<{ status: string; text: string | null; error: string | null }> {
-  const res = await fetch(`${CREAO_BASE()}/runs/${encodeURIComponent(runId)}`, { headers: creaoHeaders() });
+export async function creaoFetchRun(runId: string, role: Role, lender: Lender | null): Promise<{ status: string; text: string | null; error: string | null }> {
+  const key = creaoKey(role, lender);
+  const url = appPath()
+    ? `${CREAO_BASE()}/apps/${encodeURIComponent(creaoAppId(role, lender))}/runs/${encodeURIComponent(runId)}`
+    : `${CREAO_BASE()}/runs/${encodeURIComponent(runId)}`;
+  const res = await fetch(url, { headers: creaoHeaders(key) });
   if (!res.ok) throw new Error(`CREAO get run ${res.status}: ${(await res.text()).slice(0, 300)}`);
   const json: any = await res.json();
   const status = String(json?.status ?? "unknown").toLowerCase();
@@ -496,7 +506,7 @@ export const verifyAndCompleteRun = internalAction({
   handler: async (ctx, { runId }): Promise<{ status: string }> => {
     const run = await ctx.runQuery(internal.agents.getRunByRunId, { runId });
     if (!run || run.status !== "pending") return { status: run?.status ?? "unknown" };
-    const r = await creaoFetchRun(runId);
+    const r = await creaoFetchRun(runId, run.role, run.lender ?? null);
     if (r.status === "completed") {
       await ctx.runMutation(internal.agents.completeRun, { runId, outcome: "completed", text: r.text, error: null });
       return { status: "completed" };

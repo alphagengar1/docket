@@ -34,16 +34,16 @@ npx convex run eval:runEval '{}'         # 20 personas → evalRuns row (add {"k
 | `CRS_USERNAME`, `CRS_PASSWORD` | unset | Login is `POST /users/login`; bearer (~1h) and refreshToken cached in `secretsCache`; refresh via `/users/refresh-token` before any re-login. A failed login is recorded and **not retried for 30 min**; a 401 on a data call clears the token and surfaces an error (never loops). **Set per deployment: re-run `convex env set CRS_USERNAME ...` / `CRS_PASSWORD ...` after `npx convex login` moves you to a cloud deployment.** |
 | `CRS_PERSONA_MAP` | unset | Optional JSON override `{"P01": {tu,efx,exp,identity,fraud,blj,...}}`; defaults come from `convex/crs.personas.ts`. |
 | `CRS_INCLUDE_CRIMINAL`, `CRS_INCLUDE_EVICTION`, `CRS_ALWAYS_RETRIEVE` | unset | `1` adds the CIC criminal / eviction searches (off for lending by default), or always runs the redundant credit "retrieve" step. |
-| `CREAO_API_KEY` | unset | Bearer for `agent.creao.ai`. |
+| `CREAO_KEY_CU\|FINTECH\|PRIME`, `CREAO_COMPLIANCE_KEY`, `CREAO_UNDERWRITER_KEY`, `CREAO_API_KEY` | unset | Per-app `capi_` keys first, shared key as fallback. |
 | `CREAO_UNDERWRITER_APP_ID`, `CREAO_APP_ID_CU|FINTECH|PRIME`, `CREAO_COMPLIANCE_APP_ID` | unset | Per-lender ids override the shared underwriter id. |
 | `CREAO_BASE_URL` | `https://agent.creao.ai/api/v1` | |
-| `CREAO_RUNS_STYLE` | (body appId) | Set `app-path` to POST `/apps/{appId}/runs` instead of `/runs` with `appId` in the body. |
+| `CREAO_RUNS_STYLE` | (app path) | Default POSTs `/apps/{appId}/runs` and GETs `/apps/{appId}/runs/{id}`; set `body` to use `/runs` with `appId` in the body. |
 | `CONVEX_SITE_URL` | set by Convex | Used to build the webhook URL; skipped when it is localhost (the workflow polls instead). |
 
 ## Flipping providers
 - Claude everywhere: set `ANTHROPIC_API_KEY`. Done.
 - CREAO for compliance only (the plan if runs are slow): `AGENT_PROVIDER_COMPLIANCE=creao` + `CREAO_API_KEY` + `CREAO_COMPLIANCE_APP_ID`.
-- CREAO runs are async: the offer row is inserted `pending` with `runId`; `/creao/webhook` re-fetches `GET /runs/{id}` (webhooks are unsigned) and completes it; the workflow also polls every 5 s for up to 4 min and marks leftovers `failed`.
+- CREAO runs are async: the offer row is inserted `pending` with `runId`; `/creao/webhook` re-fetches the run with the app key (webhooks are unsigned) and completes it; the workflow also polls every 5 s for up to 4 min and marks leftovers `failed`.
 - Live CRS: `convex env set CRS_PROVIDER crs` (creds already set). Optionally `CRS_STRICT 1` to fail loudly instead of falling back. Flip back with `CRS_PROVIDER mock`. Refresh a fixture: `convex run crs:captureFixture '{"personaId":"P01"}'`.
   Live latency measured 2026-10-24: 6 sandbox calls per persona (TU, EFX, EXP, identity, FraudFinder, BLJ; 9 when the order response lacks a report, e.g. the deceased file), 2.1-4.4 s wall (avg 3.0 s) with 200 ms spacing; 20 personas in parallel took 45 s end-to-end including the three underwriters. Each call is 0.2-0.7 s.
 

@@ -16,8 +16,9 @@ import { HardStopCard } from './components/HardStopCard'
 import { Inspector, type InspectorTab } from './components/Inspector'
 import { Drawer } from './components/Drawer'
 import { ApplicantView } from './components/ApplicantView'
+import { DecisionSheet } from './components/DecisionSheet'
 
-type Theme = 'dark' | 'light'
+type Theme = 'tag' | 'dark' | 'light'
 
 export default function App() {
   const desk = useDesk()
@@ -101,6 +102,10 @@ export default function App() {
     setSelectedOfferId(null)
     setIntakeOpen(false)
   }
+  const open = (id: string) => {
+    select(id)
+    setSheetOpen(true)
+  }
 
   const hs = applicant?.status === 'hard_stop' ? hardStopEvent(events) : undefined
 
@@ -132,6 +137,20 @@ export default function App() {
     [desk, advanceFrom],
   )
 
+  // Sheet navigation walks the sidebar order: decisions first (ranked), then everything else newest first.
+  const walkOrder = useMemo(() => {
+    const ids = new Set(ranked.map((r) => r.applicant._id))
+    const rest = desk.applicants.filter((a) => !ids.has(a._id)).sort((a, b) => b.createdAt - a.createdAt)
+    return [...ranked.map((r) => r.applicant), ...rest]
+  }, [ranked, desk.applicants])
+  const walkIndex = walkOrder.findIndex((a) => a._id === selectedId)
+  const walk = (delta: number) => {
+    if (!walkOrder.length) return
+    const i = walkIndex < 0 ? 0 : (walkIndex + delta + walkOrder.length) % walkOrder.length
+    setSelectedId(walkOrder[i]._id)
+    setSelectedOfferId(null)
+  }
+
   // Keyboard: A approves the best offer for the selected applicant, X declines, N jumps to the top of the queue.
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
@@ -140,7 +159,11 @@ export default function App() {
       if (t && (t.tagName === 'INPUT' || t.tagName === 'TEXTAREA' || t.tagName === 'SELECT' || t.isContentEditable)) return
       const k = e.key.toLowerCase()
       if (k === 'n') {
-        if (ranked[0]) select(ranked[0].applicant._id)
+        if (ranked[0]) open(ranked[0].applicant._id)
+        return
+      }
+      if (k === 'enter' && selectedId && !sheetOpen) {
+        setSheetOpen(true)
         return
       }
       const cur = ranked.find((r) => r.applicant._id === selectedId)
@@ -180,14 +203,14 @@ export default function App() {
           desk.stopReplay()
         }}
         theme={theme}
-        onTheme={() => setTheme((t) => (t === 'dark' ? 'light' : 'dark'))}
+        onTheme={() => setTheme((t) => (t === 'tag' ? 'dark' : t === 'dark' ? 'light' : 'tag'))}
       />
       <div className="main">
         <Queue
           applicants={desk.applicants}
           offers={desk.offers}
           selectedId={intakeOpen ? null : selectedId}
-          onSelect={select}
+          onSelect={open}
           onNew={() => openIntake(null)}
           onApproveBest={(aid, oid) => void quickApprove(aid, oid)}
           onDecline={(aid) => void quickDecline(aid)}
@@ -333,6 +356,30 @@ export default function App() {
           }}
         />
       </div>
+      {sheetOpen && applicant && (
+        <DecisionSheet
+          applicant={applicant}
+          offers={offers}
+          checks={desk.reasonChecks}
+          events={events}
+          notice={notice}
+          decision={decision}
+          now={now}
+          underwriteStartedAt={underwriteStart}
+          position={{ index: Math.max(0, walkIndex), total: walkOrder.length }}
+          selectedOfferId={selectedOfferId}
+          onSelectOffer={(id) => setSelectedOfferId((cur) => (cur === id ? null : id))}
+          onPrev={() => walk(-1)}
+          onNext={() => walk(1)}
+          onClose={() => setSheetOpen(false)}
+          onApprove={(offerId) => void quickApprove(applicant._id, offerId)}
+          onDecline={() => void quickDecline(applicant._id)}
+          onInspect={(t) => {
+            setTab(t)
+            setSheetOpen(false)
+          }}
+        />
+      )}
       {deckOpen && <PersonaDeck personas={desk.personas} onPick={(id) => openIntake(id)} onClose={() => setDeckOpen(false)} />}
     </div>
   )
