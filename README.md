@@ -1,16 +1,16 @@
 # Docket
 
-Docket is a one-person credit union. One human loan officer runs a lending desk through an org chart of agents. An applicant gives consent and states a loan purpose and income. The backend pulls CRS sandbox data (three bureaus, identity verification, fraud screen). Three underwriter agents, each with a written policy, return an offer or a decline. A compliance agent drafts the adverse-action notice. The loan officer approves. Before any notice goes out, Docket tests each decline reason by changing that one factor and re-running the lender, and it withholds any reason that does not change the decision.
+Docket is a one-person credit union. One human loan officer runs a lending desk through an org chart of agents. An applicant gives consent and states a loan purpose and income. The backend pulls CRS sandbox data (three bureaus, identity verification, fraud screen). Five underwriter agents, each with a written policy, return an offer or a decline. A compliance agent drafts the adverse-action notice. The loan officer approves. Before any notice goes out, Docket tests each decline reason by changing that one factor and re-running the lender, and it withholds any reason that does not change the decision.
 
 ## What is real vs simulated
 
 Real:
 - Credit data is a CRS sandbox response for CRS test personas. The endpoints, response formats and schema are the production ones.
-- The three lender agents run Claude (`claude-haiku-5-5` for underwriters, `claude-sonnet-5-5` for compliance) against written policies in `policies/`.
+- The five lender agents run Claude (`claude-haiku-5-5` for underwriters, `claude-sonnet-5-5` for compliance) against written policies in `policies/`.
 - Hard stops, offer classification, the FCRA paragraph, the PII boundary and the eval are code with tests.
 
 Simulated:
-- The three lenders are ours. They are agents with written policies. Pacific Ridge Credit Union, Northstar Lending and Meridian Bank Prime are fictional names. This is not a marketplace.
+- The five lenders are ours. They are agents with written policies. Pacific Ridge Credit Union, Northstar Lending, Meridian Bank Prime, Cascade Regional Bank and Harbor Second Chance Finance are fictional names. This is not a marketplace.
 - No money moves. No real lender is contacted.
 - Every applicant is one of 20 CRS test personas. There are no real people in this repo.
 - A human approves every offer and every notice. Override on a hard stop is always refused and logged.
@@ -25,7 +25,7 @@ One durable workflow, `runDesk` in `convex/desk.ts` (Convex Workflow component),
 1. Intake: consent screen, purpose, amount, stated income.
 2. Pull: `crs.ts` calls TransUnion, Equifax and Experian prequal, identity verification, FraudFinder and public records.
 3. Guardrails: `rules.ts` stops deceased files, unscorable files, failed identity and fraud score 80 or more. No lender sees a stopped file.
-4. Underwrite x3 in parallel (conservative credit union, growth fintech, prime bank), each with a 20 s timeout. Then reason verification runs, then the compliance agent writes the notice from verified reasons only.
+4. Underwrite x5 in parallel (conservative credit union, growth fintech, prime bank, regional relationship bank, second-chance subprime lender), each with a 20 s timeout. Then reason verification runs, then the compliance agent writes the notice from verified reasons only.
 5. Human: status becomes `awaiting_human`. The loan officer approves an offer or sends the notice.
 
 Every step appends an `auditEvents` row.
@@ -34,11 +34,11 @@ Every step appends an `auditEvents` row.
 
 1. Counterfactual reason verification (`convex/verify.ts`). Regulation B wants the principal reasons the creditor actually relied on, so we test them. We found the lender agents padded declines with filler reasons such as "score meets minimum" or "fraud score below threshold". The test withholds those from the notice.
 2. Approve, counteroffer or deny (`convex/classify.ts`). Classification is computed in code from requested versus offered terms. A notice is required for a denial or an unaccepted counteroffer, and the notice carries the FCRA statement that the consumer reporting agency did not make the decision, with its name and pull date.
-3. Dispute and replay (`desk:disputeTradeline`). The applicant disputes a tradeline, we re-run all three lenders on the corrected file and show which offers and notices changed.
+3. Dispute and replay (`desk:disputeTradeline`). The applicant disputes a tradeline, we re-run all five lenders on the corrected file and show which offers and notices changed.
 
 ## Eval
 
-The test set is the 20-persona answer key in `personas/map.json`, written by the data science teammate: approve means at least one lender approves, decline means all three decline, hard stop means `rules.ts` stops it. `eval:runEval` runs all 20 through the real desk and scores them. It runs nightly (`convex/crons.ts`) and from the board.
+The test set is the 20-persona answer key in `personas/map.json`, written by the data science teammate: approve means at least one lender approves, decline means every lender declines, hard stop means `rules.ts` stops it. `eval:runEval` runs all 20 through the real desk and scores them. It runs nightly (`convex/crons.ts`) and from the board.
 
 Latest run on the cloud deployment: 20/20 agreement with the key, reasons verified 81%, p50 underwriter latency about 3 s. This shows consistency with our own key. It does not prove fairness. Twenty personas cannot.
 
@@ -65,7 +65,7 @@ Latest run on the cloud deployment: 20/20 agreement with the key, reasons verifi
  convex/desk.ts  runDesk(applicantId)  (Workflow component, durable)
    1. pullBundle   -> crs.ts      CRS sandbox (or fixtures)
    2. guardrails   -> rules.ts    deterministic hard stops
-   3. underwrite x3-> agents.ts   claude-haiku-5-5, parallel, 20 s timeout
+   3. underwrite x5-> agents.ts   claude-haiku-5-5, parallel, 20 s timeout
       verify       -> verify.ts   counterfactual reason test
    4. compliance   -> agents.ts   claude-sonnet-5-5, notice from verified reasons
    5. ready        -> awaiting_human; Approve writes decisions
@@ -99,7 +99,7 @@ Open `#/borrower` on a phone and `#/board` on a second screen. Set env vars with
 - Deployment: https://warmhearted-seahorse-595.convex.cloud (dev).
 
 ### Hyphenate
-- Seats filled: underwriter (three policies) and compliance.
+- Seats filled: underwriter (five policies) and compliance.
 - Human approver: the loan officer approves every offer and sends every notice. Override is refused and logged.
 - Planted errors with answer key: the deceased, frozen, no-file and fraud personas in `personas/map.json`.
 - The moment: the deceased card. The board turns red, a coded rule fires, zero offers, and the notice tells the applicant how to dispute.

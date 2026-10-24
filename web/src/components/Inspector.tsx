@@ -36,6 +36,8 @@ export const ACTOR_COLOR: Record<string, string> = {
   'underwriter:cu': 'var(--actor-underwriter)',
   'underwriter:fintech': 'var(--actor-underwriter)',
   'underwriter:prime': 'var(--actor-underwriter)',
+  'underwriter:regional': 'var(--actor-underwriter)',
+  'underwriter:subprime': 'var(--actor-underwriter)',
   compliance: 'var(--actor-compliance)',
   human: 'var(--actor-human)',
 }
@@ -341,7 +343,7 @@ function OfferTab({ applicant, offer, decision, offers, checks }: { applicant: A
 const STEP_TITLE: Record<string, string> = {
   pull: 'Bureau pull',
   guardrails: 'Hard-stop rules',
-  underwrite: 'Three lenders',
+  underwrite: `${LENDERS.length} lenders`,
   verify: 'Reason verification',
   compliance: 'Adverse-action notice',
   human: 'Human review',
@@ -379,6 +381,8 @@ const ACTOR_WORD: Record<string, string> = {
   'underwriter:cu': 'Credit union',
   'underwriter:fintech': 'Fintech',
   'underwriter:prime': 'Prime bank',
+  'underwriter:regional': 'Regional bank',
+  'underwriter:subprime': 'Second chance',
   compliance: 'Compliance',
   human: 'Reviewer',
   applicant: 'Borrower',

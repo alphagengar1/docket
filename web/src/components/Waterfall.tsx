@@ -44,7 +44,7 @@ export function Waterfall({ applicant, steps, offers, checks, now }: Props) {
       case 'guardrails':
         return d == null ? 'rules.ts' : s.state === 'failed' ? `${secs(d, 2)} · hard stop` : `${secs(d, 2)} · 0 rules fired`
       case 'underwrite':
-        return d == null ? '3 policies in parallel' : `${secs(d, 2)} · ${offers.filter((o) => o.status === 'done').length}/3 done`
+        return d == null ? `${LENDERS.length} policies in parallel` : `${secs(d, 2)} · ${offers.filter((o) => o.status === 'done').length}/${LENDERS.length} done`
       case 'compliance': {
         const n = checks.length
         return d == null ? 'notice + reason tests' : `${secs(d, 2)} · ${checks.filter((c) => c.flipped).length}/${n} reasons verified`

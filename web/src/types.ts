@@ -54,7 +54,7 @@ export interface Bundle {
   raw: unknown
 }
 
-export type Lender = 'cu' | 'fintech' | 'prime'
+export type Lender = 'cu' | 'fintech' | 'prime' | 'regional' | 'subprime'
 export type Provider = 'claude' | 'creao'
 export type Tier = 'excellent' | 'good' | 'fair' | 'poor'
 
@@ -138,6 +138,8 @@ export type Actor =
   | 'underwriter:cu'
   | 'underwriter:fintech'
   | 'underwriter:prime'
+  | 'underwriter:regional'
+  | 'underwriter:subprime'
   | 'compliance'
   | 'human'
   | 'applicant'
@@ -220,4 +222,6 @@ export const LENDERS: Array<{ id: Lender; label: string; name: string; policy: s
   { id: 'cu', label: 'Credit Union', name: 'Pacific Ridge Credit Union', policy: 'Conservative' },
   { id: 'fintech', label: 'Fintech', name: 'Northstar Lending', policy: 'Growth' },
   { id: 'prime', label: 'Prime', name: 'Meridian Bank Prime', policy: 'Prime bank' },
+  { id: 'regional', label: 'Regional', name: 'Cascade Regional Bank', policy: 'Relationship bank' },
+  { id: 'subprime', label: 'Second Chance', name: 'Harbor Second Chance Finance', policy: 'Subprime' },
 ]

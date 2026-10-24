@@ -599,10 +599,20 @@ textarea:focus {
 /* Phoenix A/B/C column headers + Fey cards */
 .columns {
   display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
+  /* As many lender cells per row as fit at the card's design width; extra lenders wrap to the next row. */
+  grid-template-columns: repeat(auto-fit, minmax(var(--col-min, 232px), 1fr));
   gap: var(--sp-3);
   padding: var(--sp-3);
   align-content: start;
+}
+.lender-col {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-3);
+  min-width: 0;
+}
+.columns > .hardstop {
+  grid-column: 1 / -1;
 }
 .col-head {
   display: flex;
@@ -693,6 +703,7 @@ textarea:focus {
 /* Fey hero: 24/600, fractional part dimmed */
 .hero {
   display: flex;
+  flex-wrap: wrap;
   align-items: baseline;
   gap: 3px;
   font-size: var(--fs-hero);

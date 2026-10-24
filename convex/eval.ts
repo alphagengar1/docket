@@ -3,7 +3,7 @@
 import { v } from "convex/values";
 import { action, internalAction, internalMutation, internalQuery, query } from "./_generated/server";
 import { internal } from "./_generated/api";
-import type { Id } from "./_generated/dataModel";
+import type { Doc, Id } from "./_generated/dataModel";
 import { findPersona } from "./crs.mock";
 import { aggregate, scoreCase, type CaseResult, type Expected, type ExpectedPerLender } from "./evalScore";
 import map from "../personas/map.json";
@@ -44,7 +44,7 @@ export const seedCases = internalMutation({
         personaId: c.personaId,
         expected: c.expected as Expected,
         expectedReasonsIncludes: c.expectedReasonsIncludes,
-        expectedPerLender: (c as { expectedPerLender?: ExpectedPerLender }).expectedPerLender,
+        expectedPerLender: (c as { expectedPerLender?: Doc<"evalCases">["expectedPerLender"] }).expectedPerLender,
         note: c.note,
       });
     }
@@ -78,7 +78,7 @@ export const finishRun = internalMutation({
     perLenderMatched: v.optional(v.number()),
     perLenderTotal: v.optional(v.number()),
     perLenderMismatches: v.optional(v.array(v.object({ personaId: v.string(), lender: v.string(), expected: v.string(), got: v.string() }))),
-    latencyP50Ms: v.object({ cu: v.union(v.number(), v.null()), fintech: v.union(v.number(), v.null()), prime: v.union(v.number(), v.null()) }),
+    latencyP50Ms: v.record(v.string(), v.union(v.number(), v.null())),
   },
   handler: async (ctx, { runId, ...rest }) => {
     await ctx.db.patch(runId, { ...rest, finishedAt: Date.now() });
@@ -148,7 +148,7 @@ export type EvalSummary = {
   perLenderMatched: number;
   perLenderTotal: number;
   perLenderMismatches: Array<{ personaId: string; lender: string; expected: string; got: string }>;
-  latencyP50Ms: { cu: number | null; fintech: number | null; prime: number | null };
+  latencyP50Ms: Record<string, number | null>;
 };
 
 async function runEvalImpl(ctx: any, keep: boolean): Promise<EvalSummary> {

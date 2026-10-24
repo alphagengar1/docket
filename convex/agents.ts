@@ -181,7 +181,7 @@ function creaoAppId(role: Role, lender: Lender | null): string {
     role === "compliance"
       ? process.env.CREAO_COMPLIANCE_APP_ID
       : (lender ? process.env[`CREAO_APP_ID_${lender.toUpperCase()}`] : undefined) ?? process.env.CREAO_UNDERWRITER_APP_ID;
-  if (!id) throw new Error(`No CREAO app id for ${role}${lender ? ":" + lender : ""} (CREAO_UNDERWRITER_APP_ID / CREAO_APP_ID_CU|FINTECH|PRIME / CREAO_COMPLIANCE_APP_ID)`);
+  if (!id) throw new Error(`No CREAO app id for ${role}${lender ? ":" + lender : ""} (CREAO_UNDERWRITER_APP_ID / CREAO_APP_ID_<LENDER> / CREAO_COMPLIANCE_APP_ID)`);
   return id;
 }
 

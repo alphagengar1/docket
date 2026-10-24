@@ -10,7 +10,7 @@ No Express server. Convex actions call CRS, Claude and (optionally) CREAO; Conve
  web/ (Vite + React + Convex client)  ── useQuery (live) ──  convex/ tables
    ├─ Intake pane (chat, consent, income)                     applicants, bundles, offers,
    ├─ Pipeline rail (steps light up)                          decisions, auditEvents,
-   ├─ Three lender columns (offers stream in)                 evalCases, evalRuns, marketRates
+   ├─ Lender columns, one per policy (offers stream in)              evalCases, evalRuns, marketRates
    ├─ Decision pane (reasons, adverse-action notice, Approve)
    └─ Eval panel + audit log (projector tab)
         │ useMutation / useAction
@@ -18,7 +18,7 @@ No Express server. Convex actions call CRS, Claude and (optionally) CREAO; Conve
  convex/desk.ts   runDesk(applicantId)  ← the central orchestrator (Workflow component, durable)
    1. pullBundle      → crs.ts: live sandbox (prequal, IDV, fraud)  | crs.mock.ts until creds arrive
    2. guardrails      → rules.ts: deterministic hard stops (deceased, frozen, IDV fail, fraud ≥ threshold)
-   3. underwrite ×3   → agents.ts: runAgent("underwriter", {bundle, policy}) in parallel
+   3. underwrite ×N   → agents.ts: runAgent("underwriter", {bundle, policy}) in parallel
    4. compliance      → runAgent("compliance", {bundle, declines}) → adverse-action notice
    5. ready           → status "awaiting_human"; Approve button writes decisions
    every step appends auditEvents
@@ -50,7 +50,7 @@ One durable workflow owns the order, the retries and the audit trail; the specia
 ```
 convex/      schema.ts, desk.ts, crs.ts, crs.mock.ts, rules.ts, agents.ts, http.ts, eval.ts, crons.ts, market.ts
 web/         Vite + React + TS. src/hooks/useDesk.ts is the ONLY place the UI touches Convex.
-policies/    cu.md, fintech.md, prime.md  (teammate) explicit rules + prompt text
+policies/    cu.md, fintech.md, prime.md, regional.md, subprime.md  (teammate) explicit rules + prompt text; the lender list is LENDERS in convex/types.ts and web/src/types.ts
 personas/    map.json: personaId → expected outcome + reasons (teammate)
 eval/        notes and the answer key; the runner itself is convex/eval.ts
 design/      these docs. STATUS.md is the overnight log.

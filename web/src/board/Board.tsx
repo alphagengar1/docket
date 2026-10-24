@@ -12,11 +12,13 @@ import './board.css'
 
 type Stage = 'done' | 'now' | 'next' | 'cancelled'
 
-const SHORT: Record<string, string> = { cu: 'Pacific Ridge', fintech: 'Northstar', prime: 'Meridian Prime' }
+const SHORT: Record<string, string> = { cu: 'Pacific Ridge', fintech: 'Northstar', prime: 'Meridian Prime', regional: 'Cascade Regional', subprime: 'Harbor 2nd Chance' }
 const POLICY: Record<string, string> = {
   cu: 'Conservative. Needs a score of 660 or more and utilization at 50% or less.',
   fintech: 'Growth. Prices near-prime and thin files. Needs a score of 600 or more.',
   prime: 'Prime. Needs a score of 720 or more and utilization at 30% or less.',
+  regional: 'Relationship bank. Needs a score of 680 or more and utilization at 45% or less.',
+  subprime: 'Second chance. Lends from a score of 560, small amounts, high APR.',
 }
 const HARD_SENTENCE: Record<string, string> = {
   'flags.deceased': 'The bureau says this person died. They just applied.',
@@ -80,7 +82,7 @@ function stages(a: Applicant | undefined, desk: Desk, notice?: Notice, decision?
 }
 
 function Strip({ stage }: { stage: Stage[] }) {
-  const labels = ['Bureau', 'Lenders ×3', 'Compliance', 'Human']
+  const labels = ['Bureau', `Lenders ×${LENDERS.length}`, 'Compliance', 'Human']
   return (
     <div className="bd-strip" aria-label="Pipeline">
       {labels.map((l, i) => (
@@ -372,7 +374,7 @@ function BoardMain({ desk: globalDesk, applicantId }: { desk: Desk; applicantId:
       <Header a={a} months={months} />
       {!approved && <Bureau b={bundle} compact={showCols} />}
       {showCols && !approved && (
-        <div className="bd-cols">
+        <div className="bd-cols" style={{ ['--lenders' as string]: LENDERS.length }}>
           {LENDERS.map((l) => {
             const o = offers.find((x) => x.lender === l.id)
             return <LenderCol key={l.id} lenderId={l.id} o={o} picked={!!o && o._id === chosenId} lowest={o?._id === lowestId && lowestId !== lowPayId} lowPay={o?._id === lowPayId && lowestId !== lowPayId} />

@@ -73,8 +73,9 @@ export function buildCounterfactual(input: UnderwriterInput, rawField: string): 
       return set(input.statedIncome, cf);
     }
     case "amountRequested": {
-      // A request comfortably inside every policy's capacity for the stated income.
-      const cf = Math.max(2500, Math.min(input.amountRequested, Math.floor((input.statedIncome * 0.3) / 100) * 100, 20000));
+      // A request comfortably inside every policy's capacity for the stated income and under every
+      // policy's dollar cap (Harbor's $20k is the smallest full-file cap; $2,500 clears every minimum loan).
+      const cf = Math.max(2500, Math.min(input.amountRequested, Math.floor((input.statedIncome * 0.3) / 100) * 100, 5000));
       next.amountRequested = cf;
       return set(input.amountRequested, cf);
     }

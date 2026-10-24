@@ -68,13 +68,15 @@ export function simulateDesk(applicant: Applicant, o: SimulateOptions): TimedOp[
 
   // 2300 — underwrite x3 in parallel
   status(gDone, 'underwriting')
-  audit(gDone, { actor: 'desk', action: 'step.underwrite.start', ref: null, note: 'Three underwriters, one policy each, in parallel.' })
+  audit(gDone, { actor: 'desk', action: 'step.underwrite.start', ref: null, note: `${LENDERS.length} underwriters, one policy each, in parallel.` })
   const seed = hash(applicant.personaId + (applicant.replayOf ?? ''))
-  const order: Lender[] = ['cu', 'fintech', 'prime']
+  const order: Lender[] = LENDERS.map((l) => l.id)
   const latencies: Record<Lender, number> = {
     cu: 1100 + (seed % 5) * 120,
     fintech: 2600 + ((seed >> 3) % 5) * 140,
     prime: 1900 + ((seed >> 6) % 5) * 130,
+    regional: 2200 + ((seed >> 9) % 5) * 125,
+    subprime: 1500 + ((seed >> 12) % 5) * 135,
   }
   const input = { bundle, statedIncome: applicant.statedIncome, amountRequested: applicant.amountRequested, purpose: applicant.purpose }
   const notices: Array<{ lender: Lender; classification: 'deny' | 'counteroffer'; reasons: Reason[] }> = []

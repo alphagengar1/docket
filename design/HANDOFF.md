@@ -3,7 +3,7 @@
 Read this first if you just sat down at the laptop. Written Sat Oct 24, 10:20 AM.
 
 ## What Docket is (the pitch in four lines)
-A one-person credit union. A borrower types a 4-digit card code on their phone. Docket pulls their credit file from the CRS Credit API sandbox, runs deterministic hard-stop rules, then three AI underwriters (a credit union, a fintech, a prime bank, each with its own written policy in `policies/`) decide in parallel. A compliance agent writes the adverse-action notice, every denial reason is verified by a counterfactual test, and a human approves every offer. Nothing goes out without a person.
+A one-person credit union. A borrower types a 4-digit card code on their phone. Docket pulls their credit file from the CRS Credit API sandbox, runs deterministic hard-stop rules, then five AI underwriters (a credit union, a fintech, a prime bank, a regional bank, a second-chance lender, each with its own written policy in `policies/`) decide in parallel. A compliance agent writes the adverse-action notice, every denial reason is verified by a counterfactual test, and a human approves every offer. Nothing goes out without a person.
 
 ## The three screens
 | Screen | URL | Who looks at it |
@@ -17,7 +17,7 @@ The public URL and localhost show the same live data: both talk to the cloud Con
 ## Running the demo
 1. Hand the judge a persona card from the printed deck (PDF in `design/deck/persona-deck.pdf`; codes in `design/card-codes.json`).
 2. They open the phone URL and type the 4-digit code. The application starts by itself.
-3. Watch the console. The waterfall fills in, three lender cards resolve, the applicant lands in the queue under "Needs your decision".
+3. Watch the console. The waterfall fills in, five lender cards resolve, the applicant lands in the queue under "Needs your decision".
 4. In the queue click **Approve best** or **Decline**, or press **A** / **X**. **N** jumps to the top of the queue. The phone updates instantly.
 5. The Inspector on the right has the credit snapshot, the trace, and the notice. "Dispute" on a tradeline re-pulls and re-runs as a replay.
 6. **Reset** in the top bar wipes applicants between judges. Replays of all 20 personas are kept.
@@ -33,7 +33,7 @@ Say out loud that bureau data is the CRS sandbox (`CRS_PROVIDER=mock` uses cache
 ## Repo map
 - `convex/` backend (schema, desk.ts verbs, agents, rules, verify, classify, eval, CRS client, fixtures). Deploys automatically while a `convex dev` watcher is running; otherwise `npx convex deploy` is NOT what we use, run `npx convex dev --once`.
 - `web/src/` console; `web/src/board/` judge board; `web/src/borrower/` phone.
-- `policies/*.md` the three lender policies (plain English, run `npm run policies:sync` after editing).
+- `policies/*.md` the five lender policies (plain English, run `npm run policies:sync` after editing).
 - `personas/map.json` answer key for the 20 personas, including per-lender expectations.
 - `design/` product, architecture, contracts, decisions, STATUS log, deck, screenshots, prompts for other Claude sessions.
 - `docs/devpost.md` the Devpost text and submission checklist; `docs/pitch-cards.md` judge Q&A.

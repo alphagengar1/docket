@@ -11,7 +11,7 @@
     "dev:once": "convex dev --once",
     "codegen": "convex codegen",
     "typecheck": "tsc --noEmit -p convex",
-    "test": "node --test convex/rules.test.ts convex/eval.test.ts convex/classify.test.ts convex/pii.test.ts",
+    "test": "node --test convex/rules.test.ts convex/eval.test.ts convex/classify.test.ts convex/pii.test.ts convex/stub.test.ts",
     "deploy": "convex deploy",
     "policies:sync": "node policies/sync-to-convex.mjs"
   },

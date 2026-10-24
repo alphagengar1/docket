@@ -15,7 +15,7 @@ export const applicantStatus = v.union(
   v.literal("hard_stop"),
 );
 
-export const lender = v.union(v.literal("cu"), v.literal("fintech"), v.literal("prime"));
+export const lender = v.union(v.literal("cu"), v.literal("fintech"), v.literal("prime"), v.literal("regional"), v.literal("subprime"));
 export const provider = v.union(v.literal("claude"), v.literal("creao"));
 export const tier = v.union(
   v.literal("excellent"),
@@ -68,6 +68,8 @@ export const actor = v.union(
   v.literal("underwriter:cu"),
   v.literal("underwriter:fintech"),
   v.literal("underwriter:prime"),
+  v.literal("underwriter:regional"),
+  v.literal("underwriter:subprime"),
   v.literal("compliance"),
   v.literal("human"),
   v.literal("applicant"), // dispute events (design/differentiators.md #3)
@@ -207,7 +209,9 @@ export default defineSchema({
     expected: expectedOutcome,
     expectedReasonsIncludes: v.array(v.string()),
     // Per-lender answer key (none = hard stop, no lender ran). Optional for older rows.
-    expectedPerLender: v.optional(v.object({ cu: perLenderOutcome, fintech: perLenderOutcome, prime: perLenderOutcome })),
+    expectedPerLender: v.optional(
+      v.object({ cu: perLenderOutcome, fintech: perLenderOutcome, prime: perLenderOutcome, regional: v.optional(perLenderOutcome), subprime: v.optional(perLenderOutcome) }),
+    ),
     note: v.string(),
   }).index("by_personaId", ["personaId"]),
 
@@ -227,12 +231,12 @@ export default defineSchema({
       }),
     ),
     reasonsVerifiedPct: v.optional(v.number()),
-    // Per-lender agreement (fraction of the cases x 3 lender slots matching expectedPerLender); optional for older runs.
+    // Per-lender agreement (fraction of the cases x lender slots named in expectedPerLender); optional for older runs.
     perLenderAgreement: v.optional(v.union(v.number(), v.null())),
     perLenderMatched: v.optional(v.number()),
     perLenderTotal: v.optional(v.number()),
     perLenderMismatches: v.optional(v.array(v.object({ personaId: v.string(), lender: v.string(), expected: v.string(), got: v.string() }))),
-    latencyP50Ms: v.optional(v.object({ cu: v.union(v.number(), v.null()), fintech: v.union(v.number(), v.null()), prime: v.union(v.number(), v.null()) })),
+    latencyP50Ms: v.optional(v.record(v.string(), v.union(v.number(), v.null()))), // one entry per lender id
   }).index("by_startedAt", ["startedAt"]),
 
   marketRates: defineTable({

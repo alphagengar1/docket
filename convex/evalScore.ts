@@ -1,9 +1,10 @@
 // Pure scoring for the eval runner (unit-tested in eval.test.ts).
+import { LENDERS, type Lender } from "./types.ts";
 export type Expected = "approve" | "decline" | "hard_stop";
 export type Got = Expected | "pending" | "error";
 export type PerLenderOutcome = "approve" | "counteroffer" | "decline" | "none";
-export type ExpectedPerLender = { cu: PerLenderOutcome; fintech: PerLenderOutcome; prime: PerLenderOutcome };
-const LENDERS = ["cu", "fintech", "prime"] as const;
+/** Per-lender answer key. Only the lenders named in the key are scored, so an older key with three lenders still works. */
+export type ExpectedPerLender = Partial<Record<Lender, PerLenderOutcome>>;
 
 export type CaseObservation = {
   status: string;
@@ -74,10 +75,13 @@ export function scoreCase(
     checks: { total: o.reasonChecks?.length ?? 0, flipped: o.reasonChecks?.filter((c) => c.flipped).length ?? 0 },
     latencies: o.offers.filter((x) => x.lender && x.latencyMs != null).map((x) => ({ lender: x.lender!, ms: x.latencyMs! })),
     perLender: expectedPerLender
-      ? LENDERS.map((l) => {
-          const g = observedPerLender(o, l);
-          return { lender: l, expected: expectedPerLender[l], got: g, match: g === expectedPerLender[l] };
-        })
+      ? (Object.keys(expectedPerLender) as Lender[])
+          .filter((l) => expectedPerLender[l] != null)
+          .map((l) => {
+            const g = observedPerLender(o, l);
+            const e = expectedPerLender[l]!;
+            return { lender: l, expected: e, got: g, match: g === e };
+          })
       : undefined,
   };
 }
@@ -104,7 +108,7 @@ export function aggregate(results: CaseResult[]) {
     perLenderTotal: slots.length,
     perLenderMismatches: slots.filter((s) => !s.match).map((s) => ({ personaId: s.personaId, lender: s.lender, expected: s.expected, got: s.got })),
     reasonsVerifiedPct: total ? flipped / total : 0,
-    latencyP50Ms: { cu: lat("cu"), fintech: lat("fintech"), prime: lat("prime") },
+    latencyP50Ms: Object.fromEntries(LENDERS.map((l) => [l, lat(l)])) as Record<string, number | null>,
     cases,
     agreement: cases ? agree / cases : 0,
     fraudZeroOffers: results.filter((r) => r.expected === "hard_stop").every((r) => r.offersCount === 0),

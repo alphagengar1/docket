@@ -211,59 +211,52 @@ export default function App() {
                 <Waterfall applicant={applicant} steps={steps} offers={offers} checks={desk.reasonChecks.filter((c) => c.applicantId === selectedId)} now={now} />
                 <div className="board-scroll">
                 <div className={`columns ${original ? 'diff' : ''}`}>
+                  {original && (
+                    <div className="diff-label section-label">
+                      Before dispute · {original.name} (top card) · after re-pull below, changed values highlighted
+                    </div>
+                  )}
+                  {/* One cell per lender (header, optional before-card, card) so any number of lenders wraps into rows. */}
                   {LENDERS.map((l, i) => {
                     const o = offers.find((x) => x.lender === l.id)
+                    const chosen = !!decision?.chosenOfferId && o?._id === decision.chosenOfferId
                     return (
-                      <div key={`h-${l.id}`} className="col-head">
-                        <span className="letter">{'ABC'[i]}</span>
-                        <span className="nm">{l.label}</span>
-                        <span className="chips">
-                          {o?.status === 'done' && <span className="chip">{(o.latencyMs! / 1000).toFixed(1)}s</span>}
-                          {o?.status === 'done' && <span className="chip">{o.reasons.length} reasons</span>}
-                          {!o && <span className="chip">{l.policy.toLowerCase()}</span>}
-                        </span>
+                      <div key={l.id} className="lender-col">
+                        <div className="col-head">
+                          <span className="letter">{'ABCDEFGH'[i] ?? i + 1}</span>
+                          <span className="nm">{l.label}</span>
+                          <span className="chips">
+                            {o?.status === 'done' && <span className="chip">{(o.latencyMs! / 1000).toFixed(1)}s</span>}
+                            {o?.status === 'done' && <span className="chip">{o.reasons.length} reasons</span>}
+                            {!o && <span className="chip">{l.policy.toLowerCase()}</span>}
+                          </span>
+                        </div>
+                        {original && <BeforeCard lender={l.id} offer={beforeOffers.find((x) => x.lender === l.id)} />}
+                        {applicant?.status !== 'hard_stop' && (
+                          <OfferCard
+                            lender={l.id}
+                            offer={o}
+                            checks={desk.reasonChecks}
+                            bestApr={bestApr}
+                            before={original ? beforeOffers.find((x) => x.lender === l.id) : undefined}
+                            underwriteStartedAt={underwriteStart}
+                            now={now}
+                            selected={!!o && o._id === selectedOfferId}
+                            chosen={chosen}
+                            dim={!!decision && !chosen}
+                            canSelect={!!applicant && applicant.status === 'awaiting_human'}
+                            onSelect={() => {
+                              if (!o) return
+                              setSelectedOfferId((cur) => (cur === o._id ? null : o._id))
+                              setTab('offer')
+                            }}
+                            onTrace={() => setTab('trace')}
+                          />
+                        )}
                       </div>
                     )
                   })}
-                  {original && (
-                    <>
-                      <div className="diff-label section-label">Before dispute · {original.name}</div>
-                      {LENDERS.map((l) => (
-                        <BeforeCard key={`b-${l.id}`} lender={l.id} offer={beforeOffers.find((x) => x.lender === l.id)} />
-                      ))}
-                      <div className="diff-label section-label">After re-pull · changed values highlighted</div>
-                    </>
-                  )}
-                  {applicant?.status === 'hard_stop' ? (
-                    <HardStopCard event={hs} />
-                  ) : (
-                    LENDERS.map((l) => {
-                      const o = offers.find((x) => x.lender === l.id)
-                      const chosen = !!decision?.chosenOfferId && o?._id === decision.chosenOfferId
-                      return (
-                        <OfferCard
-                          key={l.id}
-                          lender={l.id}
-                          offer={o}
-                          checks={desk.reasonChecks}
-                          bestApr={bestApr}
-                          before={original ? beforeOffers.find((x) => x.lender === l.id) : undefined}
-                          underwriteStartedAt={underwriteStart}
-                          now={now}
-                          selected={!!o && o._id === selectedOfferId}
-                          chosen={chosen}
-                          dim={!!decision && !chosen}
-                          canSelect={!!applicant && applicant.status === 'awaiting_human'}
-                          onSelect={() => {
-                            if (!o) return
-                            setSelectedOfferId((cur) => (cur === o._id ? null : o._id))
-                            setTab('offer')
-                          }}
-                          onTrace={() => setTab('trace')}
-                        />
-                      )
-                    })
-                  )}
+                  {applicant?.status === 'hard_stop' && <HardStopCard event={hs} />}
                 </div>
                 </div>
             </div>

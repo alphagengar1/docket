@@ -44,12 +44,12 @@
 .bd-bureau.compact .lbl { font-size: 22px; letter-spacing: 0.02em; }
 @keyframes bd-in { from { opacity: 0; transform: translateY(8px); } }
 
-.bd-cols { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 20px; flex: 1; }
+.bd-cols { display: grid; grid-template-columns: repeat(var(--lenders, 3), minmax(0, 1fr)); gap: 20px; flex: 1; }
 .bd .col { background: var(--panel); border: 1px solid var(--hairline); padding: 18px 24px; display: flex; flex-direction: column; gap: 10px; min-width: 0; }
 .bd .col.picked { border: 4px solid var(--go); padding: 15px 21px; }
 .bd .col.none { border: 2px dashed var(--mute); background: transparent; }
 .bd .col.pending { border: 2px dashed var(--hairline); background: transparent; }
-.bd .ch { display: flex; justify-content: space-between; align-items: center; gap: 12px; }
+.bd .ch { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: 8px 12px; } /* badge drops under the name when five columns squeeze it */
 .bd .name { font-size: 24px; }
 .bd .name.mute { color: var(--mute); }
 .bd .badge { font-family: var(--f-disp); font-stretch: 125%; font-weight: 800; text-transform: uppercase; font-size: 22px; padding: 2px 8px; flex: none; }

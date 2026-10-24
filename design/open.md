@@ -38,3 +38,11 @@
 - Cloud dev deployment: dev:warmhearted-seahorse-595, https://warmhearted-seahorse-595.convex.cloud (dashboard: https://dashboard.convex.dev/t/swaraj-adhikari/agent). Env set: ANTHROPIC_API_KEY, OPENAI_API_KEY, CREAO_*_KEY (Cue agents, need new IDs if CREAO is in), CRS_USERNAME/PASSWORD, CRS_PROVIDER=mock (fixtures; flip to crs for live pulls), GIT_SHA.
 - web/.env.local points at the cloud URL. Eval on cloud: 20/20 agreement, reasons verified 81%, p50 underwriter ~3.0 s. Recordings for all 20 personas being written on cloud.
 - P15 resolved: policies carry a frozen-file exception (underwrite on VantageScore when TU is frozen, add "lift the freeze" condition).
+
+## Two more lenders (claude, Sat 12:40, branch feat/more-lenders)
+- Contract proposal (additive, worked around; please ratify): `offers.lender` union gains `"regional" | "subprime"`; `auditEvents.actor` gains `"underwriter:regional" | "underwriter:subprime"`; `evalCases.expectedPerLender` gains optional keys `regional`, `subprime` (older three-key rows still validate and are scored on the keys they have); `evalRuns.latencyP50Ms` is now a record keyed by lender id. contracts.md still lists the three-lender unions.
+- personas/map.json (teammate file): regional and subprime columns were derived from the deterministic stub, not from Claude runs; P06 top-level expected changed decline -> approve. Please review the new columns and the P06 note.
+- design/deck/presenter-sheet.{html,pdf}: per-lender columns do not include regional/subprime. Cards carry no outcome, so the printed deck is unaffected.
+- Cloud deployment (warmhearted-seahorse-595): the 20 replay recordings were made with three lenders; after this branch deploys, re-run `eval:recordAll` so replays show five cards. `npx convex env set CREAO_APP_ID_REGIONAL` / `_SUBPRIME` only matter if CREAO underwriters are used.
+- docs/devpost.md, docs/pitch-cards.md and web/src/mock/fixture.ts (the recorded mock replay) still say or carry three lenders. Swaraj's call whether the submission text changes.
+- Known stub-vs-key disagreements that predate this change (key comes from real Claude runs): P02 fintech (key counteroffer, stub approve) and P19 fintech (key approve, stub decline on the $25k cap). convex/stub.test.ts checks only the top-level outcome for those lenders.

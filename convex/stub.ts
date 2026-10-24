@@ -2,7 +2,7 @@
 // (or AGENT_PROVIDER_*=stub). It applies the SAME thresholds written in
 // policies/*.md so the board has believable data without an LLM. Pure functions.
 import type { ComplianceInput, Lender, Reason, UnderwriterInput, UnderwriterOutput } from "./types";
-import { LENDER_NAMES } from "./policies";
+import { LENDER_NAMES } from "./policies.ts";
 
 type Band = { min: number; apr: number };
 
@@ -25,6 +25,8 @@ type PolicyNumbers = {
   bands: Band[];
   term: (amount: number) => number;
   always: string[];
+  /** Thin-file lane (no TransUnion score, <= 2 tradelines): underwrite on VantageScore 4 at a flat APR and a small cap. null = no thin files. */
+  thin: { minVantage: number; cap: number; apr: number } | null;
 };
 
 const P: Record<Lender, PolicyNumbers> = {
@@ -51,6 +53,7 @@ const P: Record<Lender, PolicyNumbers> = {
       "Open a Pacific Ridge share account (membership required before funding).",
       "Provide two most recent pay stubs or equivalent proof of the stated income.",
     ],
+    thin: null,
   },
   fintech: {
     minScore: 600,
@@ -73,6 +76,7 @@ const P: Record<Lender, PolicyNumbers> = {
     ],
     term: (a) => (a <= 5000 ? 24 : a <= 15000 ? 36 : 48),
     always: ["E-sign the loan agreement; funds arrive in 1-2 business days."],
+    thin: { minVantage: 620, cap: 5000, apr: 24.9 },
   },
   prime: {
     minScore: 720,
@@ -97,12 +101,61 @@ const P: Record<Lender, PolicyNumbers> = {
       "Verify income with a W-2 or two years of tax returns.",
       "Enroll in autopay from a Meridian checking account to keep the quoted APR (otherwise +0.50%).",
     ],
+    thin: null,
+  },
+  regional: {
+    minScore: 680,
+    requireFico: true,
+    maxUtil: 0.45,
+    maxInq: 4,
+    fraudDecline: 55,
+    fraudCondition: [35, 54],
+    fraudConditionText: "Branch manager identity review before funding.",
+    bankruptcy: "decline",
+    lien: "decline",
+    incomePct: 0.4,
+    cap: 50000,
+    minAmount: 2000,
+    bands: [
+      { min: 760, apr: 7.25 },
+      { min: 720, apr: 8.75 },
+      { min: 680, apr: 11.25 },
+    ],
+    term: (a) => (a <= 12000 ? 36 : a <= 30000 ? 60 : 72),
+    always: [
+      "Open a Cascade checking account with direct deposit before funding.",
+      "Provide the most recent W-2 or two months of bank statements.",
+    ],
+    thin: null,
+  },
+  subprime: {
+    minScore: 560,
+    requireFico: false,
+    maxUtil: 0.9,
+    maxInq: 8,
+    fraudDecline: 70,
+    fraudCondition: [40, 69],
+    fraudConditionText: "Complete a video identity check before funding.",
+    bankruptcy: { minScore: 580, condition: "Provide the bankruptcy discharge order; an open case is not eligible." },
+    lien: { minScore: 600, condition: "Provide proof of a payment plan for the lien or judgment before funding." },
+    incomePct: 0.3,
+    cap: 20000,
+    minAmount: 500,
+    bands: [
+      { min: 660, apr: 23.9 },
+      { min: 620, apr: 27.9 },
+      { min: 580, apr: 31.9 },
+      { min: 560, apr: 35.9 },
+    ],
+    term: (a) => (a <= 3000 ? 18 : a <= 6000 ? 24 : 36),
+    always: ["Enroll in autopay from a verified bank account.", "Complete a 15-minute financial coaching call before funding."],
+    thin: { minVantage: 600, cap: 3000, apr: 35.9 },
   },
 };
 
 /** The APR the policy table advertises for this score (null = no band). Used by classify.ts. */
 export function advertisedApr(lender: Lender, score: number | null, thinFile = false): number | null {
-  if (thinFile) return lender === "fintech" ? 24.9 : null;
+  if (thinFile) return P[lender].thin?.apr ?? null;
   if (score == null) return null;
   const band = P[lender].bands.find((b) => score >= b.min);
   return band ? band.apr : null;
@@ -122,7 +175,7 @@ export function stubUnderwrite(lender: Lender, input: UnderwriterInput): Underwr
   let scoreField = "credit.fico9";
   if (fico == null) {
     if (bundle.flags.frozen && vantage != null) {
-      // Frozen-file exception (all three policies): underwrite on VantageScore 4, not a thin file.
+      // Frozen-file exception (every policy): underwrite on VantageScore 4, not a thin file.
       score = vantage;
       scoreField = "credit.vantage4";
       conditions.push("Lift the TransUnion security freeze before funding.");
@@ -134,12 +187,12 @@ export function stubUnderwrite(lender: Lender, input: UnderwriterInput): Underwr
           field: "credit.tradelines",
         });
       }
-    } else if (vantage != null && bundle.credit.tradelines.length <= 2) {
+    } else if (vantage != null && p.thin && bundle.credit.tradelines.length <= 2) {
       thinFile = true;
       score = vantage;
       scoreField = "credit.vantage4";
-      if (vantage < 620) {
-        reasons.push({ text: `VantageScore 4 of ${vantage} is below the 620 thin-file minimum.`, field: "credit.vantage4" });
+      if (vantage < p.thin.minVantage) {
+        reasons.push({ text: `VantageScore 4 of ${vantage} is below the ${p.thin.minVantage} thin-file minimum.`, field: "credit.vantage4" });
       }
     } else if (vantage != null) {
       score = vantage;
@@ -206,18 +259,31 @@ export function stubUnderwrite(lender: Lender, input: UnderwriterInput): Underwr
   }
 
   // ---- capacity ----------------------------------------------------------
-  let max = Math.min(statedIncome * p.incomePct, p.cap);
-  if (thinFile) max = Math.min(max, 5000);
+  const incomeMax = statedIncome * p.incomePct;
+  let max = Math.min(incomeMax, p.cap);
+  if (thinFile && p.thin) max = Math.min(max, p.thin.cap);
   let amount = amountRequested;
   if (amountRequested > max * 1.25) {
-    reasons.push({
-      text: `${usd(amountRequested)} requested exceeds the ${usd(max)} maximum for a stated income of ${usd(statedIncome)}.`,
-      field: "statedIncome",
-    });
-    reasons.push({
-      text: `The request is more than 25% above the policy maximum, so no counter-offer is available.`,
-      field: "amountRequested",
-    });
+    if (max < incomeMax) {
+      // The policy's dollar cap binds, not the income: cite the amount, not the income.
+      reasons.push({
+        text: `${usd(amountRequested)} requested exceeds this policy's ${usd(max)} maximum loan.`,
+        field: "amountRequested",
+      });
+      reasons.push({
+        text: `The request is more than 25% above the policy maximum, so no counter-offer is available.`,
+        field: "amountRequested",
+      });
+    } else {
+      reasons.push({
+        text: `${usd(amountRequested)} requested exceeds the ${usd(max)} maximum for a stated income of ${usd(statedIncome)}.`,
+        field: "statedIncome",
+      });
+      reasons.push({
+        text: `The request is more than 25% above the policy maximum, so no counter-offer is available.`,
+        field: "amountRequested",
+      });
+    }
   } else if (amountRequested > max) {
     amount = Math.floor(max / 100) * 100;
     conditions.push(`Approved at the policy maximum of ${usd(amount)} instead of the ${usd(amountRequested)} requested.`);
@@ -241,15 +307,15 @@ export function stubUnderwrite(lender: Lender, input: UnderwriterInput): Underwr
   }
 
   let apr: number;
-  if (thinFile) {
-    apr = 24.9;
+  if (thinFile && p.thin) {
+    apr = p.thin.apr;
     conditions.push("Verify income by linking a bank account before funding.");
   } else {
     const band = p.bands.find((b) => (score as number) >= b.min);
     apr = band ? band.apr : p.bands[p.bands.length - 1].apr;
   }
   const supporting: Reason[] = [
-    { text: `Score ${score} meets the ${thinFile ? "620 thin-file" : p.minScore} minimum.`, field: scoreField },
+    { text: `Score ${score} meets the ${thinFile && p.thin ? `${p.thin.minVantage} thin-file` : p.minScore} minimum.`, field: scoreField },
     { text: `Utilization ${pct(util)} and ${bundle.credit.inquiries6mo} inquiries are within policy.`, field: "credit.utilization" },
   ];
   return { decision: "approve", apr, termMonths: p.term(amount), amount, conditions, reasons: supporting };
