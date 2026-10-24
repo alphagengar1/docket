@@ -1,4 +1,4 @@
-import { useState, type ReactNode } from 'react'
+import { useEffect, useState, type ReactNode } from 'react'
 import type { Applicant, AuditEvent, Bundle, Decision, Notice, Offer, ReasonCheck } from '../types'
 import { LENDERS } from '../types'
 import { clock, monthlyPayment, num, pct, secs, usd } from '../lib/format'
@@ -25,6 +25,8 @@ interface Props {
   onApprove: () => Promise<void>
   onDecline: (note: string) => Promise<void>
   onDispute: (index: number) => Promise<void>
+  /** Focus mode: tradelines start collapsed. */
+  compact?: boolean
 }
 
 export const ACTOR_COLOR: Record<string, string> = {
@@ -36,6 +38,8 @@ export const ACTOR_COLOR: Record<string, string> = {
   'underwriter:cu': 'var(--actor-underwriter)',
   'underwriter:fintech': 'var(--actor-underwriter)',
   'underwriter:prime': 'var(--actor-underwriter)',
+  'underwriter:regional': 'var(--actor-underwriter)',
+  'underwriter:subprime': 'var(--actor-underwriter)',
   compliance: 'var(--actor-compliance)',
   human: 'var(--actor-human)',
 }
@@ -86,7 +90,7 @@ export function Inspector(p: Props) {
       </div>
 
       <Overview applicant={applicant} bundle={bundle} />
-      <Tradelines bundle={bundle} canDispute={!!bundle && !IN_FLIGHT.includes(applicant.status) && !applicant.replayOf} onDispute={p.onDispute} />
+      <Tradelines bundle={bundle} canDispute={!!bundle && !IN_FLIGHT.includes(applicant.status) && !applicant.replayOf} onDispute={p.onDispute} defaultOpen={!p.compact} />
 
       <div className="tabs" role="tablist">
         {(['offer', 'trace', 'notice'] as InspectorTab[]).map((t) => (
@@ -214,8 +218,9 @@ function Overview({ applicant, bundle }: { applicant: Applicant; bundle: Bundle 
   )
 }
 
-function Tradelines({ bundle, canDispute, onDispute }: { bundle: Bundle | undefined; canDispute: boolean; onDispute: (i: number) => Promise<void> }) {
-  const [open, setOpen] = useState(true)
+function Tradelines({ bundle, canDispute, onDispute, defaultOpen = true }: { bundle: Bundle | undefined; canDispute: boolean; onDispute: (i: number) => Promise<void>; defaultOpen?: boolean }) {
+  const [open, setOpen] = useState(defaultOpen)
+  useEffect(() => setOpen(defaultOpen), [defaultOpen])
   const [busy, setBusy] = useState<number | null>(null)
   if (!bundle) return null
   const rows = bundle.credit.tradelines
@@ -341,7 +346,7 @@ function OfferTab({ applicant, offer, decision, offers, checks }: { applicant: A
 const STEP_TITLE: Record<string, string> = {
   pull: 'Bureau pull',
   guardrails: 'Hard-stop rules',
-  underwrite: 'Three lenders',
+  underwrite: `${LENDERS.length} lenders`,
   verify: 'Reason verification',
   compliance: 'Adverse-action notice',
   human: 'Human review',
@@ -379,6 +384,8 @@ const ACTOR_WORD: Record<string, string> = {
   'underwriter:cu': 'Credit union',
   'underwriter:fintech': 'Fintech',
   'underwriter:prime': 'Prime bank',
+  'underwriter:regional': 'Regional bank',
+  'underwriter:subprime': 'Second chance',
   compliance: 'Compliance',
   human: 'Reviewer',
   applicant: 'Borrower',

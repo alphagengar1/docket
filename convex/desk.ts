@@ -71,8 +71,8 @@ export const runDeskWorkflow = workflow.define({
       return;
     }
 
-    // 3. underwrite x3 in parallel --------------------------------------
-    await step.runMutation(internal.desk.mark, { applicantId, status: "underwriting", action: "step.underwrite.start", note: "cu, fintech, prime" });
+    // 3. underwrite every lender in parallel -----------------------------
+    await step.runMutation(internal.desk.mark, { applicantId, status: "underwriting", action: "step.underwrite.start", note: LENDERS.join(", ") });
     const results = await Promise.all(
       LENDERS.map((lender) =>
         step.runAction(internal.agents.runUnderwriter, { applicantId, lender }, { retry: true, name: `underwrite:${lender}` }),
@@ -335,7 +335,7 @@ export const disputeTradeline = mutation({
       replayNote: `disputed credit.tradelines[${tradelineIndex}] (${desc})`,
       dispute: { fromApplicantId: applicantId, tradelineIndex },
     });
-    await writeAudit(ctx, { applicantId, actor: "desk", action: "replay.started", ref: String(replayId), note: "re-running all three lenders on the corrected bundle" });
+    await writeAudit(ctx, { applicantId, actor: "desk", action: "replay.started", ref: String(replayId), note: `re-running all ${LENDERS.length} lenders on the corrected bundle` });
     return replayId;
   },
 });

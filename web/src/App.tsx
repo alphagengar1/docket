@@ -10,6 +10,7 @@ import { Queue } from './components/Queue'
 import { IntakePane } from './components/IntakePane'
 import { PersonaDeck } from './components/PersonaDeck'
 import { Waterfall } from './components/Waterfall'
+import { PipelineStrip } from './components/PipelineStrip'
 import { BeforeCard, OfferCard } from './components/OfferCard'
 import { HardStopCard } from './components/HardStopCard'
 import { Inspector, type InspectorTab } from './components/Inspector'
@@ -28,12 +29,27 @@ export default function App() {
   const [deckOpen, setDeckOpen] = useState(false)
   const [applicantView, setApplicantView] = useState(false)
   const [tab, setTab] = useState<InspectorTab>('offer')
-  const [sheetOpen, setSheetOpen] = useState(false)
-  const [theme, setTheme] = useState<Theme>('tag')
+  const [theme, setTheme] = useState<Theme>('dark')
+  // Focus (default): only what the decision needs. Detail: every panel, the timing waterfall and the log.
+  const [focus, setFocus] = useState<boolean>(() => {
+    try {
+      return localStorage.getItem('docket.focus') !== 'off'
+    } catch {
+      return true
+    }
+  })
+  const [timing, setTiming] = useState(false)
 
   useEffect(() => {
     document.documentElement.dataset.theme = theme
   }, [theme])
+  useEffect(() => {
+    try {
+      localStorage.setItem('docket.focus', focus ? 'on' : 'off')
+    } catch {
+      /* private window or blocked storage: the preference just does not persist */
+    }
+  }, [focus])
 
   // Follow the newest applicant when nothing is selected (replay mode relies on this).
   useEffect(() => {
@@ -164,8 +180,10 @@ export default function App() {
   }
 
   return (
-    <div className="app">
+    <div className={`app ${focus ? 'focus' : ''}`}>
       <TopBar
+        focus={focus}
+        onFocus={setFocus}
         sandbox={desk.sandbox}
         onReset={desk.resetBoard ? () => { if (window.confirm('Reset the board? This deletes every applicant.')) { setSelectedId(null); setSelectedOfferId(null); void desk.resetBoard?.() } } : undefined}
         connection={desk.connection}
@@ -232,62 +250,69 @@ export default function App() {
                     </>
                   )}
                 </div>
-                <Waterfall applicant={applicant} steps={steps} offers={offers} checks={desk.reasonChecks.filter((c) => c.applicantId === selectedId)} now={now} />
+                {focus && (
+                  <PipelineStrip
+                    applicant={applicant}
+                    steps={steps}
+                    offers={offers}
+                    checks={desk.reasonChecks.filter((c) => c.applicantId === selectedId)}
+                    now={now}
+                    timingOpen={timing}
+                    onTiming={() => setTiming((t) => !t)}
+                  />
+                )}
+                {(!focus || timing) && (
+                  <Waterfall applicant={applicant} steps={steps} offers={offers} checks={desk.reasonChecks.filter((c) => c.applicantId === selectedId)} now={now} />
+                )}
                 <div className="board-scroll">
                 <div className={`columns ${original ? 'diff' : ''}`}>
+                  {original && (
+                    <div className="diff-label section-label">
+                      Before dispute · {original.name} (top card) · after re-pull below, changed values highlighted
+                    </div>
+                  )}
+                  {/* One cell per lender (header, optional before-card, card) so any number of lenders wraps into rows. */}
                   {LENDERS.map((l, i) => {
                     const o = offers.find((x) => x.lender === l.id)
+                    const chosen = !!decision?.chosenOfferId && o?._id === decision.chosenOfferId
                     return (
-                      <div key={`h-${l.id}`} className="col-head">
-                        <span className="letter">{'ABC'[i]}</span>
-                        <span className="nm">{l.label}</span>
-                        <span className="chips">
-                          {o?.status === 'done' && <span className="chip">{(o.latencyMs! / 1000).toFixed(1)}s</span>}
-                          {o?.status === 'done' && <span className="chip">{o.reasons.length} reasons</span>}
-                          {!o && <span className="chip">{l.policy.toLowerCase()}</span>}
-                        </span>
+                      <div key={l.id} className="lender-col">
+                        <div className="col-head">
+                          <span className="letter">{'ABCDEFGH'[i] ?? i + 1}</span>
+                          <span className="nm">{l.label}</span>
+                          <span className="chips">
+                            {o?.status === 'done' && <span className="chip">{(o.latencyMs! / 1000).toFixed(1)}s</span>}
+                            {o?.status === 'done' && <span className="chip">{o.reasons.length} reasons</span>}
+                            {!o && <span className="chip">{l.policy.toLowerCase()}</span>}
+                          </span>
+                        </div>
+                        {original && <BeforeCard lender={l.id} offer={beforeOffers.find((x) => x.lender === l.id)} />}
+                        {applicant?.status !== 'hard_stop' && (
+                          <OfferCard
+                            lender={l.id}
+                            offer={o}
+                            checks={desk.reasonChecks}
+                            bestApr={bestApr}
+                            before={original ? beforeOffers.find((x) => x.lender === l.id) : undefined}
+                            underwriteStartedAt={underwriteStart}
+                            now={now}
+                            selected={!!o && o._id === selectedOfferId}
+                            chosen={chosen}
+                            dim={!!decision && !chosen}
+                            canSelect={!!applicant && applicant.status === 'awaiting_human'}
+                            onSelect={() => {
+                              if (!o) return
+                              setSelectedOfferId((cur) => (cur === o._id ? null : o._id))
+                              setTab('offer')
+                            }}
+                            onTrace={() => setTab('trace')}
+                            compact={focus}
+                          />
+                        )}
                       </div>
                     )
                   })}
-                  {original && (
-                    <>
-                      <div className="diff-label section-label">Before dispute · {original.name}</div>
-                      {LENDERS.map((l) => (
-                        <BeforeCard key={`b-${l.id}`} lender={l.id} offer={beforeOffers.find((x) => x.lender === l.id)} />
-                      ))}
-                      <div className="diff-label section-label">After re-pull · changed values highlighted</div>
-                    </>
-                  )}
-                  {applicant?.status === 'hard_stop' ? (
-                    <HardStopCard event={hs} />
-                  ) : (
-                    LENDERS.map((l) => {
-                      const o = offers.find((x) => x.lender === l.id)
-                      const chosen = !!decision?.chosenOfferId && o?._id === decision.chosenOfferId
-                      return (
-                        <OfferCard
-                          key={l.id}
-                          lender={l.id}
-                          offer={o}
-                          checks={desk.reasonChecks}
-                          bestApr={bestApr}
-                          before={original ? beforeOffers.find((x) => x.lender === l.id) : undefined}
-                          underwriteStartedAt={underwriteStart}
-                          now={now}
-                          selected={!!o && o._id === selectedOfferId}
-                          chosen={chosen}
-                          dim={!!decision && !chosen}
-                          canSelect={!!applicant && applicant.status === 'awaiting_human'}
-                          onSelect={() => {
-                            if (!o) return
-                            setSelectedOfferId((cur) => (cur === o._id ? null : o._id))
-                            setTab('offer')
-                          }}
-                          onTrace={() => setTab('trace')}
-                        />
-                      )
-                    })
-                  )}
+                  {applicant?.status === 'hard_stop' && <HardStopCard event={hs} />}
                 </div>
                 </div>
             </div>
@@ -299,6 +324,7 @@ export default function App() {
             evalRuns={desk.evalRuns}
             evalCases={desk.evalCases.length}
             onRunEval={desk.runEval}
+            defaultOpen={!focus}
           />
         </main>
 
@@ -314,6 +340,7 @@ export default function App() {
           selectedOffer={selectedOffer}
           tab={tab}
           onTab={setTab}
+          compact={focus}
           onApprove={async () => {
             if (applicant && selectedOffer) await desk.approveOffer(applicant._id, selectedOffer._id)
           }}

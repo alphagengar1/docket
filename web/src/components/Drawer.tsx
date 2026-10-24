@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import type { Applicant, AuditEvent, EvalRun } from '../types'
 import { clockMs, pct } from '../lib/format'
 import { newestFirst } from '../lib/select'
@@ -13,12 +13,15 @@ interface Props {
   evalRuns: EvalRun[]
   evalCases: number
   onRunEval: () => Promise<void>
+  /** Focus mode starts the drawer collapsed; the tabs still open it. */
+  defaultOpen?: boolean
 }
 
 /** Respan log table for the audit log; Laminar eval list for eval metrics. */
-export function Drawer({ events, applicants, selectedId, evalRuns, evalCases, onRunEval }: Props) {
+export function Drawer({ events, applicants, selectedId, evalRuns, evalCases, onRunEval, defaultOpen = true }: Props) {
   const [tab, setTab] = useState<DrawerTab>('audit')
-  const [open, setOpen] = useState(true)
+  const [open, setOpen] = useState(defaultOpen)
+  useEffect(() => setOpen(defaultOpen), [defaultOpen])
   const [scope, setScope] = useState<'this' | 'all'>('all')
   const [running, setRunning] = useState(false)
 

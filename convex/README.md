@@ -52,7 +52,7 @@ npx convex run eval:runEval '{}'         # 20 personas → evalRuns row (add {"k
 2. **ECOA classification + FCRA** — `classify.ts`. `offers.classification` is computed in code (approve / counteroffer / deny); a notice is generated for any deny or counteroffer; the FCRA paragraph (source "CRS Credit API sandbox", pull date, "the consumer reporting agency did not make the decision") is appended in code, never by the LLM. `notices.required/requiredBecause/lendersCounteroffered/droppedReasons`.
 3. **Dispute and replay** — `desk:disputeTradeline {applicantId, tradelineIndex, note?}` writes an `applicant` audit event, creates a linked applicant (`replayOf`) and re-runs the desk on a corrected bundle (mock: tradeline removed, utilization rescaled, score +5/+25; crs: re-pulled). `getApplicantView` returns `replays: Id[]` on the original.
 
-Passing values used by the counterfactuals: fico9/vantage4 → 780, utilization → 0.10, inquiries6mo → 0, fraud.score → 5, flags.* → false, identity.verified → true, statedIncome → amountRequested/0.35 rounded up, amountRequested → min(requested, 30% of income, $20k). Fields without a mapping (tradelines, fraud.signals) are "untested" (verified = null).
+Passing values used by the counterfactuals: fico9/vantage4 → 780, utilization → 0.10, inquiries6mo → 0, fraud.score → 5, flags.* → false, identity.verified → true, statedIncome → amountRequested/0.35 rounded up, amountRequested → max($2,500, min(requested, 30% of income, $5k)) so it also clears every policy's dollar cap. Fields without a mapping (tradelines, fraud.signals) are "untested" (verified = null).
 
 ## Files
 | File | What |

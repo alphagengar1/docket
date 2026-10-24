@@ -5,9 +5,9 @@
 import { z } from "zod";
 
 export type Tier = "excellent" | "good" | "fair" | "poor";
-export type Lender = "cu" | "fintech" | "prime";
+export type Lender = "cu" | "fintech" | "prime" | "regional" | "subprime";
 export type Provider = "claude" | "creao";
-export const LENDERS: Lender[] = ["cu", "fintech", "prime"];
+export const LENDERS: Lender[] = ["cu", "fintech", "prime", "regional", "subprime"];
 
 export type Tradeline = { type: string; balance: number; status: string; openedAt: string };
 

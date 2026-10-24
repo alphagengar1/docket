@@ -1,4 +1,4 @@
-// Pure, deterministic stand-ins for convex/rules.ts (hard stops) and the three underwriter policies.
+// Pure, deterministic stand-ins for convex/rules.ts (hard stops) and the underwriter policies.
 // Thresholds mirror policies/*.md (via convex/policies.ts) so mock outcomes match the live desk.
 // The real underwriters are Claude calls; these exist so the mock flow has believable, explainable output.
 import type { Bundle, Lender, MarketAnchor, OfferClassification, Reason, Tier } from '../types'
@@ -67,18 +67,24 @@ export function classify(decision: 'approve' | 'decline', amountRequested: numbe
 function capacity(lender: Lender, income: number, thin: boolean) {
   if (lender === 'cu') return Math.min(income * 0.35, 35000)
   if (lender === 'fintech') return Math.min(income * 0.5, thin ? 5000 : 25000)
+  if (lender === 'regional') return Math.min(income * 0.4, 50000)
+  if (lender === 'subprime') return Math.min(income * 0.3, thin ? 3000 : 20000)
   return Math.min(income * 0.4, 100000)
 }
 
 function term(lender: Lender, amount: number) {
   if (lender === 'cu') return amount <= 10000 ? 36 : amount <= 20000 ? 48 : 60
   if (lender === 'fintech') return amount <= 5000 ? 24 : amount <= 15000 ? 36 : 48
+  if (lender === 'regional') return amount <= 12000 ? 36 : amount <= 30000 ? 60 : 72
+  if (lender === 'subprime') return amount <= 3000 ? 18 : amount <= 6000 ? 24 : 36
   return amount <= 15000 ? 36 : amount <= 40000 ? 60 : 84
 }
 
 function price(lender: Lender, score: number, thin: boolean): number {
   if (lender === 'cu') return score >= 740 ? 7.9 : score >= 700 ? 9.9 : 12.9
   if (lender === 'fintech') return thin ? 24.9 : score >= 720 ? 10.9 : score >= 680 ? 15.9 : score >= 640 ? 21.9 : 29.9
+  if (lender === 'regional') return score >= 760 ? 7.25 : score >= 720 ? 8.75 : 11.25
+  if (lender === 'subprime') return thin ? 35.9 : score >= 660 ? 23.9 : score >= 620 ? 27.9 : score >= 580 ? 31.9 : 35.9
   return score >= 780 ? 6.49 : score >= 740 ? 7.49 : 8.49
 }
 
@@ -87,8 +93,9 @@ export function underwrite(lender: Lender, input: UnderwriteInput): UnderwriteOu
   const anchor = anchorFor(tierFor(credit.fico9, credit.vantage4))
   const reasons: Reason[] = []
   const conditions: string[] = []
-  const thin = lender === 'fintech' && credit.fico9 == null && credit.tradelines.length <= 2
-  const score = credit.fico9 ?? (lender === 'fintech' ? credit.vantage4 : null)
+  const usesVantage = lender === 'fintech' || lender === 'subprime'
+  const thin = usesVantage && credit.fico9 == null && credit.tradelines.length <= 2
+  const score = credit.fico9 ?? (usesVantage ? credit.vantage4 : null)
 
   // --- score ---
   if (lender === 'cu') {
@@ -97,32 +104,38 @@ export function underwrite(lender: Lender, input: UnderwriteInput): UnderwriteOu
   } else if (lender === 'prime') {
     if (credit.fico9 == null) reasons.push({ text: 'No FICO 9 score on file; Prime requires a scored file.', field: 'credit.fico9' })
     else if (credit.fico9 < 720) reasons.push({ text: `FICO 9 of ${credit.fico9} is below the Prime minimum of 720.`, field: 'credit.fico9' })
+  } else if (lender === 'regional') {
+    if (credit.fico9 == null) reasons.push({ text: 'No FICO 9 score on file; Cascade requires a scored file.', field: 'credit.fico9' })
+    else if (credit.fico9 < 680) reasons.push({ text: `FICO 9 of ${credit.fico9} is below the Cascade minimum of 680.`, field: 'credit.fico9' })
   } else {
+    const floor = lender === 'subprime' ? 560 : 600
+    const thinFloor = lender === 'subprime' ? 600 : 620
     if (score == null) reasons.push({ text: 'Neither FICO 9 nor VantageScore 4 is available.', field: 'credit.fico9' })
     else if (thin) {
-      if ((credit.vantage4 ?? 0) < 620) reasons.push({ text: `Thin file: VantageScore 4 of ${credit.vantage4} is below the 620 floor.`, field: 'credit.vantage4' })
-    } else if (score < 600) reasons.push({ text: `FICO 9 of ${score} is below the policy minimum of 600.`, field: 'credit.fico9' })
+      if ((credit.vantage4 ?? 0) < thinFloor) reasons.push({ text: `Thin file: VantageScore 4 of ${credit.vantage4} is below the ${thinFloor} floor.`, field: 'credit.vantage4' })
+    } else if (score < floor) reasons.push({ text: `FICO 9 of ${score} is below the policy minimum of ${floor}.`, field: 'credit.fico9' })
   }
 
   // --- utilization / inquiries / public records / fraud ---
-  const utilCap = lender === 'cu' ? 0.5 : lender === 'fintech' ? 0.8 : 0.3
+  const utilCap = lender === 'cu' ? 0.5 : lender === 'fintech' ? 0.8 : lender === 'regional' ? 0.45 : lender === 'subprime' ? 0.9 : 0.3
   if (credit.utilization == null) {
-    if (lender !== 'fintech') reasons.push({ text: 'Utilization is unavailable, which the policy treats as a failure.', field: 'credit.utilization' })
+    if (!usesVantage) reasons.push({ text: 'Utilization is unavailable, which the policy treats as a failure.', field: 'credit.utilization' })
   } else if (credit.utilization > utilCap)
     reasons.push({ text: `Revolving utilization of ${pct(credit.utilization)} exceeds the ${pct(utilCap)} cap.`, field: 'credit.utilization' })
 
-  const inqCap = lender === 'cu' ? 3 : lender === 'fintech' ? 6 : 2
+  const inqCap = lender === 'cu' ? 3 : lender === 'fintech' ? 6 : lender === 'regional' ? 4 : lender === 'subprime' ? 8 : 2
   if (credit.inquiries6mo > inqCap)
     reasons.push({ text: `${credit.inquiries6mo} hard inquiries in six months; policy allows at most ${inqCap}.`, field: 'credit.inquiries6mo' })
 
   if (flags.bankruptcy) {
-    if (lender !== 'fintech') reasons.push({ text: 'Bankruptcy on file; policy declines regardless of age.', field: 'flags.bankruptcy' })
-    else if ((score ?? 0) < 640) reasons.push({ text: `Bankruptcy on file with a score of ${score}, below the 640 bankruptcy floor.`, field: 'flags.bankruptcy' })
-    else conditions.push('Provide the bankruptcy discharge letter.')
+    const bkFloor = lender === 'fintech' ? 640 : lender === 'subprime' ? 580 : null
+    if (bkFloor == null) reasons.push({ text: 'Bankruptcy on file; policy declines regardless of age.', field: 'flags.bankruptcy' })
+    else if ((score ?? 0) < bkFloor) reasons.push({ text: `Bankruptcy on file with a score of ${score}, below the ${bkFloor} bankruptcy floor.`, field: 'flags.bankruptcy' })
+    else conditions.push(lender === 'fintech' ? 'Provide the bankruptcy discharge letter.' : 'Provide the bankruptcy discharge order; an open case is not eligible.')
   }
   if (flags.eviction) reasons.push({ text: 'Eviction judgment in public records.', field: 'flags.eviction' })
 
-  const fraudCap = lender === 'cu' ? 60 : lender === 'fintech' ? 70 : 50
+  const fraudCap = lender === 'cu' ? 60 : lender === 'fintech' ? 70 : lender === 'regional' ? 55 : lender === 'subprime' ? 70 : 50
   if (fraud.score != null && fraud.score >= fraudCap)
     reasons.push({ text: `Fraud score ${fraud.score} is at or above the policy ceiling of ${fraudCap}.`, field: 'fraud.score' })
 
@@ -136,8 +149,9 @@ export function underwrite(lender: Lender, input: UnderwriteInput): UnderwriteOu
     amount = Math.floor(max / 100) * 100
     conditions.push(`Approved at the policy maximum of ${usd(amount)} instead of the ${usd(input.amountRequested)} requested.`)
   }
-  if (lender === 'prime' && amount < 2500 && reasons.length === 0)
-    reasons.push({ text: `Requested ${usd(amount)} is below the Prime minimum of $2,500.`, field: 'amountRequested' })
+  const minAmount = lender === 'prime' ? 2500 : lender === 'regional' ? 2000 : lender === 'subprime' ? 500 : 1000
+  if (amount < minAmount && reasons.length === 0)
+    reasons.push({ text: `Requested ${usd(amount)} is below the policy minimum of ${usd(minAmount)}.`, field: 'amountRequested' })
 
   // Contract rule: every denial carries at least two reasons. The supporting reason is truthful but may not be
   // sufficient on its own; the counterfactual test (verifyReason) is what tells the two apart.
@@ -165,6 +179,13 @@ export function underwrite(lender: Lender, input: UnderwriteInput): UnderwriteOu
   } else if (lender === 'fintech') {
     conditions.push('E-sign the loan agreement; funds arrive in 1-2 business days.')
     if (fraud.score != null && fraud.score >= 40) conditions.push('Complete step-up identity verification (government ID plus selfie).')
+    if (thin) conditions.push('Verify income by linking a bank account before funding.')
+  } else if (lender === 'regional') {
+    conditions.push('Open a Cascade checking account with direct deposit before funding.', 'Provide the most recent W-2 or two months of bank statements.')
+    if (fraud.score != null && fraud.score >= 35) conditions.push('Branch manager identity review before funding.')
+  } else if (lender === 'subprime') {
+    conditions.push('Enroll in autopay from a verified bank account.', 'Complete a 15-minute financial coaching call before funding.')
+    if (fraud.score != null && fraud.score >= 40) conditions.push('Complete a video identity check before funding.')
     if (thin) conditions.push('Verify income by linking a bank account before funding.')
   } else {
     conditions.push('Verify income with a W-2 or two years of tax returns.', 'Enroll in autopay from a Meridian checking account to keep the quoted APR (otherwise +0.50%).')
@@ -290,7 +311,7 @@ export function adverseActionNotice(
   source: { name: string; pulledAt: number },
 ): string {
   if (declines.length === 0) return ''
-  const lenderNames: Record<string, string> = { cu: 'Pacific Ridge Credit Union', fintech: 'Northstar Lending', prime: 'Meridian Bank Prime' }
+  const lenderNames: Record<string, string> = { cu: 'Pacific Ridge Credit Union', fintech: 'Northstar Lending', prime: 'Meridian Bank Prime', regional: 'Cascade Regional Bank', subprime: 'Harbor Second Chance Finance' }
   const parts = declines.map((d) => {
     const who = lenderNames[d.lender] ?? d.lender
     if (d.classification === 'counteroffer') return `${who} offered different terms than you requested. If you do not accept that counteroffer, this notice applies to that request.`

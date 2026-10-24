@@ -41,7 +41,7 @@ function Row({ a, selected, onSelect }: { a: Applicant; selected: boolean; onSel
         <span className="purpose">{a.purpose}</span>
       </span>
       <span className="amt">{usd(a.amountRequested)}</span>
-      <span className="sub">
+      <span className="sub meta">
         {a.personaId} · {a._id.slice(0, 7)}
         {a.replayOf ? ' · replay' : ''}
       </span>

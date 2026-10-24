@@ -6,7 +6,7 @@ import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 
 const here = dirname(fileURLToPath(import.meta.url));
-const lenders = ["cu", "fintech", "prime"];
+const lenders = ["cu", "fintech", "prime", "regional", "subprime"];
 const parts = lenders.map((l) => {
   const md = readFileSync(join(here, `${l}.md`), "utf8");
   return `  ${l}: ${JSON.stringify(md)},`;
@@ -23,6 +23,8 @@ export const LENDER_NAMES: Record<Lender, string> = {
   cu: "Pacific Ridge Credit Union",
   fintech: "Northstar Lending",
   prime: "Meridian Bank Prime",
+  regional: "Cascade Regional Bank",
+  subprime: "Harbor Second Chance Finance",
 };
 `;
 writeFileSync(join(here, "..", "convex", "policies.ts"), out);

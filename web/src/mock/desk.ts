@@ -1,5 +1,5 @@
 // The mock backend. Same verbs convex/desk.ts exposes as mutations/actions.
-import type { Applicant, Decision, EvalFailure, EvalRun, IntakeInput, Lender } from '../types'
+import { LENDERS, type Applicant, type Decision, type EvalFailure, type EvalRun, type IntakeInput, type Lender } from '../types'
 import { outcomeOf, simulateDesk } from './engine'
 import { EVAL_CASES, MARKET_RATES, PERSONAS, personaById, type PersonaBundle } from './personas'
 import { bundleAfterDispute } from './rules'
@@ -12,7 +12,7 @@ export const replayStore = new DeskStore({ evalCases: EVAL_CASES, marketRates: M
 function ids(store: DeskStore) {
   return {
     bundle: store.nextId('bun'),
-    offers: { cu: store.nextId('off'), fintech: store.nextId('off'), prime: store.nextId('off') } as Record<Lender, string>,
+    offers: Object.fromEntries(LENDERS.map((l) => [l.id, store.nextId('off')])) as Record<Lender, string>,
     notice: store.nextId('not'),
     audit: () => store.nextId('aud'),
     check: () => store.nextId('chk'),
@@ -164,7 +164,7 @@ export function runEval(store: DeskStore): Promise<void> {
     const ops = simulateDesk(applicant, {
       t0: startedAt,
       bundle: persona.bundle,
-      ids: { bundle: 'b', offers: { cu: 'cu', fintech: 'fintech', prime: 'prime' }, notice: 'n', audit: () => `a${n++}`, check: () => `c${n++}` },
+      ids: { bundle: 'b', offers: Object.fromEntries(LENDERS.map((l) => [l.id, l.id])) as Record<Lender, string>, notice: 'n', audit: () => `a${n++}`, check: () => `c${n++}` },
     })
     const got = outcomeOf(ops)
     const fieldsSeen = new Set<string>()

@@ -168,7 +168,7 @@ function CodeEntry({ onStarted }: { onStarted: (id: string) => void }) {
       </div>
       <div className="bw-hint">
         <b />
-        <p>Next, we pull your credit file and send it to three lenders at once. You pick the offer.</p>
+        <p>Next, we pull your credit file and send it to {LENDERS.length} lenders at once. You pick the offer.</p>
       </div>
       <div className="bw-bottom">
         {found ? (
@@ -294,7 +294,7 @@ function Offers({ v, no, onReset }: { v: BView; no: string | null; onReset: () =
         </h1>
         <p className="s16">
           For <b className="mono">{usd(v.amountRequested)}</b>
-          {term ? ` over ${term} months` : ''}. {n + missing.length === 3 && missing.length === 0 ? '3 lenders answered.' : 'More lenders may still answer.'}
+          {term ? ` over ${term} months` : ''}. {missing.length === 0 ? `All ${LENDERS.length} lenders answered.` : 'More lenders may still answer.'}
         </p>
       </div>
       {ranked.map((o) => (

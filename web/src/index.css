@@ -599,10 +599,20 @@ textarea:focus {
 /* Phoenix A/B/C column headers + Fey cards */
 .columns {
   display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
+  /* As many lender cells per row as fit at the card's design width; extra lenders wrap to the next row. */
+  grid-template-columns: repeat(auto-fit, minmax(var(--col-min, 232px), 1fr));
   gap: var(--sp-3);
   padding: var(--sp-3);
   align-content: start;
+}
+.lender-col {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-3);
+  min-width: 0;
+}
+.columns > .hardstop {
+  grid-column: 1 / -1;
 }
 .col-head {
   display: flex;
@@ -693,6 +703,7 @@ textarea:focus {
 /* Fey hero: 24/600, fractional part dimmed */
 .hero {
   display: flex;
+  flex-wrap: wrap;
   align-items: baseline;
   gap: 3px;
   font-size: var(--fs-hero);
@@ -1899,161 +1910,88 @@ table.grid.tl tr:last-child td {
   to { background-position: 0 -120%, 0 0; }
 }
 
-
-/* ---------------- Instrument Tag console: structure on top of the tokens ---------------- */
-:root[data-theme='tag'] body { font-family: var(--sans); }
-:root[data-theme='tag'] .topbar { border-bottom: 2px solid var(--text); }
-:root[data-theme='tag'] .topbar .brand { font-family: var(--disp); font-stretch: 125%; font-weight: 800; text-transform: uppercase; letter-spacing: -0.01em; }
-:root[data-theme='tag'] .section-label,
-:root[data-theme='tag'] .queue-section,
-:root[data-theme='tag'] .wf-row .nm,
-:root[data-theme='tag'] .col-head .nm { font-family: var(--mono); letter-spacing: 0.08em; text-transform: uppercase; }
-:root[data-theme='tag'] .board-head h2 { font-family: var(--disp); font-stretch: 125%; font-weight: 800; text-transform: uppercase; letter-spacing: -0.01em; font-size: 26px; }
-:root[data-theme='tag'] .board-head { border-bottom: 2px solid var(--text); }
-:root[data-theme='tag'] .card { border: 1px solid var(--hair-2); }
-:root[data-theme='tag'] .card .lender { font-family: var(--disp); font-stretch: 125%; font-weight: 800; text-transform: uppercase; letter-spacing: -0.01em; }
-:root[data-theme='tag'] .card[aria-pressed='true'] { border-color: var(--text); box-shadow: inset 0 -4px 0 var(--text); }
-:root[data-theme='tag'] .col-head .letter { background: var(--text); color: var(--surface); border-radius: 0; }
-:root[data-theme='tag'] .pill,
-:root[data-theme='tag'] .chip,
-:root[data-theme='tag'] .status { border-radius: 0; font-family: var(--mono); letter-spacing: 0.06em; text-transform: uppercase; }
-:root[data-theme='tag'] button { border-radius: 0; }
-:root[data-theme='tag'] button.approve-pill { background: var(--text); color: var(--surface); }
-:root[data-theme='tag'] button.decline-pill { background: transparent; color: var(--text); border: 2px solid var(--text); }
-:root[data-theme='tag'] .queue-row::before { width: 4px; }
-:root[data-theme='tag'] .queue-row.decide .rank { border-radius: 0; background: var(--text); color: var(--surface); }
-:root[data-theme='tag'] .timeline .d { border-radius: 0; }
-:root[data-theme='tag'] .wf-row .bar { border-radius: 0; }
-:root[data-theme='tag'] .wf-row .bar::after { background: linear-gradient(100deg, transparent 20%, rgba(255, 255, 255, 0.55) 50%, transparent 80%); background-size: 220% 100%; }
-:root[data-theme='tag'] .inspector h2,
-:root[data-theme='tag'] .pane-head .section-label { font-family: var(--mono); }
-:root[data-theme='tag'] .status.live::before,
-:root[data-theme='tag'] .pill.live::before { background: var(--hard); border-radius: 0; }
-:root[data-theme='tag'] { --wf-label-w: 176px; }
-:root[data-theme='tag'] .wf-row.child .nm { text-transform: none; font-family: var(--sans); letter-spacing: 0; }
-:root[data-theme='tag'] .card .lender { font-size: 13px; white-space: normal; line-height: 1.15; }
-:root[data-theme='tag'] .pane-foot { font-size: 11px; white-space: nowrap; gap: var(--sp-2); }
-:root[data-theme='tag'] .pane-foot span { overflow: hidden; text-overflow: ellipsis; }
-:root[data-theme='tag'] .board-head h2 { font-size: 22px; }
-
-/* Tag theme, quieter: two greys instead of three, no tick grid or row stripes in the waterfall,
-   sentence-case step names, pre-run metrics hidden, a little more air. */
-:root[data-theme='tag'] { --panel: #e3e4df; --card-2: #e3e4df; --hair: #d6d8d1; --wf-row-h: 28px; }
-:root[data-theme='tag'] .wf-row { border-bottom: 0; }
-:root[data-theme='tag'] .wf-row .lane { background-image: none; }
-:root[data-theme='tag'] .wf-row .lane::before { border-top: 0; }
-:root[data-theme='tag'] .wf-row .lbl::after { border-top-color: var(--hair); }
-:root[data-theme='tag'] .wf-row.queued .met,
-:root[data-theme='tag'] .wf-row.skipped .met { display: none; }
-:root[data-theme='tag'] .wf-row .nm { font-family: var(--sans); text-transform: none; letter-spacing: 0; font-size: var(--fs-small); }
-:root[data-theme='tag'] .wf-row.child .nm { color: var(--muted); }
-:root[data-theme='tag'] .wf-ruler .ticks { color: var(--hair-2); }
-:root[data-theme='tag'] .waterfall { padding-top: var(--sp-3); padding-bottom: var(--sp-3); }
-:root[data-theme='tag'] .col-head .nm { font-family: var(--sans); text-transform: none; letter-spacing: 0; font-weight: var(--wt-medium); }
-:root[data-theme='tag'] .col-head .chip { display: none; }
-:root[data-theme='tag'] .card { padding: var(--sp-4) var(--sp-4) var(--sp-3); }
-:root[data-theme='tag'] .card-foot .chip { text-transform: none; letter-spacing: 0; }
-:root[data-theme='tag'] .topbar .ghost { color: var(--muted); }
-:root[data-theme='tag'] .board-head { border-bottom: 1px solid var(--hair-2); }
-:root[data-theme='tag'] .inspector-head .name { font-family: var(--sans); }
-
-/* ---------------- Decision sheet (one applicant over a blurred desk) ---------------- */
-.sheet-scrim {
-  backdrop-filter: blur(10px) saturate(0.8);
-  -webkit-backdrop-filter: blur(10px) saturate(0.8);
-  background: color-mix(in srgb, var(--bg) 55%, transparent);
-  padding-top: 40px;
-  align-items: flex-start;
-  animation: sheet-in 160ms ease-out both;
-}
-.sheet {
-  background: var(--surface);
-  border: 1px solid var(--hair-2);
-  border-radius: var(--radius-lg);
-  width: 1180px;
-  max-width: calc(100vw - 48px);
-  max-height: calc(100vh - 80px);
-  overflow: auto;
-  display: flex;
-  flex-direction: column;
-  box-shadow: 0 30px 80px rgba(0, 0, 0, 0.25);
-  animation: sheet-rise 220ms cubic-bezier(0.2, 0.8, 0.2, 1) both;
-}
-@keyframes sheet-in { from { opacity: 0; } }
-@keyframes sheet-rise { from { opacity: 0; transform: translateY(14px) scale(0.985); } }
-.sheet-nav {
+/* ---------------- Focus mode ----------------
+   Default view: only what the decision needs. The pipeline is a strip of step chips, cards show the
+   offer or the first reason, the audit log and tradelines start collapsed. "Detail" in the top bar
+   brings every panel back. */
+.pstrip {
   display: flex;
   align-items: center;
-  gap: var(--sp-2);
-  padding: var(--sp-2) var(--sp-3);
+  gap: var(--sp-3);
+  padding: 6px var(--sp-3);
+  min-height: 36px;
+  background: var(--surface);
   border-bottom: 1px solid var(--hair);
-  font-size: var(--fs-label);
+  flex: none;
+  min-width: 0;
 }
-.sheet-nav .sheet-id { margin-left: auto; }
-.sheet-nav .ghost { min-width: 32px; }
-.sheet-head {
+.pstrip .steps {
   display: flex;
   flex-wrap: wrap;
-  align-items: baseline;
-  gap: var(--sp-2) var(--sp-4);
-  padding: var(--sp-4) var(--sp-6) 0;
+  gap: var(--sp-2);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  min-width: 0;
 }
-.sheet-head h2 { margin: 0; font-size: 28px; line-height: 1.1; font-weight: var(--wt-semibold); letter-spacing: var(--tracking-tight); }
-.sheet-key {
-  margin: var(--sp-4) var(--sp-6) 0;
-  padding: var(--sp-4) var(--sp-4) var(--sp-3);
-  border: 1px solid var(--hair-2);
-  border-left: 6px solid var(--muted);
-  background: var(--panel);
-  display: flex;
-  flex-direction: column;
-  gap: var(--sp-1);
-}
-.sheet-key.good { border-left-color: var(--approve); }
-.sheet-key.bad { border-left-color: var(--decline); }
-.sheet-key.hard { border-left-color: var(--hard); }
-.sheet-key .headline { font-size: 22px; font-weight: var(--wt-semibold); letter-spacing: var(--tracking-tight); }
-.sheet-key.good .headline { color: var(--approve); }
-.sheet-key.bad .headline { color: var(--decline); }
-.sheet-key.hard .headline { color: var(--hard); }
-.sheet-key .sub { color: var(--muted); font-size: var(--fs-body); }
-.sheet-key .verdicts {
-  display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: var(--sp-3);
-  margin-top: var(--sp-3);
-  padding-top: var(--sp-3);
-  border-top: 1px solid var(--hair);
-}
-.sheet-key .verdict { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
-.sheet-key .verdict .lbl { font-size: var(--fs-label); text-transform: uppercase; letter-spacing: 0.06em; color: var(--muted); }
-.sheet-key .verdict .word { font-weight: var(--wt-semibold); font-size: var(--fs-row); }
-.sheet-key .verdict.tone-approve .word { color: var(--approve); }
-.sheet-key .verdict.tone-decline .word { color: var(--decline); }
-.sheet-key .verdict.tone-hard .word { color: var(--hard); }
-.sheet-key .verdict .why { font-size: var(--fs-small); color: var(--muted); overflow: hidden; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; }
-.sheet-cards {
-  display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: var(--sp-3);
-  padding: var(--sp-4) var(--sp-6);
-}
-.sheet-cards .hardstop { grid-column: 1 / -1; }
-.sheet-foot {
-  position: sticky;
-  bottom: 0;
-  display: flex;
+.pstrip .step {
+  display: inline-flex;
   align-items: center;
-  justify-content: space-between;
-  gap: var(--sp-3);
-  padding: var(--sp-3) var(--sp-6);
-  border-top: 1px solid var(--hair);
-  background: var(--surface);
+  gap: 6px;
+  height: 24px;
+  padding: 0 10px 0 8px;
+  border: 1px solid var(--hair-2);
+  border-radius: 999px;
+  font-size: var(--fs-small);
+  color: var(--muted);
+  white-space: nowrap;
 }
-.sheet-actions { display: flex; gap: var(--sp-2); align-items: center; }
-:root[data-theme='tag'] .sheet { border-radius: 0; border-color: var(--text); box-shadow: 0 30px 80px rgba(20, 21, 20, 0.25); }
-:root[data-theme='tag'] .sheet-head h2 { font-family: var(--disp); font-stretch: 125%; font-weight: 800; text-transform: uppercase; letter-spacing: -0.01em; font-size: 34px; }
-:root[data-theme='tag'] .sheet-key { background: var(--surface); border-left-width: 8px; }
-:root[data-theme='tag'] .sheet-key .headline { font-family: var(--disp); font-stretch: 125%; font-weight: 800; text-transform: uppercase; font-size: 24px; }
-:root[data-theme='tag'] .sheet-nav { border-bottom: 2px solid var(--text); }
-:root[data-theme='tag'] .sheet-foot { border-top: 2px solid var(--text); }
+.pstrip .step .dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--hair-2);
+  flex: none;
+}
+.pstrip .step.running {
+  color: var(--text);
+  border-color: var(--accent);
+}
+.pstrip .step.running .dot {
+  background: var(--accent);
+  animation: pulse 1.2s ease-in-out infinite;
+}
+.pstrip .step.done {
+  color: var(--text);
+}
+.pstrip .step.done .dot {
+  background: var(--approve);
+}
+.pstrip .step.failed {
+  color: var(--hard);
+  border-color: var(--hard);
+}
+.pstrip .step.failed .dot {
+  background: var(--hard);
+}
+.pstrip .step.skipped {
+  opacity: var(--dim);
+}
+.pstrip .step .met {
+  font-size: var(--fs-label);
+  color: var(--muted);
+}
+.pstrip .total {
+  margin-left: auto;
+  font-size: var(--fs-small);
+  white-space: nowrap;
+}
+.app.focus .queue-row .sub.meta {
+  visibility: hidden;
+}
+.card.compact .hero-sub {
+  padding-bottom: var(--sp-3);
+}
+.card-foot .chips .link {
+  margin-left: var(--sp-2);
+}
