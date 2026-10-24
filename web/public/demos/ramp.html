@@ -1,0 +1,1354 @@
+<!-- Reference: Ramp (spend management) https://ramp.com - Docket desk restyled after Ramp's light, near-monochrome approvals inbox with one warm yellow accent. Design study only, not wired to anything. -->
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Docket · Ramp study</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#F7F6F3; --surface:#FFFFFF; --line:#E6E4DE; --line2:#EFEDE8;
+  --ink:#141414; --ink2:#55534D; --ink3:#8A877F;
+  --y:#F6D743; --ytint:#FFF8D2; --yline:#EBD76A;
+  --g:#177245; --gt:#E4F3EA; --a:#B25E09; --at:#FDEBD3; --r:#C0282D; --rt:#FDE7E5;
+  --s1:4px; --s2:8px; --s3:12px; --s4:16px; --s5:24px; --s6:32px;
+  --rad:6px; --radl:8px;
+  --sans:"Inter",-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+  --mono:"JetBrains Mono",ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;
+}
+*{box-sizing:border-box}
+html{-webkit-text-size-adjust:100%}
+body{margin:0;background:var(--bg);color:var(--ink);font:400 14px/1.45 var(--sans);overflow-x:hidden;letter-spacing:-0.005em}
+h1,h2,h3,p{margin:0}
+button{font:inherit;color:inherit;letter-spacing:inherit}
+a{color:inherit}
+.num,td,.stat b,.kv b{font-variant-numeric:tabular-nums}
+.mono{font-family:var(--mono);font-size:12px;letter-spacing:0}
+.muted{color:var(--ink2)} .faint{color:var(--ink3)}
+:focus-visible{outline:2px solid var(--ink);outline-offset:2px;box-shadow:0 0 0 5px var(--y);border-radius:var(--rad)}
+
+/* shell */
+.app{display:grid;grid-template-columns:216px minmax(0,1fr);min-height:100vh}
+.side{background:var(--surface);border-right:1px solid var(--line);position:sticky;top:0;height:100vh;display:flex;flex-direction:column;padding:var(--s4) var(--s3)}
+.brand{display:flex;align-items:center;gap:var(--s2);padding:var(--s1) var(--s2) var(--s4)}
+.brand svg{flex:none}
+.brand b{font-size:16px;font-weight:700;letter-spacing:-0.03em}
+.nav{display:flex;flex-direction:column;gap:2px}
+.nav .grp{font-size:11px;font-weight:600;color:var(--ink3);text-transform:uppercase;letter-spacing:.06em;padding:var(--s4) var(--s2) var(--s1)}
+.nav a{display:flex;align-items:center;gap:var(--s2);height:32px;padding:0 var(--s2);border-radius:var(--rad);text-decoration:none;color:var(--ink2);font-weight:500}
+.nav a:hover{background:var(--bg);color:var(--ink)}
+.nav a[aria-current]{background:var(--bg);color:var(--ink);font-weight:600}
+.nav a svg{flex:none;color:currentColor}
+.nav .cnt{margin-left:auto;background:var(--y);color:var(--ink);font-size:11px;font-weight:700;min-width:20px;height:18px;line-height:18px;text-align:center;border-radius:9px;padding:0 6px}
+.side .foot{margin-top:auto;padding:var(--s3) var(--s2);border-top:1px solid var(--line2);font-size:12px;color:var(--ink3)}
+.side .foot b{display:block;color:var(--ink2);font-weight:600}
+.main{min-width:0}
+.top{height:52px;background:var(--surface);border-bottom:1px solid var(--line);display:flex;align-items:center;justify-content:space-between;padding:0 var(--s6);position:sticky;top:0;z-index:5}
+.crumb{display:flex;align-items:center;gap:var(--s2);font-weight:500;color:var(--ink2)}
+.crumb b{color:var(--ink);font-weight:600}
+.top .right{display:flex;align-items:center;gap:var(--s3);font-size:13px;color:var(--ink2)}
+#app{padding:var(--s5) var(--s6) 48px;display:flex;flex-direction:column;gap:var(--s5)}
+
+/* tags and pills */
+.tag{display:inline-flex;align-items:center;height:20px;padding:0 var(--s2);border-radius:4px;background:var(--bg);border:1px solid var(--line);font-size:11px;font-weight:600;color:var(--ink2);letter-spacing:.02em;white-space:nowrap}
+.tag.sb{background:var(--ytint);border-color:var(--yline);color:#5C4B00;text-transform:uppercase;letter-spacing:.06em}
+.pill{display:inline-flex;align-items:center;gap:6px;height:22px;padding:0 10px 0 8px;border-radius:11px;font-size:12px;font-weight:600;white-space:nowrap}
+.pill::before{content:"";width:6px;height:6px;border-radius:50%;background:currentColor}
+.pill.g{background:var(--gt);color:var(--g)} .pill.a{background:var(--at);color:var(--a)}
+.pill.r{background:var(--rt);color:var(--r)} .pill.y{background:var(--ytint);color:#5C4B00;box-shadow:inset 0 0 0 1px var(--yline)}
+.pill.y::before{background:var(--y);box-shadow:0 0 0 1px #B89B00}
+.pill.n{background:var(--bg);color:var(--ink2);box-shadow:inset 0 0 0 1px var(--line)}
+.best{display:inline-flex;align-items:center;height:20px;padding:0 var(--s2);border-radius:4px;background:var(--y);color:var(--ink);font-size:11px;font-weight:700;letter-spacing:.02em}
+
+/* buttons */
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:6px;height:32px;padding:0 var(--s3);border-radius:var(--rad);border:1px solid var(--line);background:var(--surface);color:var(--ink);font-weight:600;cursor:pointer;white-space:nowrap}
+.btn:hover{border-color:var(--ink)}
+.btn.pri{background:var(--ink);border-color:var(--ink);color:#fff}
+.btn.pri:hover{background:#2c2c2c}
+.btn.sm{height:28px;padding:0 10px;font-size:13px}
+.btn[disabled]{opacity:.4;cursor:not-allowed}
+.btn[disabled]:hover{border-color:var(--line)} .btn.pri[disabled]:hover{background:var(--ink);border-color:var(--ink)}
+.btn.done{background:var(--gt);border-color:var(--gt);color:var(--g);cursor:default}
+
+/* panels */
+.panel{background:var(--surface);border:1px solid var(--line);border-radius:var(--radl);min-width:0}
+.ph{display:flex;align-items:center;justify-content:space-between;gap:var(--s3);min-height:48px;padding:var(--s2) var(--s4);border-bottom:1px solid var(--line)}
+.ph h2{font-size:14px;font-weight:700;letter-spacing:-0.015em;display:flex;align-items:center;gap:var(--s2)}
+.ph .meta{font-size:12px;color:var(--ink3)}
+.pb{padding:var(--s4)}
+.page-h{display:flex;align-items:flex-end;justify-content:space-between;gap:var(--s5)}
+.page-h h1{font-size:28px;line-height:1.1;font-weight:700;letter-spacing:-0.035em}
+.page-h p{color:var(--ink2);margin-top:var(--s1);max-width:620px}
+
+/* stat strip */
+.stats{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));background:var(--surface);border:1px solid var(--line);border-radius:var(--radl)}
+.stat{padding:var(--s4) var(--s5);border-left:1px solid var(--line)} .stat:first-child{border-left:0}
+.stat span{display:flex;align-items:center;gap:6px;font-size:12px;font-weight:500;color:var(--ink2)}
+.stat b{display:block;font-size:26px;line-height:1.2;font-weight:700;letter-spacing:-0.03em;margin-top:var(--s1)}
+.stat small{font-size:12px;color:var(--ink3)}
+.dot-y{width:8px;height:8px;border-radius:50%;background:var(--y);box-shadow:0 0 0 1px #B89B00}
+
+/* toolbar + switch */
+.tools{display:flex;align-items:center;gap:var(--s4);padding:var(--s3) var(--s4);border-bottom:1px solid var(--line);flex-wrap:wrap}
+.sw{display:inline-flex;align-items:center;gap:10px;cursor:pointer;font-weight:600;background:none;border:0;padding:0}
+.sw .trk{width:34px;height:20px;border-radius:10px;background:#CFCCC4;position:relative;transition:background .15s;flex:none}
+.sw .trk::after{content:"";position:absolute;top:2px;left:2px;width:16px;height:16px;border-radius:50%;background:#fff;box-shadow:0 1px 2px rgba(0,0,0,.3);transition:transform .15s}
+.sw[aria-checked="true"] .trk{background:var(--ink)}
+.sw[aria-checked="true"] .trk::after{transform:translateX(14px);background:var(--y)}
+.tools .hint{color:var(--ink2);font-size:13px}
+.tools .chips{margin-left:auto;display:flex;gap:var(--s2);flex-wrap:wrap}
+
+/* table */
+table{width:100%;border-collapse:collapse;table-layout:fixed}
+th{font-size:12px;font-weight:500;color:var(--ink2);text-align:left;height:34px;padding:0 var(--s3);background:#FBFAF8;border-bottom:1px solid var(--line);white-space:nowrap}
+td{padding:0 var(--s3);height:44px;border-bottom:1px solid var(--line2);vertical-align:middle}
+th.r,td.r{text-align:right}
+tbody tr:last-child td{border-bottom:0}
+.q td{height:60px}
+.q tr.main td{border-bottom:0}
+.q tr.main.sel td:first-child{box-shadow:inset 3px 0 0 var(--y)}
+.q tr.main.hs td:first-child{box-shadow:inset 3px 0 0 var(--r)}
+.q tr.exc td{padding:0 var(--s3) var(--s3) 52px;height:auto;border-bottom:1px solid var(--line)}
+.q tbody tr.exc:last-child td{border-bottom:0}
+.who b{display:block;font-weight:600}
+.who span{color:var(--ink2);font-size:13px}
+.rank{color:var(--ink3);font-weight:600}
+.pips{display:inline-flex;gap:2px;margin-left:var(--s2);vertical-align:middle}
+.pips i{width:6px;height:14px;border-radius:2px;background:var(--line)} .pips i.on{background:var(--ink)}
+.acts{display:flex;gap:var(--s2);justify-content:flex-end}
+.quote{display:flex;align-items:baseline;gap:var(--s3);padding:var(--s2) var(--s3);background:var(--ytint);border-left:3px solid var(--y);border-radius:0 var(--rad) var(--rad) 0;font-size:13px}
+.quote.hs{background:var(--rt);border-left-color:var(--r)}
+.quote .lab{flex:none;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:#5C4B00}
+.quote.hs .lab{color:var(--r)}
+.quote q{quotes:"\201C" "\201D";font-weight:500;color:var(--ink)}
+.quote .src{flex:none;margin-left:auto;display:flex;gap:var(--s2);align-items:center;color:var(--ink3);font-size:12px}
+.quote.ok{background:var(--bg);border-left-color:var(--line)} .quote.ok .lab{color:var(--ink3)}
+.qfoot{display:flex;align-items:center;gap:var(--s2);padding:var(--s3) var(--s4);border-top:1px solid var(--line);color:var(--ink2);font-size:13px}
+.link{background:none;border:0;padding:0;font-weight:600;text-decoration:underline;text-underline-offset:3px;cursor:pointer}
+
+/* detail header */
+.dh{display:flex;align-items:center;gap:var(--s4);padding:var(--s4) var(--s5)}
+.av{width:44px;height:44px;border-radius:var(--rad);background:var(--ink);color:#fff;display:grid;place-items:center;font-weight:700;font-size:15px;letter-spacing:.02em;flex:none}
+.dh h2{font-size:20px;font-weight:700;letter-spacing:-0.03em;display:flex;align-items:center;gap:var(--s3)}
+.dh .sub{color:var(--ink2);margin-top:2px}
+.dh .facts{margin-left:auto;display:flex;gap:var(--s5)}
+.fact span{display:block;font-size:12px;color:var(--ink2);font-weight:500}
+.fact b{font-weight:600;font-size:15px}
+
+/* pipeline */
+.pipe{display:grid;grid-template-columns:repeat(6,minmax(0,1fr));padding:var(--s4) var(--s4) var(--s4)}
+.step{position:relative;padding:0 var(--s2) 0 0}
+.step .bar{height:3px;background:var(--ink);border-radius:2px;margin-bottom:var(--s3);margin-right:var(--s2)}
+.step.running .bar{background:linear-gradient(90deg,var(--y) 0 50%,var(--line) 50%)}
+.step.pending .bar{background:var(--line)}
+.step b{display:flex;align-items:center;gap:6px;font-weight:600}
+.step .st{font-size:12px;color:var(--ink3);font-weight:500;margin-top:2px}
+.step .mt{font-size:12px;color:var(--ink2);margin-top:2px}
+.step.running .st{color:#7A6400;font-weight:600}
+.tick{width:14px;height:14px;border-radius:50%;background:var(--ink);color:#fff;display:grid;place-items:center;flex:none}
+.spin{width:14px;height:14px;border-radius:50%;border:2px solid var(--y);border-top-color:var(--ink);animation:sp 1s linear infinite;flex:none}
+@keyframes sp{to{transform:rotate(360deg)}}
+@media (prefers-reduced-motion:reduce){.spin{animation:none}}
+
+/* lenders */
+.lgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:var(--s4)}
+.lc{display:flex;flex-direction:column;background:var(--surface);border:1px solid var(--line);border-radius:var(--radl);min-width:0;overflow:hidden}
+.lc.isbest{border-color:var(--ink);box-shadow:0 0 0 1px var(--ink)}
+.lc .top3{height:3px;background:var(--line2)} .lc.isbest .top3{background:var(--y)}
+.lc header{display:flex;justify-content:space-between;align-items:flex-start;gap:var(--s2);padding:var(--s3) var(--s4) var(--s2)}
+.lc header b{display:block;font-weight:700;letter-spacing:-0.015em;line-height:1.25}
+.lc header .tags{display:flex;gap:var(--s1);margin-top:6px;flex-wrap:wrap;align-items:center}
+.mets{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));border-top:1px solid var(--line2);border-bottom:1px solid var(--line2);margin-top:var(--s2)}
+.mets div{padding:var(--s2) var(--s3);border-left:1px solid var(--line2)} .mets div:first-child{border-left:0;padding-left:var(--s4)}
+.mets span{display:block;font-size:11px;color:var(--ink3);font-weight:500}
+.mets b{font-size:14px;font-weight:700;white-space:nowrap;letter-spacing:-0.02em}
+.mets b.dash{color:var(--ink3);font-weight:500}
+.lc .sec{padding:var(--s3) var(--s4)}
+.lc .sec h3{font-size:11px;font-weight:600;color:var(--ink3);text-transform:uppercase;letter-spacing:.06em;margin-bottom:6px}
+.lc ul{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:6px}
+.lc li{font-size:13px}
+.rs{display:grid;grid-template-columns:16px minmax(0,1fr);gap:var(--s2)}
+.rs .f{display:block;color:var(--ink3);font-family:var(--mono);font-size:11px;margin-top:1px;word-break:break-all}
+.mk{width:16px;height:16px;border-radius:50%;display:grid;place-items:center;margin-top:1px;flex:none}
+.mk.t{background:var(--gt);color:var(--g)} .mk.f{background:var(--rt);color:var(--r)} .mk.u{background:var(--bg);color:var(--ink3);box-shadow:inset 0 0 0 1px var(--line)}
+.cd{position:relative;padding-left:14px}
+.cd::before{content:"";position:absolute;left:2px;top:8px;width:4px;height:4px;background:var(--ink);border-radius:1px}
+.lc footer{margin-top:auto;display:flex;justify-content:space-between;padding:var(--s2) var(--s4);border-top:1px solid var(--line2);font-size:12px;color:var(--ink3);background:#FBFAF8}
+.legend{display:flex;gap:var(--s4);font-size:12px;color:var(--ink2);align-items:center}
+.legend span{display:inline-flex;align-items:center;gap:6px}
+.dec{background:var(--ink);color:#fff;border-radius:var(--radl);padding:var(--s4);display:flex;flex-direction:column;gap:var(--s3)}
+.dec h3{font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.06em;color:#BDBAB1}
+.dec .big{font-size:32px;font-weight:700;letter-spacing:-0.04em;line-height:1}
+.dec .big small{font-size:14px;font-weight:500;color:#BDBAB1;letter-spacing:0;margin-left:6px}
+.dec p{color:#D5D2C9;font-size:13px}
+.dec .row{display:flex;gap:var(--s2);margin-top:auto}
+.dec .btn{border-color:#4a4a46;background:transparent;color:#fff}
+.dec .btn:hover{border-color:#fff}
+.dec .btn.pri{background:var(--y);border-color:var(--y);color:var(--ink)}
+.dec .btn.pri:hover{background:#ffe36a}
+.dec :focus-visible{outline-color:#fff}
+
+/* lower grid */
+.cols{display:grid;grid-template-columns:minmax(0,1.1fr) minmax(0,1fr);gap:var(--s5);align-items:start}
+.col{display:flex;flex-direction:column;gap:var(--s5);min-width:0}
+.kvs{display:grid;grid-template-columns:repeat(3,minmax(0,1fr))}
+.kv{padding:var(--s3) var(--s4);border-right:1px solid var(--line2);border-bottom:1px solid var(--line2)}
+.kv:nth-child(3n){border-right:0}
+.kv span{display:block;font-size:12px;color:var(--ink2);font-weight:500}
+.kv b{display:flex;align-items:center;gap:var(--s2);font-size:22px;font-weight:700;letter-spacing:-0.03em;line-height:1.3;margin-top:2px}
+.kv b.sm{font-size:15px;padding-top:4px;letter-spacing:-0.01em}
+.meter{display:block;height:4px;background:var(--line);border-radius:2px;margin-top:6px;overflow:hidden}
+.meter i{display:block;height:100%;background:var(--ink)}
+.flags{display:flex;flex-wrap:wrap;gap:var(--s2);padding:var(--s3) var(--s4)}
+.fl{display:inline-flex;align-items:center;gap:6px;height:24px;padding:0 10px;border-radius:12px;font-size:12px;font-weight:600;background:var(--bg);color:var(--ink2);box-shadow:inset 0 0 0 1px var(--line)}
+.fl.on{background:var(--rt);color:var(--r);box-shadow:none}
+.fl i{font-style:normal;font-weight:500;opacity:.75}
+.notice{padding:var(--s4);display:flex;flex-direction:column;gap:var(--s3);font-size:14px;line-height:1.55;color:#2a2926}
+.notice p:first-child{font-weight:600;color:var(--ink)}
+.notice p:last-child{color:var(--ink2);font-size:13px;padding-top:var(--s3);border-top:1px solid var(--line2)}
+.ev{display:grid;grid-template-columns:repeat(3,minmax(0,1fr))}
+.lat{padding:var(--s3) var(--s4) var(--s4);display:flex;flex-direction:column;gap:6px}
+.lat h3{font-size:12px;font-weight:500;color:var(--ink2);margin-bottom:2px}
+.lat div{display:grid;grid-template-columns:130px minmax(0,1fr) 56px;gap:var(--s3);align-items:center;font-size:13px}
+.lat .tr{height:6px;border-radius:3px;background:var(--line2);overflow:hidden}
+.lat .tr i{display:block;height:100%;background:var(--ink)}
+.actor{display:inline-block;max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;vertical-align:bottom}
+.aud td{height:40px;font-size:13px}
+.aud td.note{white-space:normal;line-height:1.35;padding-top:6px;padding-bottom:6px}
+.aud td .mono{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;display:block}
+.pg{padding:var(--s3) var(--s5);color:var(--ink3);font-size:12px;text-align:center}
+
+#toast{position:fixed;left:50%;bottom:24px;transform:translateX(-50%) translateY(20px);opacity:0;pointer-events:none;background:var(--ink);color:#fff;padding:10px 16px;border-radius:var(--rad);font-weight:500;box-shadow:0 8px 24px rgba(0,0,0,.25);transition:all .2s;z-index:20;max-width:80vw}
+#toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+#toast b{color:var(--y)}
+
+@media (max-width:1360px){
+  .dh .facts{gap:var(--s4)} .cols{grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:var(--s4)}
+  #app{padding-left:var(--s5);padding-right:var(--s5)} .top{padding:0 var(--s5)}
+  .kv b{font-size:19px}
+}
+@media (max-width:1100px){
+  .app{grid-template-columns:64px minmax(0,1fr)} .nav a span,.nav .grp,.brand b,.brand .tag,.side .foot{display:none} .nav .cnt{display:none}
+  .cols{grid-template-columns:minmax(0,1fr)} .pipe{grid-template-columns:repeat(3,minmax(0,1fr));row-gap:var(--s4)}
+}
+</style>
+</head>
+<body>
+<div class="app">
+  <aside class="side" id="side"></aside>
+  <div class="main">
+    <div class="top" id="top"></div>
+    <main id="app" aria-live="polite"></main>
+  </div>
+</div>
+<div id="toast" role="status"></div>
+
+<script type="application/json" id="data">
+{
+  "_about": "Shared demo data for the UI reference mock pages (design/ui-catalog). Numbers come from the deterministic stub over the real CRS sandbox fixtures. Every mock renders the same information so the designs can be compared.",
+  "product": {
+    "name": "Docket",
+    "tagline": "A one-person credit union",
+    "sandbox": true,
+    "lenders": [
+      {
+        "id": "cu",
+        "name": "Pacific Ridge Credit Union",
+        "label": "Credit Union",
+        "policy": "Conservative"
+      },
+      {
+        "id": "fintech",
+        "name": "Northstar Lending",
+        "label": "Fintech",
+        "policy": "Growth"
+      },
+      {
+        "id": "prime",
+        "name": "Meridian Bank Prime",
+        "label": "Prime",
+        "policy": "Prime bank"
+      },
+      {
+        "id": "regional",
+        "name": "Cascade Regional Bank",
+        "label": "Regional",
+        "policy": "Relationship bank"
+      },
+      {
+        "id": "subprime",
+        "name": "Harbor Second Chance Finance",
+        "label": "Second Chance",
+        "policy": "Subprime"
+      }
+    ]
+  },
+  "desk": {
+    "waitingOnYou": 2,
+    "inFlight": 0,
+    "decidedToday": 7,
+    "dollarsApprovedToday": 86500,
+    "medianDecisionSeconds": 41
+  },
+  "queue": [
+    {
+      "rank": 1,
+      "applicantId": "j979y0sy3z4f8cjqpxnvxkhw7s8gxayy",
+      "name": "Priya Venkatesan",
+      "purpose": "home improvement",
+      "amountRequested": 25000,
+      "status": "awaiting_human",
+      "approvals": 2,
+      "lenders": 5,
+      "best": {
+        "lender": "fintech",
+        "apr": 15.9
+      }
+    },
+    {
+      "rank": 2,
+      "applicantId": "j97ax4sq05acgehadj4hqavnzn8gwseq",
+      "name": "Angela Morrissey",
+      "purpose": "debt consolidation",
+      "amountRequested": 7500,
+      "status": "awaiting_human",
+      "approvals": 1,
+      "lenders": 5,
+      "best": {
+        "lender": "subprime",
+        "apr": 31.9
+      }
+    },
+    {
+      "applicantId": "j97c3n2l0e1f5s8u4z7v9j1p3q5b7t9e",
+      "name": "Marcus Delgado",
+      "purpose": "auto repair",
+      "amountRequested": 18000,
+      "status": "hard_stop",
+      "approvals": 0,
+      "lenders": 0,
+      "hardStop": {
+        "field": "identity.verified",
+        "note": "TU identity returned 2201 SSN not associated with name and 2202 DOB mismatch"
+      }
+    },
+    {
+      "applicantId": "j97d4o3m1f2g6t9v5a8w0k2q4r6c8u0f",
+      "name": "Hannah Park",
+      "purpose": "medical expenses",
+      "amountRequested": 8000,
+      "status": "approved",
+      "approvals": 4,
+      "lenders": 5,
+      "best": {
+        "lender": "cu",
+        "apr": 12.9
+      }
+    }
+  ],
+  "selected": {
+    "applicantId": "j979y0sy3z4f8cjqpxnvxkhw7s8gxayy",
+    "personaId": "P08",
+    "name": "Priya Venkatesan",
+    "purpose": "home improvement",
+    "amountRequested": 25000,
+    "statedIncome": 120000,
+    "status": "awaiting_human",
+    "createdAt": 1792870851000,
+    "cardCode": null,
+    "bundle": {
+      "source": "crs",
+      "pulledAt": 1792870851910,
+      "score": 690,
+      "vantage4": 690,
+      "utilization": 0.38,
+      "inquiries6mo": 1,
+      "identityVerified": true,
+      "fraudScore": 10,
+      "flags": {
+        "deceased": false,
+        "frozen": false,
+        "bankruptcy": false,
+        "eviction": false,
+        "lienOrJudgment": true
+      },
+      "tradelines": [
+        {
+          "type": "credit_card",
+          "balance": 1900,
+          "status": "open",
+          "openedAt": "2014-10-19"
+        },
+        {
+          "type": "credit_card",
+          "balance": 1900,
+          "status": "open",
+          "openedAt": "2023-04-20"
+        },
+        {
+          "type": "credit_card",
+          "balance": 1900,
+          "status": "open",
+          "openedAt": "2021-10-19"
+        },
+        {
+          "type": "credit_card",
+          "balance": 1900,
+          "status": "open",
+          "openedAt": "2020-04-19"
+        },
+        {
+          "type": "credit_card",
+          "balance": 1900,
+          "status": "open",
+          "openedAt": "2018-10-19"
+        },
+        {
+          "type": "auto",
+          "balance": 12600,
+          "status": "open",
+          "openedAt": "2025-04-20"
+        },
+        {
+          "type": "credit_card",
+          "balance": 0,
+          "status": "closed",
+          "openedAt": "2020-10-19"
+        },
+        {
+          "type": "auto",
+          "balance": 0,
+          "status": "closed",
+          "openedAt": "2019-10-20"
+        }
+      ]
+    },
+    "pipeline": [
+      {
+        "id": "pull",
+        "label": "Pull",
+        "state": "done",
+        "startedAt": 1792870851000,
+        "finishedAt": 1792870851910,
+        "metric": "0.91s · crs"
+      },
+      {
+        "id": "guardrails",
+        "label": "Guardrails",
+        "state": "done",
+        "startedAt": 1792870851910,
+        "finishedAt": 1792870852840,
+        "metric": "0.93s · 0 rules fired"
+      },
+      {
+        "id": "underwrite",
+        "label": "Underwrite",
+        "state": "done",
+        "startedAt": 1792870852840,
+        "finishedAt": 1792870856100,
+        "metric": "3.26s · 5/5 done"
+      },
+      {
+        "id": "verify",
+        "label": "Reason verification",
+        "state": "done",
+        "startedAt": 1792870856100,
+        "finishedAt": 1792870858400,
+        "metric": "2.30s · 5/7 reasons verified"
+      },
+      {
+        "id": "compliance",
+        "label": "Compliance",
+        "state": "done",
+        "startedAt": 1792870858400,
+        "finishedAt": 1792870859800,
+        "metric": "1.40s · notice drafted"
+      },
+      {
+        "id": "human",
+        "label": "Human",
+        "state": "running",
+        "startedAt": 1792870859800,
+        "finishedAt": null,
+        "metric": "waiting"
+      }
+    ],
+    "offers": [
+      {
+        "lender": "cu",
+        "name": "Pacific Ridge Credit Union",
+        "label": "Credit Union",
+        "policy": "Conservative",
+        "provider": "claude",
+        "latencyMs": 2600,
+        "decision": "decline",
+        "classification": "deny",
+        "apr": null,
+        "termMonths": null,
+        "amount": null,
+        "monthlyPayment": null,
+        "conditions": [],
+        "reasons": [
+          {
+            "text": "An unsatisfied lien or judgment is in the public records; this policy declines any unsatisfied lien or judgment.",
+            "field": "flags.lienOrJudgment",
+            "verified": true
+          },
+          {
+            "text": "Score 690 sits in the good band, which does not offset the finding above under this policy.",
+            "field": "credit.fico9",
+            "verified": true
+          }
+        ]
+      },
+      {
+        "lender": "fintech",
+        "name": "Northstar Lending",
+        "label": "Fintech",
+        "policy": "Growth",
+        "provider": "claude",
+        "latencyMs": 3200,
+        "decision": "approve",
+        "classification": "approve",
+        "apr": 15.9,
+        "termMonths": 48,
+        "amount": 25000,
+        "monthlyPayment": 707.23,
+        "conditions": [
+          "E-sign the loan agreement; funds arrive in 1-2 business days.",
+          "Provide proof of a payment plan or satisfaction for the lien/judgment before funding."
+        ],
+        "reasons": [
+          {
+            "text": "Score 690 meets the 600 minimum.",
+            "field": "credit.fico9",
+            "verified": null
+          },
+          {
+            "text": "Utilization 38% and 1 inquiries are within policy.",
+            "field": "credit.utilization",
+            "verified": null
+          }
+        ]
+      },
+      {
+        "lender": "prime",
+        "name": "Meridian Bank Prime",
+        "label": "Prime",
+        "policy": "Prime bank",
+        "provider": "claude",
+        "latencyMs": 1900,
+        "decision": "decline",
+        "classification": "deny",
+        "apr": null,
+        "termMonths": null,
+        "amount": null,
+        "monthlyPayment": null,
+        "conditions": [],
+        "reasons": [
+          {
+            "text": "Score 690 is below the 720 minimum.",
+            "field": "credit.fico9",
+            "verified": true
+          },
+          {
+            "text": "Revolving utilization of 38% exceeds the 30% limit.",
+            "field": "credit.utilization",
+            "verified": false
+          },
+          {
+            "text": "An unsatisfied lien or judgment is in the public records; this policy declines any unsatisfied lien or judgment.",
+            "field": "flags.lienOrJudgment",
+            "verified": true
+          }
+        ]
+      },
+      {
+        "lender": "regional",
+        "name": "Cascade Regional Bank",
+        "label": "Regional",
+        "policy": "Relationship bank",
+        "provider": "claude",
+        "latencyMs": 2400,
+        "decision": "decline",
+        "classification": "deny",
+        "apr": null,
+        "termMonths": null,
+        "amount": null,
+        "monthlyPayment": null,
+        "conditions": [],
+        "reasons": [
+          {
+            "text": "An unsatisfied lien or judgment is in the public records; this policy declines any unsatisfied lien or judgment.",
+            "field": "flags.lienOrJudgment",
+            "verified": true
+          },
+          {
+            "text": "Score 690 sits in the good band, which does not offset the finding above under this policy.",
+            "field": "credit.fico9",
+            "verified": true
+          }
+        ]
+      },
+      {
+        "lender": "subprime",
+        "name": "Harbor Second Chance Finance",
+        "label": "Second Chance",
+        "policy": "Subprime",
+        "provider": "claude",
+        "latencyMs": 2100,
+        "decision": "approve",
+        "classification": "counteroffer",
+        "apr": 23.9,
+        "termMonths": 36,
+        "amount": 20000,
+        "monthlyPayment": 783.61,
+        "conditions": [
+          "Enroll in autopay from a verified bank account.",
+          "Complete a 15-minute financial coaching call before funding.",
+          "Provide proof of a payment plan for the lien or judgment before funding.",
+          "Approved at the policy maximum of $20,000 instead of the $25,000 requested."
+        ],
+        "reasons": [
+          {
+            "text": "Score 690 meets the 560 minimum.",
+            "field": "credit.fico9",
+            "verified": null
+          },
+          {
+            "text": "Utilization 38% and 1 inquiries are within policy.",
+            "field": "credit.utilization",
+            "verified": null
+          }
+        ]
+      }
+    ],
+    "notice": "Dear Priya Venkatesan, thank you for applying for a $25,000 loan for home improvement. This notice explains which lenders declined your request or offered different terms, and exactly why.\n\nPacific Ridge Credit Union declined because: An unsatisfied lien or judgment is in the public records; this policy declines any unsatisfied lien or judgment; Score 690 sits in the good band, which does not offset the finding above under this policy.\n\nMeridian Bank Prime declined because: Score 690 is below the 720 minimum; An unsatisfied lien or judgment is in the public records; this policy declines any unsatisfied lien or judgment.\n\nCascade Regional Bank declined because: An unsatisfied lien or judgment is in the public records; this policy declines any unsatisfied lien or judgment; Score 690 sits in the good band, which does not offset the finding above under this policy.\n\nHarbor Second Chance Finance did not approve the terms you requested but offered $20,000 at 23.9% APR for 36 months instead, because: Score 690 meets the 560 minimum; Utilization 38% and 1 inquiries are within policy.\n\nFixing the items named above, or applying for a smaller amount, would change the outcome at one or more of these lenders.\n\nThe consumer reporting agency (CRS Credit API sandbox, pulled October 24, 2026) did not make this decision and cannot explain it. You have the right to a free copy of your report within 60 days and to dispute any inaccurate information."
+  },
+  "second": {
+    "applicantId": "j97ax4sq05acgehadj4hqavnzn8gwseq",
+    "personaId": "P06",
+    "name": "Angela Morrissey",
+    "purpose": "debt consolidation",
+    "amountRequested": 7500,
+    "statedIncome": 54000,
+    "status": "awaiting_human",
+    "createdAt": 1792870791000,
+    "cardCode": null,
+    "bundle": {
+      "source": "crs",
+      "pulledAt": 1792870791910,
+      "score": 580,
+      "vantage4": 580,
+      "utilization": 0.2,
+      "inquiries6mo": 1,
+      "identityVerified": true,
+      "fraudScore": 12,
+      "flags": {
+        "deceased": false,
+        "frozen": false,
+        "bankruptcy": true,
+        "eviction": false,
+        "lienOrJudgment": false
+      },
+      "tradelines": [
+        {
+          "type": "credit_card",
+          "balance": 0,
+          "status": "charge_off",
+          "openedAt": "2017-04-12"
+        },
+        {
+          "type": "credit_card",
+          "balance": 0,
+          "status": "charge_off",
+          "openedAt": "2017-04-12"
+        },
+        {
+          "type": "credit_card",
+          "balance": 0,
+          "status": "charge_off",
+          "openedAt": "2017-04-12"
+        },
+        {
+          "type": "credit_card",
+          "balance": 0,
+          "status": "charge_off",
+          "openedAt": "2017-04-12"
+        },
+        {
+          "type": "credit_card",
+          "balance": 300,
+          "status": "open",
+          "openedAt": "2012-10-19"
+        },
+        {
+          "type": "credit_card",
+          "balance": 0,
+          "status": "closed",
+          "openedAt": "2020-10-19"
+        },
+        {
+          "type": "auto",
+          "balance": 0,
+          "status": "closed",
+          "openedAt": "2019-10-20"
+        },
+        {
+          "type": "credit_card",
+          "balance": 0,
+          "status": "closed",
+          "openedAt": "2018-10-19"
+        },
+        {
+          "type": "auto",
+          "balance": 0,
+          "status": "closed",
+          "openedAt": "2017-10-19"
+        },
+        {
+          "type": "credit_card",
+          "balance": 0,
+          "status": "closed",
+          "openedAt": "2016-10-19"
+        },
+        {
+          "type": "auto",
+          "balance": 0,
+          "status": "closed",
+          "openedAt": "2015-10-20"
+        }
+      ]
+    },
+    "pipeline": [
+      {
+        "id": "pull",
+        "label": "Pull",
+        "state": "done",
+        "startedAt": 1792870791000,
+        "finishedAt": 1792870791910,
+        "metric": "0.91s · crs"
+      },
+      {
+        "id": "guardrails",
+        "label": "Guardrails",
+        "state": "done",
+        "startedAt": 1792870791910,
+        "finishedAt": 1792870792840,
+        "metric": "0.93s · 0 rules fired"
+      },
+      {
+        "id": "underwrite",
+        "label": "Underwrite",
+        "state": "done",
+        "startedAt": 1792870792840,
+        "finishedAt": 1792870796100,
+        "metric": "3.26s · 5/5 done"
+      },
+      {
+        "id": "verify",
+        "label": "Reason verification",
+        "state": "done",
+        "startedAt": 1792870796100,
+        "finishedAt": 1792870798400,
+        "metric": "2.30s · 5/7 reasons verified"
+      },
+      {
+        "id": "compliance",
+        "label": "Compliance",
+        "state": "done",
+        "startedAt": 1792870798400,
+        "finishedAt": 1792870799800,
+        "metric": "1.40s · notice drafted"
+      },
+      {
+        "id": "human",
+        "label": "Human",
+        "state": "running",
+        "startedAt": 1792870799800,
+        "finishedAt": null,
+        "metric": "waiting"
+      }
+    ],
+    "offers": [
+      {
+        "lender": "cu",
+        "name": "Pacific Ridge Credit Union",
+        "label": "Credit Union",
+        "policy": "Conservative",
+        "provider": "claude",
+        "latencyMs": 2600,
+        "decision": "decline",
+        "classification": "deny",
+        "apr": null,
+        "termMonths": null,
+        "amount": null,
+        "monthlyPayment": null,
+        "conditions": [],
+        "reasons": [
+          {
+            "text": "Score 580 is below the 660 minimum.",
+            "field": "credit.fico9",
+            "verified": true
+          },
+          {
+            "text": "A bankruptcy is on file; this policy declines any bankruptcy.",
+            "field": "flags.bankruptcy",
+            "verified": true
+          }
+        ]
+      },
+      {
+        "lender": "fintech",
+        "name": "Northstar Lending",
+        "label": "Fintech",
+        "policy": "Growth",
+        "provider": "claude",
+        "latencyMs": 3200,
+        "decision": "decline",
+        "classification": "deny",
+        "apr": null,
+        "termMonths": null,
+        "amount": null,
+        "monthlyPayment": null,
+        "conditions": [],
+        "reasons": [
+          {
+            "text": "Score 580 is below the 600 minimum.",
+            "field": "credit.fico9",
+            "verified": true
+          },
+          {
+            "text": "A bankruptcy is on file and the score 580 is below the 640 post-bankruptcy floor.",
+            "field": "flags.bankruptcy",
+            "verified": true
+          }
+        ]
+      },
+      {
+        "lender": "prime",
+        "name": "Meridian Bank Prime",
+        "label": "Prime",
+        "policy": "Prime bank",
+        "provider": "claude",
+        "latencyMs": 1900,
+        "decision": "decline",
+        "classification": "deny",
+        "apr": null,
+        "termMonths": null,
+        "amount": null,
+        "monthlyPayment": null,
+        "conditions": [],
+        "reasons": [
+          {
+            "text": "Score 580 is below the 720 minimum.",
+            "field": "credit.fico9",
+            "verified": true
+          },
+          {
+            "text": "A bankruptcy is on file; this policy declines any bankruptcy.",
+            "field": "flags.bankruptcy",
+            "verified": true
+          }
+        ]
+      },
+      {
+        "lender": "regional",
+        "name": "Cascade Regional Bank",
+        "label": "Regional",
+        "policy": "Relationship bank",
+        "provider": "claude",
+        "latencyMs": 2400,
+        "decision": "decline",
+        "classification": "deny",
+        "apr": null,
+        "termMonths": null,
+        "amount": null,
+        "monthlyPayment": null,
+        "conditions": [],
+        "reasons": [
+          {
+            "text": "Score 580 is below the 680 minimum.",
+            "field": "credit.fico9",
+            "verified": true
+          },
+          {
+            "text": "A bankruptcy is on file; this policy declines any bankruptcy.",
+            "field": "flags.bankruptcy",
+            "verified": true
+          }
+        ]
+      },
+      {
+        "lender": "subprime",
+        "name": "Harbor Second Chance Finance",
+        "label": "Second Chance",
+        "policy": "Subprime",
+        "provider": "claude",
+        "latencyMs": 2100,
+        "decision": "approve",
+        "classification": "approve",
+        "apr": 31.9,
+        "termMonths": 36,
+        "amount": 7500,
+        "monthlyPayment": 326.24,
+        "conditions": [
+          "Enroll in autopay from a verified bank account.",
+          "Complete a 15-minute financial coaching call before funding.",
+          "Provide the bankruptcy discharge order; an open case is not eligible."
+        ],
+        "reasons": [
+          {
+            "text": "Score 580 meets the 560 minimum.",
+            "field": "credit.fico9",
+            "verified": null
+          },
+          {
+            "text": "Utilization 20% and 1 inquiries are within policy.",
+            "field": "credit.utilization",
+            "verified": null
+          }
+        ]
+      }
+    ],
+    "notice": "Dear Angela Morrissey, thank you for applying for a $7,500 loan for debt consolidation. This notice explains which lenders declined your request or offered different terms, and exactly why.\n\nPacific Ridge Credit Union declined because: Score 580 is below the 660 minimum; A bankruptcy is on file; this policy declines any bankruptcy.\n\nNorthstar Lending declined because: Score 580 is below the 600 minimum; A bankruptcy is on file and the score 580 is below the 640 post-bankruptcy floor.\n\nMeridian Bank Prime declined because: Score 580 is below the 720 minimum; A bankruptcy is on file; this policy declines any bankruptcy.\n\nCascade Regional Bank declined because: Score 580 is below the 680 minimum; A bankruptcy is on file; this policy declines any bankruptcy.\n\nFixing the items named above, or applying for a smaller amount, would change the outcome at one or more of these lenders.\n\nThe consumer reporting agency (CRS Credit API sandbox, pulled October 24, 2026) did not make this decision and cannot explain it. You have the right to a free copy of your report within 60 days and to dispute any inaccurate information."
+  },
+  "audit": [
+    {
+      "at": 1792870859800,
+      "actor": "desk",
+      "action": "step.human.start",
+      "ref": null,
+      "note": "awaiting a loan officer"
+    },
+    {
+      "at": 1792870859795,
+      "actor": "compliance",
+      "action": "compliance.notice",
+      "ref": "notices.k57anj1xxvyc457hpdbc959cs8gxaud",
+      "note": "notice drafted from 5 verified reasons; 2 unsupported reasons withheld"
+    },
+    {
+      "at": 1792870858400,
+      "actor": "desk",
+      "action": "step.verify.done",
+      "ref": null,
+      "note": "7 reasons tested: 5 supported, 2 unsupported"
+    },
+    {
+      "at": 1792870857900,
+      "actor": "underwriter:regional",
+      "action": "verify.supported",
+      "ref": "flags.lienOrJudgment",
+      "note": "fixing this field alone flips the decline"
+    },
+    {
+      "at": 1792870857400,
+      "actor": "underwriter:prime",
+      "action": "verify.unsupported",
+      "ref": "credit.utilization",
+      "note": "fixing utilization alone does not flip the decline; withheld from the notice"
+    },
+    {
+      "at": 1792870856100,
+      "actor": "desk",
+      "action": "step.underwrite.done",
+      "ref": null,
+      "note": "3 approve (1 counteroffer), 2 decline, 0 failed"
+    },
+    {
+      "at": 1792870856040,
+      "actor": "underwriter:fintech",
+      "action": "underwrite.approve",
+      "ref": "offers.k97lxv5",
+      "note": "approve: 15.9% APR, 48 mo, $25,000. 3200 ms."
+    },
+    {
+      "at": 1792870855240,
+      "actor": "underwriter:regional",
+      "action": "underwrite.decline",
+      "ref": "offers.k974az5",
+      "note": "2 reasons: flags.lienOrJudgment, credit.fico9. 2400 ms."
+    },
+    {
+      "at": 1792870854940,
+      "actor": "underwriter:subprime",
+      "action": "underwrite.approve",
+      "ref": "offers.k97b9d2",
+      "note": "counteroffer: 23.9% APR, 36 mo, $20,000. 2100 ms."
+    },
+    {
+      "at": 1792870852840,
+      "actor": "rules",
+      "action": "rules.pass",
+      "ref": null,
+      "note": "deceased no, frozen no, identity verified, fraud 10 < 80"
+    },
+    {
+      "at": 1792870851910,
+      "actor": "crs",
+      "action": "crs.pull",
+      "ref": "bundles.b97x",
+      "note": "TransUnion, Equifax, Experian prequal; identity; FraudFinder; public records. 6 calls, 2.9 s sandbox"
+    },
+    {
+      "at": 1792870851000,
+      "actor": "intake",
+      "action": "applicant.created",
+      "ref": "P08",
+      "note": "card code entered on the phone; consent recorded"
+    }
+  ],
+  "eval": {
+    "cases": 20,
+    "agreement": 1,
+    "perLenderAgreement": 0.98,
+    "reasonsVerified": 0.81,
+    "fraudZeroOffers": true,
+    "avgReasonsPerDenial": 2.22,
+    "latencyP50Ms": {
+      "cu": 2600,
+      "fintech": 3200,
+      "prime": 1900,
+      "regional": 2400,
+      "subprime": 2100
+    },
+    "lastRun": "2026-10-24T09:33:00-07:00"
+  }
+}
+</script>
+<script>
+(function(){
+"use strict";
+var D = JSON.parse(document.getElementById('data').textContent);
+
+/* ---------- helpers ---------- */
+var esc = function(s){ return String(s == null ? '' : s).replace(/[&<>"']/g, function(c){ return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]; }); };
+var usd0 = function(n){ return n == null ? '—' : new Intl.NumberFormat('en-US',{style:'currency',currency:'USD',maximumFractionDigits:0}).format(n); };
+var usd2 = function(n){ return n == null ? '—' : new Intl.NumberFormat('en-US',{style:'currency',currency:'USD'}).format(n); };
+var apr  = function(n){ return n == null ? '—' : n.toFixed(1) + '%'; };
+var pct0 = function(n){ return n == null ? '—' : Math.round(n * 100) + '%'; };
+var TZ = 'America/Los_Angeles';
+function fmtTime(ms){
+  try { return new Intl.DateTimeFormat('en-US',{timeZone:TZ,hour:'2-digit',minute:'2-digit',second:'2-digit',fractionalSecondDigits:3,hour12:false}).format(ms); }
+  catch(e){ return new Date(ms).toISOString().slice(11,23); }
+}
+function fmtDT(ms){
+  try { return new Intl.DateTimeFormat('en-US',{timeZone:TZ,month:'short',day:'numeric',hour:'numeric',minute:'2-digit',timeZoneName:'short'}).format(ms); }
+  catch(e){ return new Date(ms).toISOString(); }
+}
+function fmtDate(iso){ var p = String(iso).split('-'); if(p.length<3) return iso; return ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'][+p[1]-1] + ' ' + (+p[2]) + ', ' + p[0]; }
+function human(s){ return String(s).replace(/_/g,' ').replace(/([a-z])([A-Z])/g,'$1 $2').replace(/^./,function(c){return c.toUpperCase();}); }
+function initials(n){ return String(n).split(/\s+/).map(function(w){return w[0];}).slice(0,2).join('').toUpperCase(); }
+var lenderById = {}; D.product.lenders.forEach(function(l){ lenderById[l.id] = l; });
+var lname = function(id){ return lenderById[id] ? lenderById[id].name : id; };
+
+var ICON = {
+  check:'<svg width="10" height="10" viewBox="0 0 10 10" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M2 5.3 4.1 7.4 8 2.8"/></svg>',
+  x:'<svg width="10" height="10" viewBox="0 0 10 10" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><path d="M2.5 2.5l5 5M7.5 2.5l-5 5"/></svg>',
+  dash:'<svg width="10" height="10" viewBox="0 0 10 10" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><path d="M2.5 5h5"/></svg>',
+  inbox:'<svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round" aria-hidden="true"><path d="M2 9.5 3.8 3h8.4L14 9.5V13H2z"/><path d="M2 9.5h3.5a2.5 2.5 0 0 0 5 0H14"/></svg>',
+  person:'<svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><circle cx="8" cy="5.5" r="2.5"/><path d="M3 13.5c.6-2.6 2.6-4 5-4s4.4 1.4 5 4"/></svg>',
+  bank:'<svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round" aria-hidden="true"><path d="M8 2 14 5.5H2zM3.5 7v5M6.5 7v5M9.5 7v5M12.5 7v5M2 13.5h12"/></svg>',
+  card:'<svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><rect x="1.5" y="3.5" width="13" height="9" rx="1.5"/><path d="M1.5 6.5h13"/></svg>',
+  doc:'<svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round" aria-hidden="true"><path d="M4 1.5h5.5L13 5v9.5H4z"/><path d="M6.5 8.5h4M6.5 11h4"/></svg>',
+  log:'<svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" aria-hidden="true"><path d="M2.5 4h11M2.5 8h11M2.5 12h7"/></svg>',
+  eval:'<svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M2 13V8M6 13V3M10 13V6M14 13V9"/></svg>',
+  mark:'<svg width="24" height="24" viewBox="0 0 24 24" aria-hidden="true"><rect width="24" height="24" rx="6" fill="#141414"/><path d="M7 6h5.5a6 6 0 0 1 0 12H7z" fill="none" stroke="#fff" stroke-width="2"/><rect x="14.5" y="10.5" width="3" height="3" rx=".5" fill="#F6D743"/></svg>'
+};
+
+/* ---------- derived data ---------- */
+var STATUS = { awaiting_human:{label:'Awaiting you',cls:'y'}, hard_stop:{label:'Hard stop',cls:'r'}, approved:{label:'Approved',cls:'g'} };
+var statusOf = function(s){ return STATUS[s] || {label:human(s),cls:'n'}; };
+var CLASSIFY = { approve:{word:'OFFER',cls:'g'}, counteroffer:{word:'COUNTEROFFER',cls:'a'}, deny:{word:'DECLINED',cls:'r'} };
+var classOf = function(c){ return CLASSIFY[c] || {word:String(c).toUpperCase(),cls:'n'}; };
+
+var details = {};
+[D.selected, D.second].forEach(function(d){ if(d) details[d.applicantId] = d; });
+
+/* The exceptions: anything a person still has to touch. Applicants already approved clear out of the way. */
+function isException(q){ return q.status !== 'approved'; }
+
+/* Quote the policy line that broke: the verified decline reason cited by the most lenders (flag rules win ties). */
+function ruleFor(q){
+  if(q.hardStop) return {kind:'Hard stop', text:q.hardStop.note, field:q.hardStop.field, cited:null, of:null, hs:true};
+  if(q.status === 'approved') return {kind:'In policy', text:'No exception. Best offer already approved.', field:null, cited:null, of:null, ok:true};
+  var d = details[q.applicantId]; if(!d) return null;
+  var declined = d.offers.filter(function(o){ return o.classification === 'deny'; });
+  var tally = {};
+  declined.forEach(function(o){ o.reasons.forEach(function(r){
+    if(r.verified === false) return;
+    var t = tally[r.field] || (tally[r.field] = {field:r.field, text:r.text, n:0}); t.n++;
+  }); });
+  var best = null, bs = -1;
+  Object.keys(tally).forEach(function(k){ var s = tally[k].n * 10 + (k.indexOf('flags.') === 0 ? 1 : 0); if(s > bs){ bs = s; best = tally[k]; } });
+  if(!best) return null;
+  return {kind:'Policy line broken', text:best.text, field:best.field, cited:best.n, of:declined.length};
+}
+function bestOffer(d){
+  var b = null;
+  d.offers.forEach(function(o){ if(o.apr != null && (!b || o.apr < b.apr)) b = o; });
+  return b;
+}
+
+var state = { exceptionsOnly:true };
+
+/* ---------- renderers ---------- */
+function renderSide(){
+  var P = D.product;
+  document.getElementById('side').innerHTML =
+    '<div class="brand">' + ICON.mark + '<b>' + esc(P.name) + '</b>' + (P.sandbox ? '<span class="tag sb">Sandbox</span>' : '') + '</div>' +
+    '<nav class="nav" aria-label="Sections">' +
+      '<a href="#queue" aria-current="page">' + ICON.inbox + '<span>Approvals</span><em class="cnt" style="font-style:normal">' + esc(D.desk.waitingOnYou) + '</em></a>' +
+      '<a href="#detail">' + ICON.person + '<span>Applicant</span></a>' +
+      '<a href="#lenders">' + ICON.bank + '<span>Lenders</span></a>' +
+      '<a href="#credit">' + ICON.card + '<span>Credit file</span></a>' +
+      '<a href="#notice">' + ICON.doc + '<span>Notice</span></a>' +
+      '<div class="grp">Records</div>' +
+      '<a href="#audit">' + ICON.log + '<span>Audit log</span></a>' +
+      '<a href="#eval">' + ICON.eval + '<span>Eval</span></a>' +
+    '</nav>' +
+    '<div class="foot"><b>' + esc(P.tagline) + '</b>' + D.product.lenders.length + ' lenders, sandbox data only</div>';
+  var s = D.selected;
+  document.getElementById('top').innerHTML =
+    '<div class="crumb"><span>Approvals</span><span class="faint">/</span><b>' + esc(s.name) + '</b></div>' +
+    '<div class="right">' + (P.sandbox ? '<span class="tag sb">Sandbox data</span>' : '') + '<span>Loan officer desk</span></div>';
+}
+
+function statStrip(){
+  var k = D.desk;
+  return '<section class="stats" aria-label="Desk summary">' +
+    '<div class="stat"><span><i class="dot-y"></i>Waiting on you</span><b>' + esc(k.waitingOnYou) + '</b><small>' + esc(k.inFlight) + ' in flight</small></div>' +
+    '<div class="stat"><span>Decided today</span><b>' + esc(k.decidedToday) + '</b><small>applicants</small></div>' +
+    '<div class="stat"><span>Approved today</span><b>' + usd0(k.dollarsApprovedToday) + '</b><small>in approved dollars</small></div>' +
+    '<div class="stat"><span>Median decision</span><b>' + esc(k.medianDecisionSeconds) + 's</b><small>intake to offers</small></div>' +
+  '</section>';
+}
+
+function queueRows(){
+  var rows = D.queue.map(function(q){ return {q:q, rule:ruleFor(q)}; });
+  var order = function(q){ if(q.status === 'awaiting_human') return 0; if(q.status === 'hard_stop') return 1; return 2; };
+  rows.sort(function(a,b){ return order(a.q) - order(b.q) || (a.q.rank || 99) - (b.q.rank || 99); });
+  var exc = rows.filter(function(r){ return isException(r.q); });
+  var hidden = rows.length - exc.length;
+  var shown = state.exceptionsOnly ? exc : rows;
+  var split = exc.filter(function(r){ return r.q.status === 'awaiting_human'; }).length;
+  var hs = exc.filter(function(r){ return r.q.status === 'hard_stop'; }).length;
+
+  var body = shown.map(function(r){
+    var q = r.q, st = statusOf(q.status), rule = r.rule;
+    var hasBest = !!q.best, locked = q.status === 'approved' || q.status === 'hard_stop';
+    var pips = '';
+    if(q.lenders > 0){ for(var i = 0; i < q.lenders; i++) pips += '<i class="' + (i < q.approvals ? 'on' : '') + '"></i>'; }
+    var cls = 'main' + (q.applicantId === D.selected.applicantId ? ' sel' : '') + (q.status === 'hard_stop' ? ' hs' : '');
+    var main =
+      '<tr class="' + cls + '">' +
+        '<td class="rank num">' + (q.rank != null ? esc(q.rank) : '—') + '</td>' +
+        '<td class="who"><b>' + esc(q.name) + '</b><span>' + esc(q.purpose) + '</span></td>' +
+        '<td class="r num"><b style="font-weight:600">' + usd0(q.amountRequested) + '</b></td>' +
+        '<td><span class="pill ' + st.cls + '">' + esc(st.label) + '</span></td>' +
+        '<td class="num">' + (q.lenders > 0 ? '<b style="font-weight:600">' + esc(q.approvals) + '/' + esc(q.lenders) + '</b><span class="pips" aria-hidden="true">' + pips + '</span>' : '<span class="faint">0/0</span>') + '</td>' +
+        '<td>' + (hasBest ? '<b style="font-weight:600" class="num">' + apr(q.best.apr) + '</b> <span class="muted">' + esc(lname(q.best.lender)) + '</span>' : '<span class="faint">No offers</span>') + '</td>' +
+        '<td><div class="acts">' +
+          '<button class="btn pri sm" data-act="approve" data-name="' + esc(q.name) + '"' + (!hasBest || locked ? ' disabled' : '') + '>Approve best</button>' +
+          '<button class="btn sm" data-act="decline" data-name="' + esc(q.name) + '"' + (q.status === 'approved' ? ' disabled' : '') + '>Decline</button>' +
+        '</div></td>' +
+      '</tr>';
+    var quote = '';
+    if(rule){
+      quote = '<tr class="exc"><td colspan="7"><div class="quote' + (rule.hs ? ' hs' : '') + (rule.ok ? ' ok' : '') + '">' +
+        '<span class="lab">' + esc(rule.kind) + '</span><q>' + esc(rule.text) + '</q>' +
+        '<span class="src">' + (rule.field ? '<span class="mono">' + esc(rule.field) + '</span>' : '') +
+        (rule.cited != null ? '<span>cited by ' + rule.cited + ' of ' + rule.of + ' declining lenders</span>' : '') + '</span></div></td></tr>';
+    }
+    return main + quote;
+  }).join('');
+
+  var foot = state.exceptionsOnly
+    ? (hidden > 0 ? hidden + ' applicant' + (hidden > 1 ? 's' : '') + ' already decided and hidden. <button class="link" data-act="showall">Show all ' + rows.length + '</button>' : 'Nothing is hidden.')
+    : 'Showing all ' + rows.length + ' applicants. <button class="link" data-act="showexc">Exceptions only</button>';
+
+  return {split:split, hs:hs, hidden:hidden, html:
+    '<table class="q"><colgroup><col style="width:44px"><col><col style="width:96px"><col style="width:118px"><col style="width:112px"><col style="width:200px"><col style="width:204px"></colgroup>' +
+    '<thead><tr><th>#</th><th>Applicant</th><th class="r">Amount</th><th>Status</th><th>Lenders approving</th><th>Best offer</th><th class="r">Decision</th></tr></thead>' +
+    '<tbody>' + (body || '<tr><td colspan="7" style="height:80px;text-align:center" class="muted">Inbox zero. Nothing needs you.</td></tr>') + '</tbody></table>' +
+    '<div class="qfoot">' + foot + '</div>'};
+}
+
+function renderQueue(){
+  var r = queueRows();
+  document.getElementById('queue-body').innerHTML = r.html;
+  document.getElementById('queue-chips').innerHTML =
+    '<span class="pill y">' + r.split + ' split decision' + (r.split === 1 ? '' : 's') + '</span>' +
+    '<span class="pill r">' + r.hs + ' hard stop</span>' +
+    '<span class="pill n">' + r.hidden + ' cleared</span>';
+  var sw = document.getElementById('sw'); sw.setAttribute('aria-checked', state.exceptionsOnly ? 'true' : 'false');
+}
+
+function queuePanel(){
+  return '<section class="panel" id="queue" aria-labelledby="qh">' +
+    '<div class="ph"><h2 id="qh">Approvals queue</h2><span class="meta">Split decisions first, hard stops next</span></div>' +
+    '<div class="tools">' +
+      '<button class="sw" id="sw" role="switch" aria-checked="true" data-act="toggle"><span class="trk"></span>Exceptions only</button>' +
+      '<span class="hint">Hides applicants every lender agreed on. The rule that broke is quoted on each exception.</span>' +
+      '<div class="chips" id="queue-chips"></div>' +
+    '</div>' +
+    '<div id="queue-body"></div></section>';
+}
+
+function detailHeader(s){
+  var st = statusOf(s.status);
+  return '<section class="panel" id="detail" aria-label="Selected applicant"><div class="dh">' +
+    '<div class="av" aria-hidden="true">' + esc(initials(s.name)) + '</div>' +
+    '<div><h2>' + esc(s.name) + '<span class="pill ' + st.cls + '">' + esc(st.label) + '</span></h2>' +
+    '<div class="sub">' + esc(human(s.purpose)) + ' · ' + esc(s.personaId) + ' · applied ' + esc(fmtDT(s.createdAt)) + '</div></div>' +
+    '<div class="facts">' +
+      '<div class="fact"><span>Requested</span><b class="num">' + usd0(s.amountRequested) + '</b></div>' +
+      '<div class="fact"><span>Stated income</span><b class="num">' + usd0(s.statedIncome) + '</b></div>' +
+      '<div class="fact"><span>Card code</span><b class="mono" style="font-size:14px">' + (s.cardCode == null ? '<span class="faint" style="font-family:var(--sans)">Not entered</span>' : esc(s.cardCode)) + '</b></div>' +
+    '</div></div>' +
+    '<div class="ph" style="border-top:1px solid var(--line);border-bottom:0;padding-bottom:0"><h2>Pipeline</h2><span class="meta">' + esc(fmtDT(s.createdAt)) + '</span></div>' +
+    '<div class="pipe">' + s.pipeline.map(function(p){
+      var icon = p.state === 'done' ? '<span class="tick">' + ICON.check + '</span>' : (p.state === 'running' ? '<span class="spin"></span>' : '');
+      return '<div class="step ' + esc(p.state) + '"><div class="bar"></div><b>' + icon + esc(p.label) + '</b><div class="st">' + esc(human(p.state)) + '</div><div class="mt num">' + esc(p.metric) + '</div></div>';
+    }).join('') + '</div></section>';
+}
+
+function mark(v){
+  if(v === true) return '<span class="mk t" title="Verified: fixing this field flips the outcome" aria-label="verified">' + ICON.check + '</span>';
+  if(v === false) return '<span class="mk f" title="Not supported: withheld from the notice" aria-label="not supported">' + ICON.x + '</span>';
+  return '<span class="mk u" title="Not tested" aria-label="not tested">' + ICON.dash + '</span>';
+}
+
+function lenderCard(o, bestLender){
+  var c = classOf(o.classification), isBest = o.lender === bestLender;
+  var met = function(label, val){ return '<div><span>' + label + '</span><b class="num' + (val === '—' ? ' dash' : '') + '">' + val + '</b></div>'; };
+  return '<article class="lc' + (isBest ? ' isbest' : '') + '"><div class="top3"></div>' +
+    '<header><div><b>' + esc(o.name) + '</b><div class="tags"><span class="tag">' + esc(o.label) + '</span><span class="tag">' + esc(o.policy) + ' policy</span>' + (isBest ? '<span class="best">Best APR</span>' : '') + '</div></div>' +
+    '<span class="pill ' + c.cls + '">' + esc(c.word) + '</span></header>' +
+    '<div class="mets">' + met('APR', apr(o.apr)) + met('Monthly', usd2(o.monthlyPayment)) + met('Term', o.termMonths == null ? '—' : o.termMonths + ' mo') + met('Amount', usd0(o.amount)) + '</div>' +
+    (o.conditions.length ? '<div class="sec"><h3>Conditions</h3><ul>' + o.conditions.map(function(t){ return '<li class="cd">' + esc(t) + '</li>'; }).join('') + '</ul></div>' : '') +
+    '<div class="sec"><h3>Reasons</h3><ul>' + o.reasons.map(function(r){
+      return '<li class="rs">' + mark(r.verified) + '<span>' + esc(r.text) + '<span class="f">' + esc(r.field) + '</span></span></li>';
+    }).join('') + '</ul></div>' +
+    '<footer><span>' + esc(o.provider) + '</span><span class="num">' + esc(o.latencyMs) + ' ms</span></footer></article>';
+}
+
+function lendersSection(s){
+  var b = bestOffer(s);
+  var cards = s.offers.map(function(o){ return lenderCard(o, b && b.lender); }).join('');
+  var dec = '<aside class="dec" aria-label="Your decision"><h3>Your decision</h3>' +
+    (b ? '<div class="big num">' + apr(b.apr) + '<small>' + esc(b.name) + '</small></div>' +
+      '<p class="num">' + usd0(b.amount) + ' over ' + esc(b.termMonths) + ' months, ' + usd2(b.monthlyPayment) + ' a month. Best APR of the offers on the table.</p>'
+      : '<div class="big">No offer</div><p>No lender offered terms.</p>') +
+    '<p>A human approves every offer.</p>' +
+    '<div class="row"><button class="btn pri" data-act="approve" data-name="' + esc(s.name) + '"' + (b ? '' : ' disabled') + '>Approve best</button><button class="btn" data-act="decline" data-name="' + esc(s.name) + '">Decline</button></div></aside>';
+  return '<section id="lenders" aria-labelledby="lh"><div class="ph" style="border:0;padding:0 0 var(--s3)"><h2 id="lh" style="font-size:18px;letter-spacing:-0.025em">Five lenders, one file</h2>' +
+    '<div class="legend"><span>' + mark(true) + 'Verified</span><span>' + mark(false) + 'Not supported</span><span>' + mark(null) + 'Not tested</span></div></div>' +
+    '<div class="lgrid">' + cards + dec + '</div></section>';
+}
+
+function creditPanel(s){
+  var b = s.bundle;
+  var flags = Object.keys(b.flags).map(function(k){
+    var on = b.flags[k];
+    return '<span class="fl' + (on ? ' on' : '') + '">' + esc(human(k)) + '<i>' + (on ? 'Yes' : 'No') + '</i></span>';
+  }).join('');
+  var util = Math.max(0, Math.min(1, b.utilization));
+  var snap = '<section class="panel" id="credit" aria-labelledby="ch"><div class="ph"><h2 id="ch">Credit snapshot</h2><span class="meta">' + esc(b.source.toUpperCase()) + ' sandbox · pulled ' + esc(fmtDT(b.pulledAt)) + '</span></div>' +
+    '<div class="kvs">' +
+      '<div class="kv"><span>Score</span><b class="num">' + esc(b.score) + '</b></div>' +
+      '<div class="kv"><span>VantageScore 4</span><b class="num">' + esc(b.vantage4) + '</b></div>' +
+      '<div class="kv"><span>Utilization</span><b class="num">' + pct0(b.utilization) + '</b><i class="meter"><i style="width:' + (util * 100) + '%"></i></i></div>' +
+      '<div class="kv"><span>Inquiries, 6 mo</span><b class="num">' + esc(b.inquiries6mo) + '</b></div>' +
+      '<div class="kv"><span>Identity</span><b class="sm">' + (b.identityVerified ? '<span class="pill g">Verified</span>' : '<span class="pill r">Not verified</span>') + '</b></div>' +
+      '<div class="kv"><span>Fraud score</span><b class="num">' + esc(b.fraudScore) + '</b></div>' +
+    '</div><div class="flags" aria-label="Flags">' + flags + '</div></section>';
+
+  var tl = '<section class="panel" aria-labelledby="th"><div class="ph"><h2 id="th">Tradelines</h2><span class="meta">' + b.tradelines.length + ' accounts</span></div>' +
+    '<table><colgroup><col><col style="width:110px"><col style="width:120px"><col style="width:90px"><col style="width:100px"></colgroup>' +
+    '<thead><tr><th>Type</th><th>Status</th><th>Opened</th><th class="r">Balance</th><th class="r">&nbsp;</th></tr></thead><tbody>' +
+    b.tradelines.map(function(t, i){
+      var cls = t.status === 'open' ? 'g' : (t.status === 'closed' ? 'n' : 'r');
+      return '<tr><td style="font-weight:600">' + esc(human(t.type)) + '</td><td><span class="pill ' + cls + '">' + esc(human(t.status)) + '</span></td>' +
+        '<td class="num muted">' + esc(fmtDate(t.openedAt)) + '</td><td class="r num">' + usd0(t.balance) + '</td>' +
+        '<td class="r"><button class="btn sm" data-act="dispute" data-i="' + i + '" aria-label="Dispute ' + esc(human(t.type)) + ' opened ' + esc(fmtDate(t.openedAt)) + '">Dispute</button></td></tr>';
+    }).join('') + '</tbody></table></section>';
+  return snap + tl;
+}
+
+function noticePanel(s){
+  var paras = String(s.notice).split(/\n\s*\n/).map(function(p){ return '<p>' + esc(p) + '</p>'; }).join('');
+  return '<section class="panel" id="notice" aria-labelledby="nh"><div class="ph"><h2 id="nh">Adverse-action notice</h2><span class="tag">Drafted by compliance</span></div><div class="notice">' + paras + '</div></section>';
+}
+
+function evalPanel(){
+  var e = D.eval, max = 0;
+  Object.keys(e.latencyP50Ms).forEach(function(k){ max = Math.max(max, e.latencyP50Ms[k]); });
+  var cells = [
+    ['Cases', esc(e.cases)], ['Agreement', pct0(e.agreement)], ['Per-lender agreement', pct0(e.perLenderAgreement)],
+    ['Reasons verified', pct0(e.reasonsVerified)], ['Reasons per denial', e.avgReasonsPerDenial.toFixed(2)], ['Fraud: zero offers', e.fraudZeroOffers ? 'Pass' : 'Fail']
+  ];
+  return '<section class="panel" id="eval" aria-labelledby="eh"><div class="ph"><h2 id="eh">Eval summary</h2><span class="meta">Last run ' + esc(fmtDT(Date.parse(e.lastRun))) + '</span></div>' +
+    '<div class="ev">' + cells.map(function(c){
+      var last = c[0] === 'Fraud: zero offers';
+      return '<div class="kv"><span>' + c[0] + '</span><b class="num">' + (last ? '<span class="pill ' + (e.fraudZeroOffers ? 'g' : 'r') + '">' + c[1] + '</span>' : c[1]) + '</b></div>';
+    }).join('') + '</div>' +
+    '<div class="lat"><h3>Latency p50 by lender</h3>' + Object.keys(e.latencyP50Ms).map(function(k){
+      var v = e.latencyP50Ms[k];
+      return '<div><span>' + esc(lname(k)) + '</span><span class="tr"><i style="width:' + (v / max * 100) + '%"></i></span><span class="num r" style="text-align:right">' + esc(v) + ' ms</span></div>';
+    }).join('') + '</div></section>';
+}
+
+function auditPanel(){
+  return '<section class="panel" id="audit" aria-labelledby="ah"><div class="ph"><h2 id="ah">Audit log</h2><span class="meta">' + D.audit.length + ' events · times in PT</span></div>' +
+    '<table class="aud"><colgroup><col style="width:116px"><col style="width:190px"><col style="width:190px"><col style="width:260px"><col></colgroup>' +
+    '<thead><tr><th>Time</th><th>Actor</th><th>Action</th><th>Ref</th><th>Note</th></tr></thead><tbody>' +
+    D.audit.map(function(a){
+      return '<tr><td class="num muted">' + esc(fmtTime(a.at)) + '</td><td><span class="tag actor">' + esc(a.actor) + '</span></td>' +
+        '<td><span class="mono">' + esc(a.action) + '</span></td><td>' + (a.ref ? '<span class="mono muted" title="' + esc(a.ref) + '">' + esc(a.ref) + '</span>' : '<span class="faint">—</span>') + '</td>' +
+        '<td class="note">' + esc(a.note) + '</td></tr>';
+    }).join('') + '</tbody></table></section>';
+}
+
+function renderAll(){
+  var s = D.selected;
+  renderSide();
+  document.getElementById('app').innerHTML =
+    '<div class="page-h"><div><h1>Approvals</h1><p>Five AI underwriters read each CRS sandbox file. In-policy applicants clear on their own; only exceptions reach you.</p></div></div>' +
+    statStrip() + queuePanel() + detailHeader(s) + lendersSection(s) +
+    '<div class="cols"><div class="col">' + creditPanel(s) + '</div><div class="col">' + noticePanel(s) + evalPanel() + '</div></div>' +
+    auditPanel() +
+    '<div class="pg">Docket · personas and sandbox data only, no real PII · a human approves every offer</div>';
+  renderQueue();
+}
+
+/* ---------- interaction ---------- */
+var tt;
+function toast(html){
+  var t = document.getElementById('toast'); t.innerHTML = html; t.classList.add('show');
+  clearTimeout(tt); tt = setTimeout(function(){ t.classList.remove('show'); }, 2600);
+}
+document.addEventListener('click', function(e){
+  var el = e.target.closest ? e.target.closest('[data-act]') : null; if(!el || el.disabled) return;
+  var a = el.getAttribute('data-act');
+  if(a === 'toggle'){ state.exceptionsOnly = !state.exceptionsOnly; renderQueue(); var s = document.getElementById('sw'); if(s) s.focus(); }
+  else if(a === 'showall'){ state.exceptionsOnly = false; renderQueue(); }
+  else if(a === 'showexc'){ state.exceptionsOnly = true; renderQueue(); }
+  else if(a === 'approve'){ toast('Demo only. Approve best for <b>' + esc(el.getAttribute('data-name')) + '</b> would go to you for sign-off.'); }
+  else if(a === 'decline'){ toast('Demo only. Decline for <b>' + esc(el.getAttribute('data-name')) + '</b> would send the adverse-action notice.'); }
+  else if(a === 'dispute'){
+    var done = el.classList.toggle('done'); el.textContent = done ? 'Disputed' : 'Dispute';
+    el.setAttribute('aria-pressed', done ? 'true' : 'false');
+    if(done) toast('Dispute marked for tradeline <b>' + (+el.getAttribute('data-i') + 1) + '</b>. Demo only.');
+  }
+});
+
+renderAll();
+})();
+</script>
+</body>
+</html>
