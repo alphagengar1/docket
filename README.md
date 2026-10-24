@@ -121,7 +121,13 @@ Agent app IDs (not secret; API keys live only in the Convex env):
 - Docket Underwriter: Harbor Second Chance Finance (subprime): dd2bfed5-49ea-476e-8fc8-b8ef24b3b585
 - Docket Compliance: adverse-action notice: 11425cb9-95c8-49d9-b962-19ddba3cb70e
 
-Run share links: [LINKS].
+Run links (private chat URLs, require a logged-in CREAO session; no public share link has been created on purpose):
+- Pacific Ridge Credit Union: https://agent.creao.ai/chat?threadId=fca27e15-c517-424d-8ae7-9949c39e4dc5 (approve, 26.5 s)
+- Northstar Lending: https://agent.creao.ai/chat?threadId=8be644c2-3dc5-4de8-afec-bdce6b43d857 (approve, 27.5 s)
+- Meridian Bank Prime: https://agent.creao.ai/chat?threadId=4c6d3041-3c4e-4c9b-b34b-1dc35339a5d2 (decline, 26.9 s)
+- Cascade Regional Bank: https://agent.creao.ai/chat?threadId=7e8b1687-afd6-4c04-a5d8-a62c558fde65 (decline, 33.3 s)
+- Harbor Second Chance Finance: https://agent.creao.ai/chat?threadId=4f57270a-76ee-4ed4-b7f9-a271b3db6ec7 (approve, 23.1 s)
+- Compliance notice: https://agent.creao.ai/chat?threadId=a776155e-e276-4f65-a508-eb3213ff4fc1 (notice parsed, awaiting_human, 23.4 s)
 
 ## Team
 
