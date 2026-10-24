@@ -2162,7 +2162,7 @@ table.grid.tl tr:last-child td {
   --slide: 180ms cubic-bezier(0.2, 0, 0, 1);
 }
 .main {
-  grid-template-columns: var(--rail-w) var(--qcol, 0px) minmax(0, 1fr) var(--icol, 0px) var(--acol, 0px);
+  grid-template-columns: var(--rail-w) var(--qcol, 0px) minmax(0, 1fr) var(--icol, 0px) var(--acol, 0px) var(--rail-w);
   transition: grid-template-columns var(--slide);
   overflow: hidden;
 }
@@ -2475,3 +2475,41 @@ table.grid.tl tr:last-child td {
   .ast-compare { grid-template-columns: 1fr; }
   .ast-col + .ast-col { border-left: 0; border-top: 1px solid var(--text); }
 }
+
+
+/* Rails sit on the edge their panel opens from: Queue on the left, Inspect/Ask on the right, Log along the bottom. */
+.rail-right { border-right: 0; border-left: 1px solid var(--hair); }
+.rail-right .rail-btn { border-left: 0; border-right: 2px solid transparent; }
+.rail-right .rail-btn[aria-pressed='true'] { border-right-color: var(--accent); }
+.rail-bottom {
+  flex-direction: row;
+  justify-content: flex-end;
+  align-items: stretch;
+  gap: 0;
+  padding: 0 var(--sp-2);
+  height: 28px;
+  border-right: 0;
+  border-top: 1px solid var(--hair);
+  flex: none;
+}
+.rail-bottom .rail-btn {
+  height: 100%;
+  flex-direction: row;
+  gap: 6px;
+  padding: 0 10px;
+  border-left: 0;
+  border-top: 2px solid transparent;
+}
+.rail-bottom .rail-btn[aria-pressed='true'] { border-top-color: var(--accent); }
+.rail-bottom .rail-btn svg { width: 14px; height: 14px; }
+.rail-bottom .rail-lbl { font-size: 10px; }
+.rail-count { font-size: 10px; color: var(--muted-2); }
+.main.bare .work { justify-items: center; }
+:root[data-theme='tag'] .rail-right { border-left: 2px solid var(--text); }
+:root[data-theme='tag'] .rail-bottom { border-top: 2px solid var(--text); }
+.work > .rail-bottom { width: 100%; max-width: none; justify-self: stretch; background: var(--surface); }
+.rail-bottom .rail-btn { color: var(--muted); }
+.rail-bottom .rail-btn[aria-pressed='true'] { background: var(--selected); color: var(--text); }
+/* Decision sheet: centered in the viewport. */
+.sheet-scrim { align-items: center; padding-top: 0; }
+.sheet { max-height: calc(100vh - 64px); }

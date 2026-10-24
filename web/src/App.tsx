@@ -282,7 +282,7 @@ export default function App() {
         onTheme={() => setTheme((t) => (t === 'tag' ? 'dark' : t === 'dark' ? 'light' : 'tag'))}
       />
       <div className={`main ${Object.values(panels).some(Boolean) ? '' : 'bare'}`}>
-        <Rail open={panels} onToggle={togglePanel} waiting={ranked.length} />
+        <Rail side="left" items={['queue']} open={panels} onToggle={togglePanel} waiting={ranked.length} />
         <div className={`slot slot-q ${panels.queue ? 'open' : ''}`}>
           <div className="slot-in" style={{ width: 'var(--queue-w)' }}>
             <Queue
@@ -421,6 +421,7 @@ export default function App() {
                 </div>
             </div>
           )}
+          <Rail side="bottom" items={['log']} open={panels} onToggle={togglePanel} waiting={ranked.length} count={desk.auditEvents.length} />
           <div className={`slot-h ${panels.log ? 'open' : ''}`}>
             <Drawer
               events={desk.auditEvents}
@@ -474,6 +475,7 @@ export default function App() {
             <Assistant api={assistantApi} applicant={applicant} summonKey={summonKey} />
           </div>
         </div>
+        <Rail side="right" items={['inspector', 'assistant']} open={panels} onToggle={togglePanel} waiting={ranked.length} />
       </div>
       {sheetOpen && applicant && (
         <DecisionSheet

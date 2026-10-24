@@ -6,6 +6,11 @@ interface Props {
   open: Record<PanelId, boolean>
   onToggle: (p: PanelId) => void
   waiting: number
+  /** Which panels this rail controls. Each rail sits on the edge its panels open from. */
+  items?: PanelId[]
+  side?: 'left' | 'right' | 'bottom'
+  /** Shown next to the Log button (event count). */
+  count?: number
 }
 
 const ITEMS: Array<{ id: PanelId; label: string; key: string; icon: ReactNode }> = [
@@ -35,12 +40,13 @@ const ITEMS: Array<{ id: PanelId; label: string; key: string; icon: ReactNode }>
   },
 ]
 
-/** Thin activity rail (VS Code style): one button per collapsible panel. */
-export function Rail({ open, onToggle, waiting }: Props) {
+/** Thin activity rail (VS Code style): one button per collapsible panel, placed on the edge the panel opens from. */
+export function Rail({ open, onToggle, waiting, items, side = 'left', count }: Props) {
   const mod = /Mac|iPhone|iPad/.test(navigator.platform) ? 'Cmd' : 'Ctrl'
+  const shown = items ? ITEMS.filter((it) => items.includes(it.id)) : ITEMS
   return (
-    <nav className="rail" aria-label="Panels">
-      {ITEMS.map((it) => (
+    <nav className={`rail rail-${side}`} aria-label="Panels">
+      {shown.map((it) => (
         <button
           key={it.id}
           type="button"
@@ -54,6 +60,7 @@ export function Rail({ open, onToggle, waiting }: Props) {
           </svg>
           <span className="rail-lbl">{it.label}</span>
           {it.id === 'queue' && waiting > 0 && <span className="rail-badge">{waiting}</span>}
+          {it.id === 'log' && count != null && <span className="rail-count mono">{count}</span>}
         </button>
       ))}
     </nav>
