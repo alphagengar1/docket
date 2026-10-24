@@ -29,7 +29,8 @@ export default function App() {
   const [deckOpen, setDeckOpen] = useState(false)
   const [applicantView, setApplicantView] = useState(false)
   const [tab, setTab] = useState<InspectorTab>('offer')
-  const [theme, setTheme] = useState<Theme>('dark')
+  const [sheetOpen, setSheetOpen] = useState(false)
+  const [theme, setTheme] = useState<Theme>('tag')
   // Focus (default): only what the decision needs. Detail: every panel, the timing waterfall and the log.
   const [focus, setFocus] = useState<boolean>(() => {
     try {
