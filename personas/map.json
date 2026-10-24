@@ -103,11 +103,9 @@
     },
     {
       "personaId": "P15",
-      "expected": "hard_stop",
-      "expectedReasonsIncludes": [
-        "flags.frozen"
-      ],
-      "note": "CRS REVIEW (freeze at one bureau). TU returns NoFileReturnedCreditFreeze; EFX and EXP return 740. Rule flags.frozen fires on ANY bureau freeze, so it hard-stops although fintech would approve on the other two files. Label REVIEW vs rule disagree; change rule to all-bureaus-frozen (or alert) if REVIEW is intended."
+      "expected": "approve",
+      "expectedReasonsIncludes": [],
+      "note": "CRS REVIEW (freeze at one bureau). TU returns NoFileReturnedCreditFreeze; EFX and EXP return 740, util 0.11. Rule changed 03:10: a freeze only hard-stops when no bureau produced a score. Expect lenders to underwrite on EFX/EXP with the freeze shown as a flag; DS teammate to confirm per-policy outcome."
     },
     {
       "personaId": "P16",

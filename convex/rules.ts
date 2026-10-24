@@ -1,7 +1,7 @@
 // Deterministic hard stops. Pure function: no Convex imports, no I/O, so it can
 // be unit-tested with node:test and reasoned about without a deployment.
 //
-// contracts.md: flags.deceased || flags.frozen || !identity.verified ||
+// contracts.md: flags.deceased || flags.frozen (no scorable bureau) || !identity.verified ||
 //   (fraud.score != null && fraud.score >= 80)
 //   → status "hard_stop", zero offers, auditEvent with the triggering field.
 import type { BundleData } from "./types";
@@ -26,8 +26,12 @@ export function evaluateHardStops(bundle: BundleData): RulesResult {
   if (bundle.flags.deceased) {
     fired.push({ field: "flags.deceased", reason: "The credit file carries a deceased indicator." });
   }
-  if (bundle.flags.frozen) {
-    fired.push({ field: "flags.frozen", reason: "The credit file is frozen; the applicant must lift the freeze before any lender can review it." });
+  // A freeze at one bureau is not a stop when another bureau returned a scorable
+  // file (CRS persona P15: TU frozen, EFX/EXP 740). Only stop when no bureau
+  // produced a score at all; otherwise the freeze stays visible as a flag.
+  const noScore = bundle.credit.fico9 == null && bundle.credit.vantage4 == null;
+  if (bundle.flags.frozen && noScore) {
+    fired.push({ field: "flags.frozen", reason: "Every bureau file is frozen or unavailable; the applicant must lift the freeze before any lender can review it." });
   }
   if (!bundle.identity.verified) {
     fired.push({ field: "identity.verified", reason: "Identity could not be verified against the bureau record." });

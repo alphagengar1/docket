@@ -13,3 +13,4 @@
 - 2026-10-24 02:30 Classification and the FCRA paragraph are code, not prompt output; the compliance agent is told not to write legal boilerplate.
 - 2026-10-24 02:35 Dispute replay on mock data removes the tradeline, rescales utilization by the removed card's balance share and bumps scores +5 (+25 if derogatory); on live CRS it re-pulls.
 2026-10-24 crs-agent: credit.fico9 = TransUnion score even though the sandbox returns VantageScore 4.0 under tu-prequal-fico9 (noted per bundle in raw.notes); fraud.score = AtData risk.score as-is (0-100, high=risky); credit 'retrieve' step skipped because the order response already holds the report.
+- 2026-10-24 03:10 Freeze at one bureau no longer hard-stops when another bureau returned a score (P15 underwrites on EFX/EXP). Criminal data is not used for lending by design (P09). Liens/judgments flag proposed for policies (P08).

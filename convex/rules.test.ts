@@ -24,11 +24,21 @@ test("deceased stops with flags.deceased", () => {
   if (r.stop) assert.equal(r.field, "flags.deceased");
 });
 
-test("frozen stops with flags.frozen", () => {
+test("frozen stops only when no bureau returned a score", () => {
   const b = base();
   b.flags.frozen = true;
+  b.credit.fico9 = null;
+  b.credit.vantage4 = null;
   const r = evaluateHardStops(b);
   assert.equal(r.stop && r.field, "flags.frozen");
+});
+
+test("frozen at one bureau with a score elsewhere does not stop", () => {
+  const b = base();
+  b.flags.frozen = true;
+  b.credit.fico9 = null;
+  b.credit.vantage4 = 740;
+  assert.equal(evaluateHardStops(b).stop, false);
 });
 
 test("identity not verified stops with identity.verified", () => {
