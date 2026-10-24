@@ -19,3 +19,9 @@
 - Regenerate design/deck/presenter-sheet after policies are final (P15 now underwrites; P08 liens flag pending).
 - Theme: console is dark (Laminar/Fey donors). The Kit proposes one light theme everywhere (aluminum gray, black ink, signal orange hard-stop, blue approved, wide uppercase headlines). Decision pending Swaraj; borrower phone view and cards use the Kit theme meanwhile; status colors aligned (orange = hard stop, blue = approved).
 - Fill before judging: lender timeout N, eval pass X/20 + commit hash, lender display names + one-line policies, "who would buy this".
+
+## wire-agent (web <-> convex) notes
+- Backend gap: `personas.deck` returns only {personaId,name,hint}; the intake defaults (purpose/amount/income) live in crs.mock `defaultIntake` and are not exposed. web merges them from its mock deck by personaId (same values today). Proposal: add `defaultIntake` to listPersonaSummaries.
+- Backend gap: `desk:auditEvents` with limit 1000 times out (1s query limit) and a Convex query error throws into React render (blank page). web asks for limit 300. Consider an index/limit cap or a per-applicant query for the board.
+- Global queries are capped (applicants 200, offers 600, audit 300): a long-lived board loses old rows. Not a problem for the demo with Reset.
+- Mapping done in web only: evalRuns.reasonsVerifiedPct -> reasonsVerified; reasonChecks (several rows per field, method single|leave_one_out|all_fixed) collapsed to one per (offer, field) with flipped := offers.reasons[].verified.

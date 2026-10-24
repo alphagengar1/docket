@@ -107,6 +107,10 @@ export interface Notice {
   text: string
   lendersDeclined: string[]
   createdAt: number
+  /** Set by the backend compliance step (convex/schema.ts); absent in the mock. */
+  required?: boolean
+  requiredBecause?: string
+  droppedReasons?: Array<{ lender: string; field: string; text: string }>
 }
 
 export interface Decision {

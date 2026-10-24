@@ -11,6 +11,7 @@
     "fixture": "tsx scripts/record-fixture.ts"
   },
   "dependencies": {
+    "convex": "^1.48.0",
     "react": "^19.3.1",
     "react-dom": "^19.3.1"
   },

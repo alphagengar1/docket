@@ -365,7 +365,7 @@ function TraceTab({ applicant, events }: { applicant: Applicant; events: AuditEv
 function NoticeTab({ applicant, bundle, notice, declined, offers, decision, checks }: { applicant: Applicant; bundle: Bundle | undefined; notice: Notice | undefined; declined: Offer[]; offers: Offer[]; decision: Decision | undefined; checks: ReasonCheck[] }) {
   const [reviewed, setReviewed] = useState(false)
   const [copied, setCopied] = useState(false)
-  const req = noticeRequired(offers, decision)
+  const req = notice?.required != null ? { required: notice.required, why: notice.requiredBecause ?? '' } : noticeRequired(offers, decision)
   const total = declined.reduce((n, o) => n + o.reasons.length, 0)
   const verified = declined.reduce((n, o) => n + verifiedReasons(checks, o).length, 0)
   const requiredLine = (
