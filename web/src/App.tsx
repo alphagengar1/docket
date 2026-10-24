@@ -1,3 +1,198 @@
+import { useCallback, useEffect, useMemo, useState } from 'react'
+import { useDesk } from './hooks/useDesk'
+import { LENDERS, type IntakeInput } from './types'
+import { useNow } from './hooks/useNow'
+import { eventsFor, hardStopEvent, offersFor, stepTimings } from './lib/select'
+import { IN_FLIGHT, STATUS_TONE, STATUS_WORD } from './lib/status'
+import { TopBar } from './components/TopBar'
+import { Queue } from './components/Queue'
+import { IntakePane } from './components/IntakePane'
+import { PersonaDeck } from './components/PersonaDeck'
+import { PipelineRail } from './components/PipelineRail'
+import { OfferCard } from './components/OfferCard'
+import { HardStopCard } from './components/HardStopCard'
+import { Inspector, type InspectorTab } from './components/Inspector'
+import { Drawer } from './components/Drawer'
+
+type Theme = 'auto' | 'light' | 'dark'
+
 export default function App() {
-  return <div>DESK</div>
+  const desk = useDesk()
+  const [selectedId, setSelectedId] = useState<string | null>(null)
+  const [selectedOfferId, setSelectedOfferId] = useState<string | null>(null)
+  const [intakeOpen, setIntakeOpen] = useState(false)
+  const [intakePersona, setIntakePersona] = useState<string | null>(null)
+  const [deckOpen, setDeckOpen] = useState(false)
+  const [tab, setTab] = useState<InspectorTab>('offer')
+  const [theme, setTheme] = useState<Theme>('auto')
+
+  useEffect(() => {
+    if (theme === 'auto') delete document.documentElement.dataset.theme
+    else document.documentElement.dataset.theme = theme
+  }, [theme])
+
+  // Follow the newest applicant when nothing is selected (replay mode relies on this).
+  useEffect(() => {
+    if (desk.applicants.length === 0) {
+      if (selectedId) setSelectedId(null)
+      return
+    }
+    if (!selectedId || !desk.applicants.some((a) => a._id === selectedId)) {
+      const newest = desk.applicants.slice().sort((a, b) => b.createdAt - a.createdAt)[0]
+      setSelectedId(newest._id)
+    }
+  }, [desk.applicants, selectedId])
+
+  const applicant = desk.applicants.find((a) => a._id === selectedId)
+  const bundle = desk.bundles.find((b) => b.applicantId === selectedId)
+  const offers = useMemo(() => offersFor(desk.offers, selectedId), [desk.offers, selectedId])
+  const events = useMemo(() => eventsFor(desk.auditEvents, selectedId), [desk.auditEvents, selectedId])
+  const notice = desk.notices.find((n) => n.applicantId === selectedId)
+  const decision = desk.decisions.find((d) => d.applicantId === selectedId)
+  const steps = useMemo(() => stepTimings(applicant, events), [applicant, events])
+  const inFlight = desk.applicants.filter((a) => IN_FLIGHT.includes(a.status)).length
+  const running = !!applicant && (IN_FLIGHT.includes(applicant.status) || applicant.status === 'awaiting_human')
+  const now = useNow(running)
+
+  const selectedOffer = offers.find((o) => o._id === selectedOfferId && o.decision === 'approve')
+  const underwriteStart = steps.find((s) => s.id === 'underwrite')?.startedAt ?? null
+
+  const onSubmit = useCallback(
+    async (input: IntakeInput) => {
+      const id = await desk.createApplicant(input)
+      setSelectedId(id)
+      setSelectedOfferId(null)
+      setIntakeOpen(false)
+      setTab('offer')
+    },
+    [desk],
+  )
+
+  const openIntake = (personaId: string | null) => {
+    setIntakePersona(personaId)
+    setIntakeOpen(true)
+    setDeckOpen(false)
+  }
+
+  const select = (id: string) => {
+    setSelectedId(id)
+    setSelectedOfferId(null)
+    setIntakeOpen(false)
+  }
+
+  const hs = applicant?.status === 'hard_stop' ? hardStopEvent(events) : undefined
+
+  return (
+    <div className="app">
+      <TopBar
+        connection={desk.connection}
+        inFlight={inFlight}
+        replaying={desk.replaying}
+        onDeck={() => setDeckOpen(true)}
+        onReplay={() => {
+          setSelectedId(null)
+          setSelectedOfferId(null)
+          setIntakeOpen(false)
+          desk.startReplay()
+        }}
+        onStopReplay={() => {
+          setSelectedId(null)
+          desk.stopReplay()
+        }}
+        theme={theme}
+        onTheme={() => setTheme((t) => (t === 'auto' ? 'light' : t === 'light' ? 'dark' : 'auto'))}
+      />
+      <div className="main">
+        <Queue applicants={desk.applicants} selectedId={intakeOpen ? null : selectedId} onSelect={select} onNew={() => openIntake(null)} disabled={desk.replaying} />
+
+        <main className="pane work" aria-label="Work surface">
+          {intakeOpen ? (
+            <div className="pane-body">
+              <IntakePane personas={desk.personas} initialPersonaId={intakePersona} onSubmit={onSubmit} onCancel={() => setIntakeOpen(false)} />
+            </div>
+          ) : (
+            <div className="board">
+              <PipelineRail applicant={applicant} steps={steps} offers={offers} now={now} />
+              <div className="board-main">
+                <div className="board-head">
+                  {applicant ? (
+                    <>
+                      <h2>{applicant.name}</h2>
+                      <span className={`status tone-${STATUS_TONE[applicant.status]} ${IN_FLIGHT.includes(applicant.status) ? 'live' : ''}`}>
+                        {STATUS_WORD[applicant.status]}
+                      </span>
+                      <span className="muted">
+                        {applicant.purpose} · <span className="mono">${applicant.amountRequested.toLocaleString('en-US')}</span>
+                      </span>
+                    </>
+                  ) : (
+                    <>
+                      <h2 className="muted">No applicant selected</h2>
+                      <span className="muted">Choose one from the queue, or start a new application.</span>
+                    </>
+                  )}
+                </div>
+                <div className="columns">
+                  {applicant?.status === 'hard_stop' ? (
+                    <HardStopCard event={hs} />
+                  ) : (
+                    LENDERS.map((l) => {
+                      const o = offers.find((x) => x.lender === l.id)
+                      const chosen = !!decision?.chosenOfferId && o?._id === decision.chosenOfferId
+                      return (
+                        <OfferCard
+                          key={l.id}
+                          lender={l.id}
+                          offer={o}
+                          underwriteStartedAt={underwriteStart}
+                          now={now}
+                          selected={!!o && o._id === selectedOfferId}
+                          chosen={chosen}
+                          dim={!!decision && !chosen}
+                          canSelect={!!applicant && applicant.status === 'awaiting_human'}
+                          onSelect={() => {
+                            if (!o) return
+                            setSelectedOfferId((cur) => (cur === o._id ? null : o._id))
+                            setTab('offer')
+                          }}
+                          onTrace={() => setTab('trace')}
+                        />
+                      )
+                    })
+                  )}
+                </div>
+              </div>
+            </div>
+          )}
+          <Drawer
+            events={desk.auditEvents}
+            applicants={desk.applicants}
+            selectedId={selectedId}
+            evalRuns={desk.evalRuns}
+            evalCases={desk.evalCases.length}
+            onRunEval={desk.runEval}
+          />
+        </main>
+
+        <Inspector
+          applicant={applicant}
+          bundle={bundle}
+          offers={offers}
+          notice={notice}
+          decision={decision}
+          events={events}
+          selectedOffer={selectedOffer}
+          tab={tab}
+          onTab={setTab}
+          onApprove={async () => {
+            if (applicant && selectedOffer) await desk.approveOffer(applicant._id, selectedOffer._id)
+          }}
+          onDecline={async (note) => {
+            if (applicant) await desk.declineApplicant(applicant._id, note)
+          }}
+        />
+      </div>
+      {deckOpen && <PersonaDeck personas={desk.personas} onPick={(id) => openIntake(id)} onClose={() => setDeckOpen(false)} />}
+    </div>
+  )
 }

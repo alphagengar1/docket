@@ -212,5 +212,5 @@ export function adverseActionNotice(name: string, declines: Array<{ lender: stri
     `${name}, this notice explains the credit decisions made on your application.`,
     ...parts,
     'These decisions were based on information from a consumer reporting agency sandbox. You have the right to a free copy of your report within 60 days and to dispute anything in it that is inaccurate.',
-  ].join(' ')
+  ].join('\n\n')
 }
