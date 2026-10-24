@@ -32,3 +32,4 @@
 - Board "Notice elements" tile shows 0/7 on hard stop until the reviewer sends the notice; backend should create the hard-stop notice eagerly (board-agent).
 - Hard-stop event list shows only the last 3 audit events; override line can push out rule lines.
 - Set GIT_SHA on the Convex deployment so the eval panel shows a real commit hash.
+- (backend2) New table `recordings {personaId, recordedAt, data:any}` (index by_personaId): replay snapshots written by eval:recordAll, served by desk:recordedRun, preserved by desk:resetBoard (resetBoard deletes applicants only).

@@ -19,6 +19,7 @@ import type * as evalScore from "../evalScore.js";
 import type * as http from "../http.js";
 import type * as market from "../market.js";
 import type * as personas from "../personas.js";
+import type * as pii from "../pii.js";
 import type * as policies from "../policies.js";
 import type * as rules from "../rules.js";
 import type * as stub from "../stub.js";
@@ -43,6 +44,7 @@ declare const fullApi: ApiFromModules<{
   http: typeof http;
   market: typeof market;
   personas: typeof personas;
+  pii: typeof pii;
   policies: typeof policies;
   rules: typeof rules;
   stub: typeof stub;

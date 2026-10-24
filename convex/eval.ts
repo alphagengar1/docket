@@ -214,3 +214,45 @@ export const reseedCases = internalMutation({
   args: {},
   handler: async (ctx): Promise<number> => await ctx.runMutation(internal.eval.seedCases, { force: true }),
 });
+
+/**
+ * Replay recording: run every persona ONE AT A TIME (so the recorded timings are uncontended,
+ * i.e. what a live single run looks like) and snapshot each into the `recordings` table (survives resetBoard) and delete the applicant.
+ *  `npx convex run eval:recordAll`. Returns per-persona wall time.
+ */
+export const recordAll = internalAction({
+  args: { personaIds: v.optional(v.array(v.string())) },
+  handler: async (ctx, { personaIds }): Promise<Array<{ personaId: string; status: string; wallMs: number }>> => {
+    await ctx.runMutation(internal.eval.seedCases, {});
+    const cases: Array<{ personaId: string }> = await ctx.runQuery(internal.eval.listCases, {});
+    const out: Array<{ personaId: string; status: string; wallMs: number }> = [];
+    for (const c of cases) {
+      if (personaIds && !personaIds.includes(c.personaId)) continue;
+      const persona = findPersona(c.personaId);
+      const intake = persona?.defaultIntake ?? { purpose: "eval", amountRequested: 10000, statedIncome: 60000 };
+      const t = Date.now();
+      const applicantId: Id<"applicants"> = await ctx.runMutation(internal.desk.createApplicantInternal, {
+        personaId: c.personaId,
+        ...intake,
+        name: persona?.name ?? c.personaId,
+      });
+      let status = "intake";
+      while (Date.now() - t < 120_000) {
+        const st: Record<string, string> = await ctx.runQuery(internal.eval.statuses, { ids: [applicantId] });
+        status = st[applicantId];
+        if (TERMINAL.has(status)) break;
+        await new Promise((r) => setTimeout(r, 500));
+      }
+      const wallMs = Date.now() - t;
+      if (TERMINAL.has(status)) {
+        // hard_stop is set before the notice step runs; let the workflow finish writing.
+        await new Promise((r) => setTimeout(r, 2500));
+        await ctx.runMutation(internal.desk.saveRecording, { applicantId });
+        // Recording is self-contained; keep the board clean.
+        await ctx.runMutation(internal.desk.deleteApplicantCascade, { applicantId });
+      }
+      out.push({ personaId: c.personaId, status, wallMs });
+    }
+    return out;
+  },
+});

@@ -90,6 +90,11 @@ export default defineSchema({
     // Dispute-and-replay: this row re-runs the desk for `replayOf` with a corrected bundle.
     replayOf: v.optional(v.id("applicants")),
     replayNote: v.optional(v.string()),
+    // Demo Day Kit additions (all optional).
+    cardCode: v.optional(v.string()),
+    chosenOfferId: v.optional(v.id("offers")),
+    overrideAttempts: v.optional(v.number()),
+    overrideResult: v.optional(v.string()),
   })
     .index("by_personaId", ["personaId"])
     .index("by_replayOf", ["replayOf"])
@@ -121,6 +126,11 @@ export default defineSchema({
     // Computed in code (classify.ts) from requested vs offered terms. ECOA: deny and
     // counteroffer both require an adverse-action notice.
     classification: v.optional(classification),
+    // Set when status is "failed": "timeout" (LENDER_TIMEOUT_MS exceeded) or "error".
+    failureReason: v.optional(v.string()),
+    // Computed when an approving offer is written (classify.ts).
+    monthlyPayment: v.optional(v.number()),
+    costToBorrow: v.optional(v.number()),
     runId: v.union(v.string(), v.null()),
     shareUrl: v.union(v.string(), v.null()),
     latencyMs: v.union(v.number(), v.null()),
@@ -139,6 +149,7 @@ export default defineSchema({
     requiredBecause: v.optional(v.string()),
     droppedReasons: v.optional(v.array(v.object({ lender: v.string(), field: v.string(), text: v.string() }))),
     fcraSource: v.optional(v.string()),
+    approvedAt: v.optional(v.number()), // human approved sending this notice (desk:approveNotice)
   }).index("by_applicantId", ["applicantId"]),
 
   // Counterfactual reason tests (design/differentiators.md #1, pre-approved).
@@ -179,6 +190,13 @@ export default defineSchema({
     ref: v.union(v.string(), v.null()),
     note: v.string(),
   }).index("by_applicantId", ["applicantId"]),
+
+  // Replay recordings (desk:recordedRun). Survive desk:resetBoard. `data` is the recordedRun payload.
+  recordings: defineTable({
+    personaId: v.string(),
+    recordedAt: v.number(),
+    data: v.any(),
+  }).index("by_personaId", ["personaId"]),
 
   evalCases: defineTable({
     personaId: v.string(),

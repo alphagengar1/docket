@@ -8,10 +8,14 @@ import { vResultValidator } from "@convex-dev/workpool";
 import { v } from "convex/values";
 import { components, internal } from "./_generated/api";
 import type { Doc, Id } from "./_generated/dataModel";
-import { internalMutation, internalQuery, mutation, query, type QueryCtx } from "./_generated/server";
+import { action, internalMutation, internalQuery, mutation, query, type MutationCtx, type QueryCtx } from "./_generated/server";
 import { applicantStatus } from "./schema";
 import { writeAudit } from "./audit";
-import { findPersona } from "./crs.mock";
+import { findPersona, mockBundle } from "./crs.mock";
+import { personaCodes, personaIdForCode } from "./crs.personas";
+import { lenderTimeoutMs, pingClaude } from "./agents";
+import { LENDER_NAMES } from "./policies";
+import { costToBorrow, fcraParagraph, monthlyPayment } from "./classify";
 import { evaluateHardStops } from "./rules";
 import { LENDERS } from "./types";
 import { noticeRequired } from "./classify";
@@ -60,7 +64,11 @@ export const runDeskWorkflow = workflow.define({
       action: "step.guardrails.done",
       note: guard.stop ? `HARD STOP on ${guard.field}` : "passed",
     });
-    if (guard.stop) return;
+    if (guard.stop) {
+      // The notice exists immediately; a human still signs off with desk:approveNotice.
+      await step.runMutation(internal.desk.createHardStopNotice, { applicantId });
+      return;
+    }
 
     // 3. underwrite x3 in parallel --------------------------------------
     await step.runMutation(internal.desk.mark, { applicantId, status: "underwriting", action: "step.underwrite.start", note: "cu, fintech, prime" });
@@ -180,7 +188,12 @@ export const mark = internalMutation({
     note: v.string(),
   },
   handler: async (ctx, { applicantId, status, action, note }) => {
-    if (status) await ctx.db.patch(applicantId, { status });
+    if (status) {
+      // Do not regress a borrower who already chose an offer back to a working status.
+      const cur = await ctx.db.get(applicantId);
+      const chosen = cur?.status === "awaiting_human" && cur.chosenOfferId;
+      if (!(chosen && status !== "awaiting_human")) await ctx.db.patch(applicantId, { status });
+    }
     await writeAudit(ctx, { applicantId, actor: "desk", action, note });
   },
 });
@@ -251,6 +264,7 @@ async function createAndStart(
     amountRequested: number;
     statedIncome: number;
     name?: string;
+    cardCode?: string;
     replayOf?: Id<"applicants">;
     replayNote?: string;
     dispute?: { fromApplicantId: Id<"applicants">; tradelineIndex: number };
@@ -268,6 +282,7 @@ async function createAndStart(
     consentAt: now,
     status: "intake",
     createdAt: now,
+    ...((args.cardCode ?? personaCodes[args.personaId]) ? { cardCode: args.cardCode ?? personaCodes[args.personaId] } : {}),
     ...(args.replayOf ? { replayOf: args.replayOf, replayNote: args.replayNote ?? "" } : {}),
   });
   await writeAudit(ctx, {
@@ -334,18 +349,39 @@ const stripRaw = (b: Doc<"bundles">) => {
 
 export const createApplicant = mutation({
   args: {
-    personaId: v.string(),
-    purpose: v.string(),
-    amountRequested: v.number(),
-    statedIncome: v.number(),
+    personaId: v.optional(v.string()),
+    cardCode: v.optional(v.string()),
+    purpose: v.optional(v.string()),
+    amountRequested: v.optional(v.number()),
+    statedIncome: v.optional(v.number()),
     name: v.optional(v.string()),
   },
   handler: async (ctx, args): Promise<Id<"applicants">> => {
-    if (!findPersona(args.personaId) && (process.env.CRS_PROVIDER ?? "mock") !== "crs") {
-      throw new Error(`unknown personaId ${args.personaId}`);
+    let personaId = args.personaId;
+    if (args.cardCode) {
+      const fromCode = personaIdForCode(args.cardCode);
+      if (!fromCode) throw new Error(`unknown card code ${args.cardCode}`);
+      if (personaId && personaId !== fromCode) throw new Error("cardCode and personaId disagree");
+      personaId = fromCode;
     }
-    if (args.amountRequested <= 0 || args.statedIncome < 0) throw new Error("amount and income must be positive");
-    return await createAndStart(ctx, args);
+    if (!personaId) throw new Error("personaId or cardCode is required");
+    const persona = findPersona(personaId);
+    if (!persona && (process.env.CRS_PROVIDER ?? "mock") !== "crs") {
+      throw new Error(`unknown personaId ${personaId}`);
+    }
+    const d = persona?.defaultIntake ?? { purpose: "personal", amountRequested: 10000, statedIncome: 60000 };
+    const purpose = args.purpose ?? d.purpose;
+    const amountRequested = args.amountRequested ?? d.amountRequested;
+    const statedIncome = args.statedIncome ?? d.statedIncome;
+    if (amountRequested <= 0 || statedIncome < 0) throw new Error("amount and income must be positive");
+    return await createAndStart(ctx, {
+      personaId,
+      purpose,
+      amountRequested,
+      statedIncome,
+      ...(args.name ? { name: args.name } : {}),
+      ...(args.cardCode ? { cardCode: args.cardCode.trim() } : {}),
+    });
   },
 });
 
@@ -526,17 +562,394 @@ export const declineApplicant = mutation({
   },
 });
 
+async function cascadeDelete(ctx: MutationCtx, applicantId: Id<"applicants">) {
+  for (const table of ["bundles", "offers", "notices", "decisions", "auditEvents", "agentRuns", "reasonChecks"] as const) {
+    const rows = await ctx.db
+      .query(table)
+      .withIndex("by_applicantId", (q) => q.eq("applicantId", applicantId))
+      .collect();
+    for (const r of rows) await ctx.db.delete(r._id);
+  }
+  await ctx.db.delete(applicantId);
+}
+
 /** Delete an applicant and every row that hangs off it (eval cleanup / demo reset). */
 export const deleteApplicantCascade = internalMutation({
   args: { applicantId: v.id("applicants") },
   handler: async (ctx, { applicantId }) => {
-    for (const table of ["bundles", "offers", "notices", "decisions", "auditEvents", "agentRuns", "reasonChecks"] as const) {
-      const rows = await ctx.db
-        .query(table)
-        .withIndex("by_applicantId", (q) => q.eq("applicantId", applicantId))
-        .collect();
-      for (const r of rows) await ctx.db.delete(r._id);
+    await cascadeDelete(ctx, applicantId);
+  },
+});
+
+// ---------------------------------------------------------------------------
+// Demo Day Kit: card codes, borrower (phone) API, operator controls, replay.
+// All additions; nothing above changed shape.
+// ---------------------------------------------------------------------------
+
+/** Card code -> persona + suggested intake. Null if the code is unknown. */
+export const lookupCode = query({
+  args: { code: v.string() },
+  handler: async (_ctx, { code }) => {
+    const personaId = personaIdForCode(code);
+    if (!personaId) return null;
+    const p = findPersona(personaId);
+    if (!p) return null;
+    return {
+      code: personaCodes[personaId],
+      personaId,
+      displayName: p.name,
+      name: p.name,
+      purpose: p.defaultIntake.purpose,
+      amountRequested: p.defaultIntake.amountRequested,
+      statedIncome: p.defaultIntake.statedIncome,
+    };
+  },
+});
+
+type BorrowerStatus = "checking" | "offers" | "waiting_for_underwriter" | "approved" | "declined" | "stopped";
+
+/** Everything the phone may show. No bureau data, no scores, no reasons, no SSN. */
+export const borrowerView = query({
+  args: { applicantId: v.id("applicants") },
+  handler: async (ctx, { applicantId }) => {
+    const a = await ctx.db.get(applicantId);
+    if (!a) return null;
+    const offerRows = await ctx.db
+      .query("offers")
+      .withIndex("by_applicantId", (q) => q.eq("applicantId", applicantId))
+      .collect();
+    const offers = offerRows
+      .filter((o) => o.status === "done" && o.decision === "approve" && o.apr != null && o.amount != null && o.termMonths != null)
+      .map((o) => ({
+        offerId: o._id,
+        lender: o.lender,
+        lenderName: LENDER_NAMES[o.lender],
+        apr: o.apr as number,
+        monthlyPayment: o.monthlyPayment ?? monthlyPayment(o.amount as number, o.apr as number, o.termMonths as number),
+        costToBorrow: o.costToBorrow ?? costToBorrow(o.amount as number, o.apr as number, o.termMonths as number),
+        termMonths: o.termMonths as number,
+        amount: o.amount as number,
+        classification: o.classification ?? ("approve" as const),
+      }))
+      .sort((x, y) => x.apr - y.apr);
+    const notice = await ctx.db
+      .query("notices")
+      .withIndex("by_applicantId", (q) => q.eq("applicantId", applicantId))
+      .order("desc")
+      .first();
+
+    let status: BorrowerStatus;
+    switch (a.status) {
+      case "hard_stop":
+        status = "stopped";
+        break;
+      case "approved":
+        status = "approved";
+        break;
+      case "declined":
+        status = "declined";
+        break;
+      case "awaiting_human":
+        status = a.chosenOfferId || offers.length === 0 ? "waiting_for_underwriter" : "offers";
+        break;
+      case "underwriting":
+      case "compliance":
+        status = offers.length > 0 ? "offers" : "checking";
+        break;
+      default:
+        status = "checking";
     }
-    await ctx.db.delete(applicantId);
+    return {
+      applicantId,
+      name: a.name,
+      cardCode: a.cardCode ?? null,
+      purpose: a.purpose,
+      amountRequested: a.amountRequested,
+      status,
+      offers,
+      chosenOfferId: a.chosenOfferId ?? null,
+      // The notice is shown only after a human approved sending it.
+      noticeText: notice?.approvedAt ? notice.text : null,
+      noticeReady: !!notice && !notice.approvedAt,
+      canOverride: false as const,
+      overrideAttempts: a.overrideAttempts ?? 0,
+      overrideResult: a.overrideResult ?? null,
+    };
+  },
+});
+
+/** Borrower picks an offer. Escalates to the human underwriter (status awaiting_human). */
+export const chooseOffer = mutation({
+  args: { applicantId: v.id("applicants"), offerId: v.id("offers") },
+  handler: async (ctx, { applicantId, offerId }) => {
+    const a = await ctx.db.get(applicantId);
+    if (!a) throw new Error("applicant not found");
+    const o = await ctx.db.get(offerId);
+    if (!o || o.applicantId !== applicantId) throw new Error("offer does not belong to applicant");
+    if (o.status !== "done" || o.decision !== "approve") throw new Error("that offer is not available");
+    if (a.status === "approved" || a.status === "declined" || a.status === "hard_stop") throw new Error(`application is ${a.status}`);
+    await ctx.db.patch(applicantId, { chosenOfferId: offerId, status: "awaiting_human" });
+    await writeAudit(ctx, {
+      applicantId,
+      actor: "applicant",
+      action: "offer.chosen",
+      ref: String(offerId),
+      note: `chose ${o.lender}: $${o.amount} at ${o.apr}% for ${o.termMonths} months; escalated to underwriter`,
+    });
+    return { ok: true as const };
+  },
+});
+
+/**
+ * The judge, as reviewer, tries to fund a stopped file. ALWAYS refused: a hard stop is a coded rule,
+ * and no person or model can override it from this surface.
+ */
+export const attemptOverride = mutation({
+  args: { applicantId: v.id("applicants") },
+  handler: async (ctx, { applicantId }): Promise<{ blocked: true; reason: string }> => {
+    const a = await ctx.db.get(applicantId);
+    if (!a) throw new Error("applicant not found");
+    const stops = (
+      await ctx.db
+        .query("auditEvents")
+        .withIndex("by_applicantId", (q) => q.eq("applicantId", applicantId))
+        .collect()
+    ).filter((e) => e.actor === "rules" && e.action === "rules.hard_stop");
+    const ref = stops[0]?.ref ?? null;
+    const reason = a.status === "hard_stop" ? "Override blocked: fraud review required" : "Override blocked: no override path exists for this application";
+    const attempts = (a.overrideAttempts ?? 0) + 1;
+    await ctx.db.patch(applicantId, { overrideAttempts: attempts, overrideResult: reason });
+    await writeAudit(ctx, {
+      applicantId,
+      actor: "human",
+      action: "override.blocked",
+      ref,
+      note: `${reason}${ref ? ` (rule ${ref})` : ""}; attempt ${attempts}`,
+    });
+    return { blocked: true, reason };
+  },
+});
+
+const BUREAU_CONTACTS =
+  "Equifax 1-800-685-1111, Experian 1-888-397-3742, TransUnion 1-800-916-8800";
+
+/** Borrower-language reason for a hard-stop rule field. */
+const STOP_REASON_TEXT: Record<string, string> = {
+  "flags.deceased": "The credit bureau's file for this identity carries a deceased indicator.",
+  "flags.frozen": "The credit file for this identity is frozen at the credit bureaus, so no score could be retrieved.",
+  "identity.verified": "The credit bureau could not verify this identity against its records.",
+  "fraud.score": "Our fraud check rated this application as too risky to continue.",
+};
+
+function hardStopNotice(name: string, amount: number, purpose: string, fields: string[], source: "crs" | "nessie" | "mock", pulledAt: number): string {
+  const reasons = (fields.length ? fields : ["unknown"])
+    .map((f) => `- ${STOP_REASON_TEXT[f] ?? "The application stopped at an automated safety check."}`)
+    .join("\n");
+  return [
+    `Dear ${name}, we could not process your request for $${amount.toLocaleString("en-US")} (${purpose}). No lender reviewed your application.`,
+    `The reason${fields.length > 1 ? "s" : ""}:\n${reasons}`,
+    `If this information is wrong, for example if the file is marked in error, you can correct it: contact the credit bureau directly (${BUREAU_CONTACTS}) and dispute the item. Once it is corrected you are welcome to apply again.`,
+    fcraParagraph(source, pulledAt),
+  ].join("\n\n");
+}
+
+async function ensureHardStopNotice(ctx: MutationCtx, applicantId: Id<"applicants">): Promise<Doc<"notices">> {
+  const existing = await ctx.db.query("notices").withIndex("by_applicantId", (q) => q.eq("applicantId", applicantId)).order("desc").first();
+  if (existing) return existing;
+  const a = await ctx.db.get(applicantId);
+  if (!a) throw new Error("applicant not found");
+  const audits = await ctx.db.query("auditEvents").withIndex("by_applicantId", (q) => q.eq("applicantId", applicantId)).collect();
+  const fields = audits.filter((e) => e.actor === "rules" && e.action === "rules.hard_stop" && e.ref).map((e) => e.ref as string);
+  const bundle = await ctx.db.query("bundles").withIndex("by_applicantId", (q) => q.eq("applicantId", applicantId)).order("desc").first();
+  const text = hardStopNotice(a.name, a.amountRequested, a.purpose, fields, bundle?.source ?? "mock", bundle?.pulledAt ?? Date.now());
+  const id = await ctx.db.insert("notices", {
+    applicantId,
+    text,
+    lendersDeclined: [],
+    createdAt: Date.now(),
+    required: true,
+    requiredBecause: "hard stop: no lender reviewed the file",
+    fcraSource: fcraParagraph(bundle?.source ?? "mock", bundle?.pulledAt ?? Date.now()),
+  });
+  await writeAudit(ctx, { applicantId, actor: "compliance", action: "compliance.notice", ref: String(id), note: "adverse-action notice generated at hard stop (code template, no model); awaiting human sign-off" });
+  return (await ctx.db.get(id))!;
+}
+
+/** Workflow step: write the hard-stop notice as soon as the stop fires. */
+export const createHardStopNotice = internalMutation({
+  args: { applicantId: v.id("applicants") },
+  handler: async (ctx, { applicantId }) => {
+    await ensureHardStopNotice(ctx, applicantId);
+  },
+});
+
+/**
+ * Human signs off on the adverse-action notice (sets approvedAt). For a hard stop the notice already
+ * exists (created by the workflow; created here if the workflow had not reached it). Sets the
+ * applicant to "declined" when there is nothing left to approve.
+ */
+export const approveNotice = mutation({
+  args: { applicantId: v.id("applicants") },
+  handler: async (ctx, { applicantId }) => {
+    const a = await ctx.db.get(applicantId);
+    if (!a) throw new Error("applicant not found");
+    const offerRows = await ctx.db
+      .query("offers")
+      .withIndex("by_applicantId", (q) => q.eq("applicantId", applicantId))
+      .collect();
+    const approvable = offerRows.some((o) => o.status === "done" && o.decision === "approve");
+    const wasHardStop = a.status === "hard_stop";
+    let notice = await ctx.db.query("notices").withIndex("by_applicantId", (q) => q.eq("applicantId", applicantId)).order("desc").first();
+    if (!notice) {
+      if (!wasHardStop) throw new Error("no notice exists for this applicant");
+      notice = await ensureHardStopNotice(ctx, applicantId);
+    }
+    if (!notice.approvedAt) await ctx.db.patch(notice._id, { approvedAt: Date.now() });
+    await writeAudit(ctx, { applicantId, actor: "human", action: "notice.approved", ref: String(notice._id), note: "human approved sending the adverse-action notice" });
+
+    if (wasHardStop || (a.status === "awaiting_human" && !approvable)) {
+      await ctx.db.patch(applicantId, { status: "declined" });
+      await ctx.db.insert("decisions", {
+        applicantId,
+        chosenOfferId: null,
+        outcome: wasHardStop ? "hard_stop" : "declined",
+        approvedBy: "human",
+        at: Date.now(),
+        note: "adverse-action notice approved; no offer to fund",
+      });
+    }
+    return { ok: true as const, noticeId: notice._id };
+  },
+});
+
+// ---------------------------------------------------------------------------
+// Operator controls
+// ---------------------------------------------------------------------------
+const RESET_BATCH = 8;
+
+async function resetBatch(ctx: MutationCtx): Promise<{ deleted: number; remaining: boolean }> {
+  const rows = await ctx.db.query("applicants").take(RESET_BATCH + 1);
+  const batch = rows.slice(0, RESET_BATCH);
+  for (const a of batch) await cascadeDelete(ctx, a._id);
+  const remaining = rows.length > RESET_BATCH;
+  if (remaining) await ctx.scheduler.runAfter(0, internal.desk.resetBoardStep, {});
+  return { deleted: batch.length, remaining };
+}
+
+/** Delete every applicant and its rows. Keeps evalCases, evalRuns, marketRates, secretsCache. */
+export const resetBoard = mutation({
+  args: {},
+  handler: async (ctx) => await resetBatch(ctx),
+});
+export const resetBoardStep = internalMutation({
+  args: {},
+  handler: async (ctx) => await resetBatch(ctx),
+});
+
+/** Pre-heat before judging: one tiny Claude call plus one CRS fixture read. */
+export const warmup = action({
+  args: {},
+  handler: async (): Promise<{ claudeMs: number | null; claudeOk: boolean; claudeError?: string; crsMs: number; crsProvider: string; totalMs: number }> => {
+    const t0 = Date.now();
+    const claude = await pingClaude();
+    const t1 = Date.now();
+    mockBundle("P01"); // fixture read (parses the persona fixture)
+    const crsMs = Date.now() - t1;
+    return {
+      claudeMs: claude.ms,
+      claudeOk: claude.ok,
+      ...(claude.error ? { claudeError: claude.error } : {}),
+      crsMs,
+      crsProvider: process.env.CRS_PROVIDER ?? "mock",
+      totalMs: Date.now() - t0,
+    };
+  },
+});
+
+/** UI chrome: SANDBOX label, lender timeout, build id. */
+export const config = query({
+  args: {},
+  handler: async (ctx) => {
+    const ms = lenderTimeoutMs();
+    const latest = await ctx.db.query("evalRuns").withIndex("by_startedAt").order("desc").first();
+    return {
+      productName: process.env.PRODUCT_NAME ?? "Docket",
+      sandbox: true as const,
+      lenderTimeoutMs: ms,
+      lenderTimeoutSeconds: Math.round(ms / 100) / 10,
+      commit: process.env.GIT_SHA ?? null,
+      crsProvider: process.env.CRS_PROVIDER ?? "mock",
+      lenderNames: LENDER_NAMES,
+      latestEval: latest && latest.finishedAt ? { cases: latest.cases, agreement: latest.agreement, passed: Math.round(latest.agreement * latest.cases), startedAt: latest.startedAt } : null,
+    };
+  },
+});
+
+// ---------------------------------------------------------------------------
+// Replay
+// ---------------------------------------------------------------------------
+const TERMINAL_STATUSES = new Set(["awaiting_human", "approved", "declined", "hard_stop"]);
+
+async function buildRecording(ctx: QueryCtx, a: Doc<"applicants">) {
+  const personaId = a.personaId;
+  const t0 = a.createdAt;
+  const rel = (t: number) => Math.max(0, t - t0);
+  const bundle = await ctx.db.query("bundles").withIndex("by_applicantId", (q) => q.eq("applicantId", a._id)).order("desc").first();
+  const offers = await ctx.db.query("offers").withIndex("by_applicantId", (q) => q.eq("applicantId", a._id)).collect();
+  const notice = await ctx.db.query("notices").withIndex("by_applicantId", (q) => q.eq("applicantId", a._id)).order("desc").first();
+  const checks = await ctx.db.query("reasonChecks").withIndex("by_applicantId", (q) => q.eq("applicantId", a._id)).collect();
+  const audits = await ctx.db.query("auditEvents").withIndex("by_applicantId", (q) => q.eq("applicantId", a._id)).order("asc").collect();
+  // Ids are dropped on purpose: a recording is self-contained and must not point at rows that reset deletes.
+  const strip = <T extends { _id: unknown; _creationTime: number; applicantId: unknown }>(d: T) => {
+    const { _creationTime: _c, applicantId: _a, ...rest } = d;
+    return { ...rest, _id: String(d._id) };
+  };
+  const last = audits.length ? audits[audits.length - 1].at : a.createdAt;
+  return {
+    personaId,
+    recordedAt: a.createdAt,
+    durationMs: rel(last),
+    status: a.status,
+    applicant: {
+      name: a.name.replace(/ \(eval\)$/, ""),
+      cardCode: a.cardCode ?? personaCodes[personaId] ?? null,
+      purpose: a.purpose,
+      amountRequested: a.amountRequested,
+      statedIncome: a.statedIncome,
+    },
+    bundle: bundle ? { ...(({ raw: _r, _id: _i, _creationTime: _c, applicantId: _a, ...rest }) => rest)(bundle), t: rel(bundle.pulledAt) } : null,
+    offers: offers.map((o) => ({ ...strip(o), t: rel(o.createdAt) })),
+    reasonChecks: checks.map((c) => ({ ...strip(c), t: rel(c.createdAt) })),
+    notice: notice ? { ...strip(notice), t: rel(notice.createdAt) } : null,
+    auditEvents: audits.map((e) => ({ t: rel(e.at), actor: e.actor, action: e.action, ref: e.ref, note: e.note })),
+  };
+}
+
+/**
+ * Full event sequence of the most recent recorded run of a persona, timestamps relative to start
+ * (ms). Served from the `recordings` table (survives resetBoard); falls back to the latest
+ * completed live run if none was recorded.
+ */
+export const recordedRun = query({
+  args: { personaId: v.string() },
+  handler: async (ctx, { personaId }) => {
+    const rec = await ctx.db.query("recordings").withIndex("by_personaId", (q) => q.eq("personaId", personaId)).order("desc").first();
+    if (rec) return rec.data as Awaited<ReturnType<typeof buildRecording>>;
+    const rows = await ctx.db.query("applicants").withIndex("by_personaId", (q) => q.eq("personaId", personaId)).order("desc").take(30);
+    const a = rows.find((r) => !r.replayOf && TERMINAL_STATUSES.has(r.status));
+    return a ? await buildRecording(ctx, a) : null;
+  },
+});
+
+/** Snapshot a finished run into `recordings` (replacing the persona's previous one). */
+export const saveRecording = internalMutation({
+  args: { applicantId: v.id("applicants") },
+  handler: async (ctx, { applicantId }) => {
+    const a = await ctx.db.get(applicantId);
+    if (!a) return null;
+    const data = await buildRecording(ctx as unknown as QueryCtx, a);
+    for (const old of await ctx.db.query("recordings").withIndex("by_personaId", (q) => q.eq("personaId", a.personaId)).collect()) await ctx.db.delete(old._id);
+    await ctx.db.insert("recordings", { personaId: a.personaId, recordedAt: Date.now(), data });
+    return { durationMs: data.durationMs, status: data.status, events: data.auditEvents.length };
   },
 });

@@ -2083,3 +2083,21 @@ export const CRS_PERSONAS: Record<string, CrsPersona> = {
     }
   }
 };
+
+/**
+ * Printed card codes: 4 digits (2-9 only, no 0/1) typed on a numeric keypad. Embedded copy of
+ * design/card-codes.json (the shared table); keep the two in sync.
+ */
+export const CARD_CODE_ALPHABET = "23456789";
+export const personaCodes: Record<string, string> = {
+  P01: "9987", P02: "4657", P03: "4579", P04: "4997", P05: "3239",
+  P06: "7996", P07: "7356", P08: "9487", P09: "4439", P10: "7962",
+  P11: "2536", P12: "7263", P13: "9442", P14: "6735", P15: "3659",
+  P16: "4546", P17: "2792", P18: "6896", P19: "5628", P20: "7554",
+};
+
+export function personaIdForCode(code: string): string | null {
+  const c = code.trim();
+  for (const [id, cc] of Object.entries(personaCodes)) if (cc === c) return id;
+  return null;
+}

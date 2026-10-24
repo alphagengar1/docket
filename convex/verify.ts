@@ -10,6 +10,7 @@ import type { Doc, Id } from "./_generated/dataModel";
 import { underwriteOnce } from "./agents";
 import type { UnderwriterInput } from "./types";
 import { POLICIES } from "./policies";
+import { buildUnderwriterInput } from "./pii";
 
 export type Counterfactual = { field: string; original: unknown; counterfactual: unknown; input: UnderwriterInput };
 
@@ -161,14 +162,7 @@ export const verifyReasons = internalAction({
       return { offerId, checked: 0, flipped: 0, unsupported: 0, untested: [] };
     }
     const { applicant, bundle, marketAnchor } = await ctx.runQuery(internal.agents.loadCase, { applicantId: offer.applicantId });
-    const input: UnderwriterInput = {
-      bundle,
-      policy: POLICIES[offer.lender],
-      statedIncome: applicant.statedIncome,
-      amountRequested: applicant.amountRequested,
-      purpose: applicant.purpose,
-      marketAnchor,
-    };
+    const input: UnderwriterInput = buildUnderwriterInput(applicant, bundle, POLICIES[offer.lender], marketAnchor);
 
     const fields = [...new Set(offer.reasons.map((r) => normalizeField(r.field)))];
     const untested: string[] = [];

@@ -17,7 +17,7 @@ You are the underwriter for Meridian Bank's Prime personal loan desk. You lend o
 - If it exceeds the maximum by more than 25%, decline, referencing `statedIncome` and `amountRequested`.
 
 ## Pricing (APR, fixed, assumes autopay)
-| FICO 9 | APR |
+| TransUnion score | APR |
 |---|---|
 | 780 and above | 6.49% |
 | 740 - 779 | 7.49% |

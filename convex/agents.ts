@@ -29,7 +29,8 @@ import {
 } from "./types";
 import { POLICIES, LENDER_NAMES } from "./policies";
 import { advertisedApr, stubCompliance, stubUnderwrite } from "./stub";
-import { classifyOffer, fcraParagraph, noticeRequired } from "./classify";
+import { classifyOffer, costToBorrow, fcraParagraph, monthlyPayment, noticeRequired } from "./classify";
+import { buildComplianceInput, buildUnderwriterInput, fillName } from "./pii";
 
 export type Role = "underwriter" | "compliance";
 export type ProviderName = "claude" | "creao" | "stub";
@@ -65,6 +66,7 @@ function underwriterSystem(lender: Lender): string {
   return [
     `You are the ${LENDER_NAMES[lender]} underwriting agent on an automated lending desk. A human loan officer approves every offer; you only recommend.`,
     `Apply the policy below literally. Quote the actual numbers from the bundle in every reason. Reference bundle fields by path (credit.fico9, credit.utilization, credit.inquiries6mo, credit.vantage4, credit.tradelines, flags.bankruptcy, flags.eviction, fraud.score, fraud.signals, statedIncome, amountRequested).`,
+    `Refer to credit.fico9 as the TransUnion score; never write FICO.`,
     `If the market anchor is present, keep an approval's APR inside or within one point of the band; the policy table still wins if they conflict.`,
     ``,
     `=== POLICY ===`,
@@ -78,7 +80,7 @@ function underwriterUser(input: UnderwriterInput): string {
 }
 
 const COMPLIANCE_SYSTEM = [
-  "You write adverse-action notices for an automated lending desk. Plain English, second person, addressed to the applicant by name.",
+  "You write adverse-action notices for an automated lending desk. Plain English, second person (refer to credit.fico9 as the TransUnion score; never write FICO), addressed to the applicant using the literal placeholder {{APPLICANT_NAME}} (the system substitutes the real name; you never see it).",
   "Each entry in `declines` is a lender response that requires notice: classification \"deny\" (declined) or \"counteroffer\" (approved on different terms; state the offered amount, APR and term and that they may accept or decline it).",
   "Name every lender and every reason listed for it, quoting the numbers. Use ONLY the reasons given; each has already been verified by a counterfactual test. Do not add, merge or soften reasons. Group by lender.",
   "Do NOT write the credit-bureau / FCRA paragraph or any legal boilerplate; the system appends the legally required text after yours.",
@@ -98,20 +100,25 @@ async function callClaudeJson<T>(opts: {
   validate: (raw: unknown) => { success: true; data: T } | { success: false; error: string };
   effort: "low" | "medium";
   maxTokens: number;
+  signal?: AbortSignal;
 }): Promise<ClaudeResult<T>> {
   const client = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
   const started = Date.now();
   const messages: Anthropic.MessageParam[] = [{ role: "user", content: opts.user }];
   let lastError = "";
   for (let attempt = 0; attempt < 2; attempt++) {
+    if (opts.signal?.aborted) return { ok: false, error: "aborted", latencyMs: Date.now() - started };
     try {
-      const res = await client.messages.create({
-        model: opts.model,
-        max_tokens: opts.maxTokens,
-        system: opts.system,
-        messages,
-        output_config: { format: zodOutputFormat(opts.format), effort: opts.effort },
-      });
+      const res = await client.messages.create(
+        {
+          model: opts.model,
+          max_tokens: opts.maxTokens,
+          system: opts.system,
+          messages,
+          output_config: { format: zodOutputFormat(opts.format), effort: opts.effort },
+        },
+        opts.signal ? { signal: opts.signal } : undefined,
+      );
       if (res.stop_reason === "refusal") {
         return { ok: false, error: "model refused", latencyMs: Date.now() - started };
       }
@@ -261,6 +268,7 @@ export const insertOffer = internalMutation({
     note: v.string(),
     actualProvider: v.string(),
     advertisedApr: v.optional(v.union(v.number(), v.null())),
+    failureReason: v.optional(v.string()),
   },
   handler: async (ctx, a) => {
     const o = a.output as UnderwriterOutput | null;
@@ -282,6 +290,10 @@ export const insertOffer = internalMutation({
       reasons: o?.reasons ?? [],
       marketAnchor: a.marketAnchor,
       ...(cls ? { classification: cls.classification } : {}),
+      ...(a.failureReason ? { failureReason: a.failureReason } : {}),
+      ...(o?.apr != null && o.amount != null && o.termMonths != null
+        ? { monthlyPayment: monthlyPayment(o.amount, o.apr, o.termMonths), costToBorrow: costToBorrow(o.amount, o.apr, o.termMonths) }
+        : {}),
       runId: a.runId,
       shareUrl: null,
       latencyMs: a.latencyMs,
@@ -421,6 +433,9 @@ export const completeRun = internalMutation({
             amount: o.amount,
             conditions: o.conditions,
             reasons: o.reasons,
+            ...(o.apr != null && o.amount != null && o.termMonths != null
+              ? { monthlyPayment: monthlyPayment(o.amount, o.apr, o.termMonths), costToBorrow: costToBorrow(o.amount, o.apr, o.termMonths) }
+              : {}),
             latencyMs,
           });
         } else {
@@ -452,7 +467,7 @@ export const completeRun = internalMutation({
         const needs = offers.filter((o) => o.status === "done" && (o.classification ?? (o.decision === "decline" ? "deny" : "approve")) !== "approve");
         await ctx.db.insert("notices", {
           applicantId: run.applicantId,
-          text: `${val.data.text.trim()}\n\n${fcra}`,
+          text: `${fillName(val.data.text.trim(), (await ctx.db.get(run.applicantId))?.name ?? "Applicant")}\n\n${fcra}`,
           lendersDeclined: needs.map((o) => o.lender),
           lendersCounteroffered: needs.filter((o) => o.classification === "counteroffer").map((o) => o.lender),
           required: true,
@@ -546,7 +561,7 @@ export const failPending = internalMutation({
 // ---------------------------------------------------------------------------
 export type OnceResult = { output: UnderwriterOutput | null; latencyMs: number; note: string; actualProvider: "claude" | "stub" };
 
-export async function underwriteOnce(lender: Lender, input: UnderwriterInput): Promise<OnceResult> {
+export async function underwriteOnce(lender: Lender, input: UnderwriterInput, signal?: AbortSignal): Promise<OnceResult> {
   const provider = providerFor("underwriter");
   if (provider === "claude") {
     const r = await callClaudeJson<UnderwriterOutput>({
@@ -557,6 +572,7 @@ export async function underwriteOnce(lender: Lender, input: UnderwriterInput): P
       validate: validateUnderwriter,
       effort: "low",
       maxTokens: 4096,
+      signal,
     });
     return r.ok
       ? { output: r.value, latencyMs: r.latencyMs, note: `${UNDERWRITER_MODEL} ${r.latencyMs}ms`, actualProvider: "claude" }
@@ -575,6 +591,50 @@ export async function underwriteOnce(lender: Lender, input: UnderwriterInput): P
 // ---------------------------------------------------------------------------
 // runAgent entry points (called as workflow steps)
 // ---------------------------------------------------------------------------
+/** Per-lender timeout (env LENDER_TIMEOUT_MS, default 20000). */
+export function lenderTimeoutMs(): number {
+  const n = Number(process.env.LENDER_TIMEOUT_MS);
+  return Number.isFinite(n) && n > 0 ? n : 20_000;
+}
+
+/**
+ * underwriteOnce with a hard deadline. On timeout the in-flight request is aborted and
+ * `timedOut` is true. LENDER_SIMULATE_HANG=<lender>[,<lender>] makes that lender hang
+ * (failure injection for the demo and tests).
+ */
+export async function underwriteWithTimeout(
+  lender: Lender,
+  input: UnderwriterInput,
+  timeoutMs = lenderTimeoutMs(),
+): Promise<OnceResult & { timedOut: boolean }> {
+  const ctl = new AbortController();
+  const started = Date.now();
+  let timer: ReturnType<typeof setTimeout> | undefined;
+  const timeout = new Promise<"timeout">((resolve) => {
+    timer = setTimeout(() => {
+      ctl.abort();
+      resolve("timeout");
+    }, timeoutMs);
+  });
+  const hang = (process.env.LENDER_SIMULATE_HANG ?? "").split(",").map((x) => x.trim()).includes(lender);
+  const work: Promise<OnceResult> = hang ? new Promise<OnceResult>(() => {}) : underwriteOnce(lender, input, ctl.signal);
+  try {
+    const r = await Promise.race([work, timeout]);
+    if (r === "timeout") {
+      return {
+        output: null,
+        latencyMs: Date.now() - started,
+        note: `timeout after ${timeoutMs}ms${hang ? " (simulated hang)" : ""}`,
+        actualProvider: providerFor("underwriter") === "claude" ? "claude" : "stub",
+        timedOut: true,
+      };
+    }
+    return { ...r, timedOut: false };
+  } finally {
+    if (timer) clearTimeout(timer);
+  }
+}
+
 export type AgentStepResult = { status: "done" | "pending" | "failed"; decision?: "approve" | "decline" | null; note: string };
 
 export const runUnderwriter = internalAction({
@@ -585,14 +645,7 @@ export const runUnderwriter = internalAction({
     const existing = offers.find((o: Doc<"offers">) => o.lender === lender && o.status !== "failed");
     if (existing) return { status: existing.status, decision: existing.decision, note: "already present" };
 
-    const input: UnderwriterInput = {
-      bundle,
-      policy: POLICIES[lender],
-      statedIncome: applicant.statedIncome,
-      amountRequested: applicant.amountRequested,
-      purpose: applicant.purpose,
-      marketAnchor,
-    };
+    const input: UnderwriterInput = buildUnderwriterInput(applicant, bundle, POLICIES[lender], marketAnchor);
     const provider = providerFor("underwriter");
 
     if (provider === "creao") {
@@ -626,7 +679,7 @@ export const runUnderwriter = internalAction({
       }
     }
 
-    const once = await underwriteOnce(lender, input);
+    const once = await underwriteWithTimeout(lender, input);
     const output = once.output;
     await ctx.runMutation(internal.agents.insertOffer, {
       applicantId,
@@ -639,6 +692,7 @@ export const runUnderwriter = internalAction({
       latencyMs: once.latencyMs,
       note: once.note,
       actualProvider: once.actualProvider,
+      ...(output ? {} : { failureReason: once.timedOut ? "timeout" : "error" }),
       advertisedApr: advertisedApr(lender, bundle.credit.fico9 ?? bundle.credit.vantage4, bundle.credit.fico9 == null),
     });
     return { status: output ? "done" : "failed", decision: output?.decision ?? null, note: once.note };
@@ -691,15 +745,8 @@ export const runCompliance = internalAction({
       });
     }
 
-    const input: ComplianceInput = {
-      applicant: {
-        name: applicant.name,
-        purpose: applicant.purpose,
-        amountRequested: applicant.amountRequested,
-        statedIncome: applicant.statedIncome,
-      },
-      declines,
-    };
+    // PII boundary: the agent sees a name placeholder, never the applicant's name.
+    const input: ComplianceInput = buildComplianceInput(applicant, declines);
     const fcra = fcraParagraph(source, pulledAt);
     const lendersDeclined = declines.map((d) => d.lender);
     const lendersCounteroffered = declines.filter((d) => d.classification === "counteroffer").map((d) => d.lender);
@@ -744,7 +791,7 @@ export const runCompliance = internalAction({
       if (r.ok) {
         await ctx.runMutation(internal.agents.insertNotice, {
           ...common,
-          text: `${r.value.text.trim()}\n\n${fcra}`,
+          text: `${fillName(r.value.text.trim(), applicant.name)}\n\n${fcra}`,
           note: `${COMPLIANCE_MODEL} ${r.latencyMs}ms [provider=claude] ${dropped.length} unsupported reason(s) withheld`,
         });
         return { status: "done", note: `${COMPLIANCE_MODEL} ${r.latencyMs}ms; ${dropped.length} unsupported reason(s) withheld` };
@@ -761,9 +808,26 @@ export const runCompliance = internalAction({
     const out = stubCompliance(input);
     await ctx.runMutation(internal.agents.insertNotice, {
       ...common,
-      text: `${out.text}\n\n${fcra}`,
+      text: `${fillName(out.text, applicant.name)}\n\n${fcra}`,
       note: `deterministic stub notice [provider=stub] ${dropped.length} unsupported reason(s) withheld`,
     });
     return { status: "done", note: `stub notice; ${dropped.length} unsupported reason(s) withheld` };
   },
 });
+
+/** Warm-up ping: one tiny Claude call. Returns null latency when no key is set. */
+export async function pingClaude(): Promise<{ ok: boolean; ms: number | null; model: string; error?: string }> {
+  if (!process.env.ANTHROPIC_API_KEY) return { ok: false, ms: null, model: UNDERWRITER_MODEL, error: "no ANTHROPIC_API_KEY" };
+  const started = Date.now();
+  try {
+    const client = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
+    await client.messages.create({
+      model: UNDERWRITER_MODEL,
+      max_tokens: 8,
+      messages: [{ role: "user", content: "Reply with OK." }],
+    });
+    return { ok: true, ms: Date.now() - started, model: UNDERWRITER_MODEL };
+  } catch (e: any) {
+    return { ok: false, ms: Date.now() - started, model: UNDERWRITER_MODEL, error: String(e?.message ?? e).slice(0, 200) };
+  }
+}

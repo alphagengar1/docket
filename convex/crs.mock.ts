@@ -446,6 +446,7 @@ const SYNTHETIC_PERSONAS: Persona[] = [
 // synthetic generator above is only a fallback for a persona with no fixture.
 // ---------------------------------------------------------------------------
 import { CRS_FIXTURES } from "./crs.fixtures.ts";
+import { personaCodes } from "./crs.personas.ts";
 
 // What the eval types into the intake form for each real CRS persona.
 const INTAKE: Record<string, { purpose: string; amountRequested: number; statedIncome: number }> = {
@@ -495,7 +496,7 @@ export function listPersonaSummaries() {
   const ids = [...new Set([...Object.keys(CRS_FIXTURES), ...SYNTHETIC_PERSONAS.map((p) => p.personaId)])].sort();
   return ids.map((id) => {
     const p = findPersona(id)!;
-    return { personaId: p.personaId, name: p.name, hint: p.hint };
+    return { personaId: p.personaId, name: p.name, hint: p.hint, code: personaCodes[id] ?? null };
   });
 }
 

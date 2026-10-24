@@ -118,7 +118,7 @@ export function stubUnderwrite(lender: Lender, input: UnderwriterInput): Underwr
   let scoreField = "credit.fico9";
   if (fico == null) {
     if (p.requireFico) {
-      reasons.push({ text: "No FICO 9 score is on file; this policy does not underwrite thin files.", field: "credit.fico9" });
+      reasons.push({ text: "No TransUnion score score is on file; this policy does not underwrite thin files.", field: "credit.fico9" });
       if (bundle.credit.tradelines.length <= 2) {
         reasons.push({
           text: `Only ${bundle.credit.tradelines.length} tradeline(s) on file; the credit history is too thin to evaluate.`,
@@ -136,7 +136,7 @@ export function stubUnderwrite(lender: Lender, input: UnderwriterInput): Underwr
       score = vantage;
       scoreField = "credit.vantage4";
     } else {
-      reasons.push({ text: "Neither a FICO 9 nor a VantageScore 4 is on file.", field: "credit.fico9" });
+      reasons.push({ text: "Neither a TransUnion score nor a VantageScore 4 is on file.", field: "credit.fico9" });
       reasons.push({ text: "No score means the file cannot be priced.", field: "credit.vantage4" });
     }
   }

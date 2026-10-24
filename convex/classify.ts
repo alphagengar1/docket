@@ -49,3 +49,15 @@ export function fcraParagraph(source: "crs" | "nessie" | "mock", pulledAt: numbe
     `You have the right to a free copy of your report from that agency within 60 days of this notice and to dispute the accuracy or completeness of any information in it.`
   );
 }
+
+/** Fixed-rate amortized monthly payment, rounded to cents. */
+export function monthlyPayment(amount: number, aprPct: number, months: number): number {
+  const r = aprPct / 100 / 12;
+  const pay = r === 0 ? amount / months : (amount * r) / (1 - Math.pow(1 + r, -months));
+  return Math.round(pay * 100) / 100;
+}
+
+/** Total repaid minus amount borrowed (no fees in any current policy). */
+export function costToBorrow(amount: number, aprPct: number, months: number): number {
+  return Math.round((monthlyPayment(amount, aprPct, months) * months - amount) * 100) / 100;
+}
