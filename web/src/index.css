@@ -1909,3 +1909,89 @@ table.grid.tl tr:last-child td {
   from { background-position: 0 120%, 0 0; }
   to { background-position: 0 -120%, 0 0; }
 }
+
+/* ---------------- Focus mode ----------------
+   Default view: only what the decision needs. The pipeline is a strip of step chips, cards show the
+   offer or the first reason, the audit log and tradelines start collapsed. "Detail" in the top bar
+   brings every panel back. */
+.pstrip {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-3);
+  padding: 6px var(--sp-3);
+  min-height: 36px;
+  background: var(--surface);
+  border-bottom: 1px solid var(--hair);
+  flex: none;
+  min-width: 0;
+}
+.pstrip .steps {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--sp-2);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  min-width: 0;
+}
+.pstrip .step {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  height: 24px;
+  padding: 0 10px 0 8px;
+  border: 1px solid var(--hair-2);
+  border-radius: 999px;
+  font-size: var(--fs-small);
+  color: var(--muted);
+  white-space: nowrap;
+}
+.pstrip .step .dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--hair-2);
+  flex: none;
+}
+.pstrip .step.running {
+  color: var(--text);
+  border-color: var(--accent);
+}
+.pstrip .step.running .dot {
+  background: var(--accent);
+  animation: pulse 1.2s ease-in-out infinite;
+}
+.pstrip .step.done {
+  color: var(--text);
+}
+.pstrip .step.done .dot {
+  background: var(--approve);
+}
+.pstrip .step.failed {
+  color: var(--hard);
+  border-color: var(--hard);
+}
+.pstrip .step.failed .dot {
+  background: var(--hard);
+}
+.pstrip .step.skipped {
+  opacity: var(--dim);
+}
+.pstrip .step .met {
+  font-size: var(--fs-label);
+  color: var(--muted);
+}
+.pstrip .total {
+  margin-left: auto;
+  font-size: var(--fs-small);
+  white-space: nowrap;
+}
+.app.focus .queue-row .sub.meta {
+  visibility: hidden;
+}
+.card.compact .hero-sub {
+  padding-bottom: var(--sp-3);
+}
+.card-foot .chips .link {
+  margin-left: var(--sp-2);
+}

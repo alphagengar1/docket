@@ -10,6 +10,7 @@ import { Queue } from './components/Queue'
 import { IntakePane } from './components/IntakePane'
 import { PersonaDeck } from './components/PersonaDeck'
 import { Waterfall } from './components/Waterfall'
+import { PipelineStrip } from './components/PipelineStrip'
 import { BeforeCard, OfferCard } from './components/OfferCard'
 import { HardStopCard } from './components/HardStopCard'
 import { Inspector, type InspectorTab } from './components/Inspector'
@@ -28,10 +29,26 @@ export default function App() {
   const [applicantView, setApplicantView] = useState(false)
   const [tab, setTab] = useState<InspectorTab>('offer')
   const [theme, setTheme] = useState<Theme>('dark')
+  // Focus (default): only what the decision needs. Detail: every panel, the timing waterfall and the log.
+  const [focus, setFocus] = useState<boolean>(() => {
+    try {
+      return localStorage.getItem('docket.focus') !== 'off'
+    } catch {
+      return true
+    }
+  })
+  const [timing, setTiming] = useState(false)
 
   useEffect(() => {
     document.documentElement.dataset.theme = theme
   }, [theme])
+  useEffect(() => {
+    try {
+      localStorage.setItem('docket.focus', focus ? 'on' : 'off')
+    } catch {
+      /* private window or blocked storage: the preference just does not persist */
+    }
+  }, [focus])
 
   // Follow the newest applicant when nothing is selected (replay mode relies on this).
   useEffect(() => {
@@ -140,8 +157,10 @@ export default function App() {
   }
 
   return (
-    <div className="app">
+    <div className={`app ${focus ? 'focus' : ''}`}>
       <TopBar
+        focus={focus}
+        onFocus={setFocus}
         sandbox={desk.sandbox}
         onReset={desk.resetBoard ? () => { if (window.confirm('Reset the board? This deletes every applicant.')) { setSelectedId(null); setSelectedOfferId(null); void desk.resetBoard?.() } } : undefined}
         connection={desk.connection}
@@ -208,7 +227,20 @@ export default function App() {
                     </>
                   )}
                 </div>
-                <Waterfall applicant={applicant} steps={steps} offers={offers} checks={desk.reasonChecks.filter((c) => c.applicantId === selectedId)} now={now} />
+                {focus && (
+                  <PipelineStrip
+                    applicant={applicant}
+                    steps={steps}
+                    offers={offers}
+                    checks={desk.reasonChecks.filter((c) => c.applicantId === selectedId)}
+                    now={now}
+                    timingOpen={timing}
+                    onTiming={() => setTiming((t) => !t)}
+                  />
+                )}
+                {(!focus || timing) && (
+                  <Waterfall applicant={applicant} steps={steps} offers={offers} checks={desk.reasonChecks.filter((c) => c.applicantId === selectedId)} now={now} />
+                )}
                 <div className="board-scroll">
                 <div className={`columns ${original ? 'diff' : ''}`}>
                   {original && (
@@ -251,6 +283,7 @@ export default function App() {
                               setTab('offer')
                             }}
                             onTrace={() => setTab('trace')}
+                            compact={focus}
                           />
                         )}
                       </div>
@@ -268,6 +301,7 @@ export default function App() {
             evalRuns={desk.evalRuns}
             evalCases={desk.evalCases.length}
             onRunEval={desk.runEval}
+            defaultOpen={!focus}
           />
         </main>
 
@@ -283,6 +317,7 @@ export default function App() {
           selectedOffer={selectedOffer}
           tab={tab}
           onTab={setTab}
+          compact={focus}
           onApprove={async () => {
             if (applicant && selectedOffer) await desk.approveOffer(applicant._id, selectedOffer._id)
           }}

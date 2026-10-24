@@ -1,3 +1,4 @@
+import { useState } from 'react'
 import { LENDERS, type Lender, type Offer, type ReasonCheck } from '../types'
 import { monthlyPayment, secs, totalInterest, usd } from '../lib/format'
 import { offerWord } from '../lib/status'
@@ -20,6 +21,8 @@ interface Props {
   bestApr: number | null
   /** The matching offer from the original run, when this card belongs to a dispute replay. */
   before?: Offer
+  /** Focus mode: headline only (status, APR or first reason, monthly); rows, conditions and reasons open on Details. */
+  compact?: boolean
 }
 
 /** Fey number: integer part full, fractional part dimmed. */
@@ -36,10 +39,12 @@ export function Num({ value, digits = 2, prefix = '', suffix = '' }: { value: nu
   )
 }
 
-export function OfferCard({ lender, offer, checks, underwriteStartedAt, now, selected, chosen, dim, canSelect, onSelect, onTrace, bestApr, before }: Props) {
+export function OfferCard({ lender, offer, checks, underwriteStartedAt, now, selected, chosen, dim, canSelect, onSelect, onTrace, bestApr, before, compact }: Props) {
   const meta = LENDERS.find((l) => l.id === lender)!
   const approve = offer?.status === 'done' && offer.decision === 'approve'
   const apr = useCountUp(approve ? offer!.apr : null)
+  const [expanded, setExpanded] = useState(false)
+  const full = !compact || expanded
 
   if (!offer || offer.status === 'pending') {
     const since = offer?.createdAt ?? underwriteStartedAt
@@ -53,6 +58,7 @@ export function OfferCard({ lender, offer, checks, underwriteStartedAt, now, sel
           <span className="skel" style={{ width: 96, height: 24 }} />
         </div>
         <div className="hero-sub mono">{since ? 'Reviewing…' : 'Not started'}</div>
+        {!compact && (
         <dl className="rows">
           <dt>Monthly</dt>
           <dd>
@@ -67,6 +73,7 @@ export function OfferCard({ lender, offer, checks, underwriteStartedAt, now, sel
             <span className="skel" style={{ width: 64, height: 12 }} />
           </dd>
         </dl>
+        )}
         <div className="card-foot">
           <span className="chips">
             <span className="chip">{since ? secs(now - since, 1) : '—'}</span>
@@ -94,7 +101,7 @@ export function OfferCard({ lender, offer, checks, underwriteStartedAt, now, sel
 
   return (
     <div
-      className={`card arrive ${selectable ? 'selectable' : ''} ${chosen ? 'chosen' : ''} ${dim ? 'dim' : ''}`}
+      className={`card arrive ${selectable ? 'selectable' : ''} ${chosen ? 'chosen' : ''} ${dim ? 'dim' : ''} ${compact && !expanded ? 'compact' : ''}`}
       role={selectable ? 'button' : undefined}
       tabIndex={selectable ? 0 : undefined}
       aria-pressed={selectable ? selected : undefined}
@@ -129,6 +136,7 @@ export function OfferCard({ lender, offer, checks, underwriteStartedAt, now, sel
         </div>
       )}
 
+      {full && (
       <dl className="rows">
         <dt>Amount</dt>
         <dd className={`primary ${changed('amount') ? 'changed' : ''}`}>{approve && offer.amount != null ? <Num value={offer.amount} digits={0} prefix="$" /> : '—'}</dd>
@@ -139,8 +147,9 @@ export function OfferCard({ lender, offer, checks, underwriteStartedAt, now, sel
         <dt title="Market APR range for this credit tier">Anchor{offer.marketAnchor ? ` · ${offer.marketAnchor.tier}` : ''}</dt>
         <dd>{offer.marketAnchor ? `${offer.marketAnchor.aprLow}–${offer.marketAnchor.aprHigh}%` : '—'}</dd>
       </dl>
+      )}
 
-      {offer.conditions.length > 0 && (
+      {full && offer.conditions.length > 0 && (
         <div className="block">
           <span className="label">Conditions</span>
           <ul className="conds">
@@ -151,27 +160,45 @@ export function OfferCard({ lender, offer, checks, underwriteStartedAt, now, sel
         </div>
       )}
 
+      {full && (
       <div className="block">
         <span className="label">{approve ? 'Basis' : `Reasons · ${offer.reasons.length} · counterfactual test`}</span>
         <ReasonList offer={offer} checks={checks} />
       </div>
+      )}
 
       <div className="card-foot">
         <span className="chips">
           <span className="chip">{secs(offer.latencyMs, 2)}</span>
-          <span className="chip">{offer.provider}</span>
+          {full && <span className="chip">{offer.provider}</span>}
+          {!full && offer.conditions.length > 0 && <span className="chip">{offer.conditions.length} conditions</span>}
           <span className="chip">{offer.reasons.length} reasons</span>
         </span>
-        <button
-          type="button"
-          className="link"
-          onClick={(e) => {
-            e.stopPropagation()
-            onTrace()
-          }}
-        >
-          Trace
-        </button>
+        <span className="chips">
+          {compact && (
+            <button
+              type="button"
+              className="link"
+              aria-expanded={expanded}
+              onClick={(e) => {
+                e.stopPropagation()
+                setExpanded((x) => !x)
+              }}
+            >
+              {expanded ? 'Less' : 'Details'}
+            </button>
+          )}
+          <button
+            type="button"
+            className="link"
+            onClick={(e) => {
+              e.stopPropagation()
+              onTrace()
+            }}
+          >
+            Trace
+          </button>
+        </span>
       </div>
     </div>
   )

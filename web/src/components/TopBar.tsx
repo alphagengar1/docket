@@ -15,10 +15,13 @@ interface Props {
   onTheme: () => void
   sandbox?: boolean
   onReset?: () => void
+  /** Focus shows only what the decision needs; Detail brings every panel and timing back. */
+  focus: boolean
+  onFocus: (v: boolean) => void
 }
 
 /** Laminar top bar: title, segmented control, outlined 28px controls, metric chips. */
-export function TopBar({ connection, inFlight, replaying, view, onView, onDeck, onReplay, onStopReplay, theme, onTheme, sandbox, onReset }: Props) {
+export function TopBar({ connection, inFlight, replaying, view, onView, onDeck, onReplay, onStopReplay, theme, onTheme, sandbox, onReset, focus, onFocus }: Props) {
   return (
     <header className="topbar">
       <span className="brand">
@@ -35,9 +38,17 @@ export function TopBar({ connection, inFlight, replaying, view, onView, onDeck, 
           Applicant
         </button>
       </div>
+      <div className="seg" role="group" aria-label="Density">
+        <button type="button" aria-pressed={focus} onClick={() => onFocus(true)} title="Only what the decision needs">
+          Focus
+        </button>
+        <button type="button" aria-pressed={!focus} onClick={() => onFocus(false)} title="Every panel, timing and log">
+          Detail
+        </button>
+      </div>
       <span className="sep" />
       <span className={`pill ${inFlight > 0 ? 'live' : ''}`}>{inFlight > 0 ? `Running ${inFlight}` : 'Idle'}</span>
-      <span className="chip">{connection}</span>
+      {!focus && <span className="chip">{connection}</span>}
       {sandbox && (
         <span className="chip" title="Sandbox data only: CRS test personas" style={{ color: 'var(--warn, #ff8a3d)' }}>
           SANDBOX
