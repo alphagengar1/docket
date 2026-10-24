@@ -7,29 +7,29 @@ Twenty shipped-product screens worth borrowing from, and one demo front page per
 
 ## Branches
 
-`ui-refs` holds this folder. One branch per reference, cut from `ui-refs`, adds a single static page at `web/public/demos/<slug>.html`:
+`ui-refs` holds this folder. One branch per reference, cut from `ui-refs`, adds a single static page (branch names are `ui-ref/<slug>`, singular, because git cannot nest branches under `ui-refs`) at `web/public/demos/<slug>.html`:
 
 | # | Branch | Reference |
 |---|---|---|
-| 01 | `ui-refs/lendflow` | Lendflow deal pipeline |
-| 02 | `ui-refs/alloy` | Alloy application review |
-| 03 | `ui-refs/sardine` | Sardine alert table and decision modal |
-| 04 | `ui-refs/method` | Method entity detail |
-| 05 | `ui-refs/evidence` | Evidence report page |
-| 06 | `ui-refs/mercury` | Mercury transactions and side panel |
-| 07 | `ui-refs/ramp` | Ramp approvals |
-| 08 | `ui-refs/fey` | Fey holdings table |
-| 09 | `ui-refs/hyperexpense` | Hyperexpense FP&A dashboard |
-| 10 | `ui-refs/finary` | Finary portfolio |
-| 11 | `ui-refs/lightyear` | Lightyear account home |
-| 12 | `ui-refs/cobalt` | Cobalt insights |
-| 13 | `ui-refs/stripe` | Stripe dashboard |
-| 14 | `ui-refs/respan` | Respan KPI tiles and logs |
-| 15 | `ui-refs/laminar` | Laminar trace console |
-| 16 | `ui-refs/arize-phoenix` | Arize Phoenix experiment compare |
-| 17 | `ui-refs/axiom` | Axiom query results |
-| 18 | `ui-refs/dash0` | Dash0 span heatmap |
-| 19 | `ui-refs/linear` | Linear triage inbox |
-| 20 | `ui-refs/opik` | Opik trace view |
+| 01 | `ui-ref/lendflow` | Lendflow deal pipeline |
+| 02 | `ui-ref/alloy` | Alloy application review |
+| 03 | `ui-ref/sardine` | Sardine alert table and decision modal |
+| 04 | `ui-ref/method` | Method entity detail |
+| 05 | `ui-ref/evidence` | Evidence report page |
+| 06 | `ui-ref/mercury` | Mercury transactions and side panel |
+| 07 | `ui-ref/ramp` | Ramp approvals |
+| 08 | `ui-ref/fey` | Fey holdings table |
+| 09 | `ui-ref/hyperexpense` | Hyperexpense FP&A dashboard |
+| 10 | `ui-ref/finary` | Finary portfolio |
+| 11 | `ui-ref/lightyear` | Lightyear account home |
+| 12 | `ui-ref/cobalt` | Cobalt insights |
+| 13 | `ui-ref/stripe` | Stripe dashboard |
+| 14 | `ui-ref/respan` | Respan KPI tiles and logs |
+| 15 | `ui-ref/laminar` | Laminar trace console |
+| 16 | `ui-ref/arize-phoenix` | Arize Phoenix experiment compare |
+| 17 | `ui-ref/axiom` | Axiom query results |
+| 18 | `ui-ref/dash0` | Dash0 span heatmap |
+| 19 | `ui-ref/linear` | Linear triage inbox |
+| 20 | `ui-ref/opik` | Opik trace view |
 
 To look at one: `git switch ui-refs/<slug>`, then open `web/public/demos/<slug>.html` in a browser, or with the web dev server running from `web/`, visit `http://localhost:5173/demos/<slug>.html`. Each page is one self-contained HTML file with the data inlined; nothing in the real app changes on these branches.
