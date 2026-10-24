@@ -13,6 +13,8 @@ interface Props {
   onApproveBest: (applicantId: string, offerId: string) => void
   onDecline: (applicantId: string) => void
   disabled?: boolean
+  /** Hard-stop reason per applicant id, quoted on the row. */
+  stopReasons?: Record<string, string>
 }
 
 const TONE_VAR: Record<string, string> = {
@@ -26,26 +28,34 @@ const TONE_VAR: Record<string, string> = {
 
 const SHORT: Record<string, string> = Object.fromEntries(LENDERS.map((l) => [l.id, l.label]))
 
-function Row({ a, selected, onSelect }: { a: Applicant; selected: boolean; onSelect: () => void }) {
+function Row({ a, selected, onSelect, stopReason }: { a: Applicant; selected: boolean; onSelect: () => void; stopReason?: string }) {
+  const hard = a.status === 'hard_stop'
   return (
     <button
       type="button"
       role="option"
       aria-selected={selected}
-      className={`queue-row ${IN_FLIGHT.includes(a.status) ? 'live' : ''}`}
+      className={`queue-row plain ${hard ? 'hardrow' : ''} ${IN_FLIGHT.includes(a.status) ? 'live' : ''}`}
       style={{ ['--row-tone' as string]: TONE_VAR[STATUS_TONE[a.status]] }}
       onClick={onSelect}
     >
-      <span className="name">
-        {a.name}
-        <span className="purpose">{a.purpose}</span>
+      <span className="q-line1">
+        <span className="q-name">{a.name}</span>
+        <span className="q-amt mono">{usd(a.amountRequested)}</span>
       </span>
-      <span className="amt">{usd(a.amountRequested)}</span>
-      <span className="sub meta">
-        {a.personaId} · {a._id.slice(0, 7)}
+      <span className="q-line2">
+        <span className="q-purpose">{a.purpose}</span>
+        <span className={`ax-pill ${hard ? 'hard' : 'outline'}`}>{STATUS_WORD[a.status]}</span>
+      </span>
+      {hard && stopReason && (
+        <span className="q-stop">
+          <span className="mono">{a.personaId}</span> {stopReason}
+        </span>
+      )}
+      <span className="q-meta mono">
+        {hard ? 'Stopped before lenders · no offers' : `${a.personaId} · ${a._id.slice(0, 7)}`}
         {a.replayOf ? ' · replay' : ''}
       </span>
-      <span className="word">{STATUS_WORD[a.status]}</span>
     </button>
   )
 }
@@ -55,6 +65,7 @@ function DecideRow({ r, rank, selected, onSelect, onApproveBest, onDecline, disa
   const a = r.applicant
   const b = r.best
   const counter = b?.classification === 'counteroffer'
+  const total = LENDERS.length
   return (
     <div
       role="option"
@@ -70,37 +81,42 @@ function DecideRow({ r, rank, selected, onSelect, onApproveBest, onDecline, disa
         }
       }}
     >
-      <span className="name">
-        <span className="rank mono">{rank}</span>
-        {a.name}
-        <span className="purpose">{a.purpose}</span>
+      <span className="q-line1">
+        <span className="q-rank mono">{rank}</span>
+        <span className="q-name">{a.name}</span>
+        <span className="q-amt mono">{usd(a.amountRequested)}</span>
       </span>
-      <span className="amt">{usd(a.amountRequested)}</span>
-      <span className="sub">
-        {r.approvals}/{r.done} lenders said yes
-        {a.replayOf ? ' · replay' : ''}
+      <span className="q-line2">
+        <span className="q-purpose">{a.purpose}</span>
+        <span className="ax-pill outline">Review</span>
       </span>
-      <span className="best">
+      <span className="q-line3">
+        <span className="q-approve">
+          {r.approvals}/{total} approve
+        </span>
+        <span className="q-seg" role="img" aria-label={`${r.approvals} of ${total} lenders approve`}>
+          {Array.from({ length: total }, (_, i) => (
+            <i key={i} className={i < r.approvals ? 'on' : ''} />
+          ))}
+        </span>
+      </span>
+      <span className="q-best">
         {b ? (
           <>
-            <span className="mono">{b.apr!.toFixed(2)}%</span> {SHORT[b.lender]}
+            <b className="mono">{b.apr!.toFixed(2)}%</b> {SHORT[b.lender]}
             {counter ? ` · counter ${usd(b.amount ?? 0)}` : ''}
           </>
         ) : (
-          'no offer'
+          <b>No offer</b>
         )}
+        {a.replayOf ? <span className="muted"> · replay</span> : null}
       </span>
       <span className="queue-actions" onClick={(e) => e.stopPropagation()}>
-        {b && (
-          <button type="button" className="approve-pill" disabled={disabled} onClick={onApproveBest} title={`Approve ${SHORT[b.lender]} at ${b.apr!.toFixed(2)}%`}>
-            Approve best
-          </button>
-        )}
+        <button type="button" className="approve-pill" disabled={disabled || !b} onClick={onApproveBest} title={b ? `Approve ${SHORT[b.lender]} at ${b.apr!.toFixed(2)}%` : 'No offer to approve'}>
+          Approve best
+        </button>
         <button type="button" className="decline-pill" disabled={disabled} onClick={onDecline}>
           Decline
-        </button>
-        <button type="button" className="link" onClick={onSelect}>
-          Open
         </button>
       </span>
     </div>
@@ -108,7 +124,7 @@ function DecideRow({ r, rank, selected, onSelect, onApproveBest, onDecline, disa
 }
 
 /** Laminar traces table: 41px rows, 3px status bar flush-left, mono ids. Decision rows ranked on top. */
-export function Queue({ applicants, offers, selectedId, onSelect, onNew, onApproveBest, onDecline, disabled }: Props) {
+export function Queue({ applicants, offers, selectedId, onSelect, onNew, onApproveBest, onDecline, disabled, stopReasons }: Props) {
   const ranked = rankDecisions(applicants, offers)
   const decidingIds = new Set(ranked.map((r) => r.applicant._id))
   const newest = applicants.slice().sort((a, b) => b.createdAt - a.createdAt)
@@ -128,7 +144,7 @@ export function Queue({ applicants, offers, selectedId, onSelect, onNew, onAppro
           <>
             <div className="queue-section">
               <span>Needs your decision · {ranked.length}</span>
-              <span className="mono">best first · A approve · X decline</span>
+              <span className="mono">A approve · X decline</span>
             </div>
             {ranked.map((r, i) => (
               <DecideRow
@@ -150,7 +166,7 @@ export function Queue({ applicants, offers, selectedId, onSelect, onNew, onAppro
               <span>In flight · {inFlight.length}</span>
             </div>
             {inFlight.map((a) => (
-              <Row key={a._id} a={a} selected={a._id === selectedId} onSelect={() => onSelect(a._id)} />
+              <Row key={a._id} a={a} selected={a._id === selectedId} onSelect={() => onSelect(a._id)} stopReason={stopReasons?.[a._id]} />
             ))}
           </>
         )}
@@ -160,7 +176,7 @@ export function Queue({ applicants, offers, selectedId, onSelect, onNew, onAppro
               <span>Decided · {finished.length}</span>
             </div>
             {finished.map((a) => (
-              <Row key={a._id} a={a} selected={a._id === selectedId} onSelect={() => onSelect(a._id)} />
+              <Row key={a._id} a={a} selected={a._id === selectedId} onSelect={() => onSelect(a._id)} stopReason={stopReasons?.[a._id]} />
             ))}
           </>
         )}

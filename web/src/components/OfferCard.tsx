@@ -4,6 +4,7 @@ import { monthlyPayment, secs, totalInterest, usd } from '../lib/format'
 import { offerWord } from '../lib/status'
 import { useCountUp } from '../hooks/useNow'
 import { ReasonList } from './ReasonList'
+import { LenderCard } from './LenderCard'
 
 interface Props {
   lender: Lender
@@ -90,6 +91,25 @@ export function OfferCard({ lender, offer, checks, underwriteStartedAt, now, sel
   const selectable = canSelect && approve
   const changed = (k: 'decision' | 'apr' | 'amount' | 'termMonths' | 'classification') => !!before && before.status === 'done' && before[k] !== offer[k]
   const delta = approve && bestApr != null && offer.apr != null ? offer.apr - bestApr : null
+
+  if (full) {
+    return (
+      <LenderCard
+        lender={lender}
+        offer={offer}
+        checks={checks}
+        bestApr={bestApr}
+        selected={selected}
+        chosen={chosen}
+        dim={dim}
+        selectable={selectable}
+        changed={{ apr: changed('apr'), amount: changed('amount'), term: changed('termMonths'), decision: changed('decision') || changed('classification') }}
+        onSelect={onSelect}
+        onTrace={onTrace}
+        onCollapse={compact ? () => setExpanded(false) : undefined}
+      />
+    )
+  }
 
   const handleKey = (e: React.KeyboardEvent) => {
     if (!selectable) return

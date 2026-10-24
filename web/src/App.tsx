@@ -2,10 +2,14 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useDesk } from './hooks/useDesk'
 import { LENDERS, type IntakeInput } from './types'
 import { useNow } from './hooks/useNow'
+import { summarize } from './lib/summary'
+import { stopLabel } from '../../convex/labels'
 import { eventsFor, hardStopEvent, offersFor, originalOf, stepTimings } from './lib/select'
 import { IN_FLIGHT, STATUS_TONE, STATUS_WORD } from './lib/status'
 import { rankDecisions } from './lib/rank'
 import { TopBar } from './components/TopBar'
+import { DecisionSummary } from './components/DecisionSummary'
+import { ApplicantFacts } from './components/ApplicantFacts'
 import { Queue } from './components/Queue'
 import { IntakePane } from './components/IntakePane'
 import { PersonaDeck } from './components/PersonaDeck'
@@ -172,6 +176,12 @@ export default function App() {
     setSheetOpen(true)
   }
 
+  const stopReasons = useMemo(() => {
+    const m: Record<string, string> = {}
+    for (const e of desk.auditEvents) if (e.action === 'rules.hard_stop' || e.action === 'hard_stop') m[e.applicantId] = e.note || stopLabel(e.ref ?? '')
+    return m
+  }, [desk.auditEvents])
+  const [lendersOpen, setLendersOpen] = useState(true)
   const hs = applicant?.status === 'hard_stop' ? hardStopEvent(events) : undefined
 
   // Ranked decision queue: after a quick approve/decline, move to the next applicant waiting on a human.
@@ -284,6 +294,7 @@ export default function App() {
               onApproveBest={(aid, oid) => void quickApprove(aid, oid)}
               onDecline={(aid) => void quickDecline(aid)}
               disabled={desk.replaying}
+              stopReasons={stopReasons}
             />
           </div>
         </div>
@@ -302,9 +313,6 @@ export default function App() {
                       <span className={`status tone-${STATUS_TONE[applicant.status]} ${IN_FLIGHT.includes(applicant.status) ? 'live' : ''}`}>
                         {STATUS_WORD[applicant.status]}
                       </span>
-                      <span className="muted">
-                        {applicant.purpose} · <span className="mono">${applicant.amountRequested.toLocaleString('en-US')}</span>
-                      </span>
                       {original && (
                         <span className="muted">
                           · replay after dispute ·{' '}
@@ -321,6 +329,7 @@ export default function App() {
                     </>
                   )}
                 </div>
+                {applicant && !intakeOpen && <ApplicantFacts a={applicant} />}
                 {focus && (
                   <PipelineStrip
                     applicant={applicant}
@@ -336,7 +345,30 @@ export default function App() {
                   <Waterfall applicant={applicant} steps={steps} offers={offers} checks={desk.reasonChecks.filter((c) => c.applicantId === selectedId)} now={now} />
                 )}
                 <div className="board-scroll">
-                <div className={`columns ${original ? 'diff' : ''}`}>
+                {applicant && (
+                  <DecisionSummary
+                    applicant={applicant}
+                    offers={offers}
+                    hardStop={hs}
+                    canDecide={applicant.status === 'awaiting_human' && !desk.replaying}
+                    onApprove={(oid) => void quickApprove(applicant._id, oid)}
+                    onDecline={() => void quickDecline(applicant._id)}
+                  />
+                )}
+                {applicant && applicant.status !== 'hard_stop' && (() => {
+                  const sm = summarize(applicant, offers, hs)
+                  return (
+                    <button type="button" className="ax-sec-head" aria-expanded={lendersOpen} onClick={() => setLendersOpen((v) => !v)}>
+                      <span className="ax-chev" aria-hidden="true">{lendersOpen ? '\u25BE' : '\u25B8'}</span>
+                      <span className="ax-sec-title">Lender decisions</span>
+                      <span className="ax-sec-count">
+                        {sm.declined} declined · {sm.offered} {sm.offered === 1 ? 'offer' : 'offers'} · {sm.counter} {sm.counter === 1 ? 'counteroffer' : 'counteroffers'}
+                      </span>
+                    </button>
+                  )
+                })()}
+                {(lendersOpen || applicant?.status === 'hard_stop') && (
+                <div className={`columns ${original ? 'diff' : ''} ${!focus && !original ? 'stack' : ''}`}>
                   {original && (
                     <div className="diff-label section-label">
                       Before dispute · {original.name} (top card) · after re-pull below, changed values highlighted
@@ -385,6 +417,7 @@ export default function App() {
                   })}
                   {applicant?.status === 'hard_stop' && <HardStopCard event={hs} />}
                 </div>
+                )}
                 </div>
             </div>
           )}

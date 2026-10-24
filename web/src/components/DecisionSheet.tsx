@@ -3,12 +3,12 @@
 import { useEffect } from 'react'
 import type { Applicant, AuditEvent, Decision, Notice, Offer, ReasonCheck } from '../types'
 import { LENDERS } from '../types'
-import { secs, usd } from '../lib/format'
-import { IN_FLIGHT, STATUS_TONE, STATUS_WORD, offerWord } from '../lib/status'
-import { hardStopEvent, verifiedReasons } from '../lib/select'
-import { fieldLabel } from '../../../convex/labels'
+import { secs } from '../lib/format'
+import { IN_FLIGHT, STATUS_TONE, STATUS_WORD } from '../lib/status'
+import { hardStopEvent } from '../lib/select'
+import { DecisionSummary } from './DecisionSummary'
+import { ApplicantFacts } from './ApplicantFacts'
 import { OfferCard } from './OfferCard'
-import { HardStopCard } from './HardStopCard'
 
 interface Props {
   applicant: Applicant
@@ -46,11 +46,6 @@ export function DecisionSheet(p: Props) {
   const hs = hard ? hardStopEvent(p.events) : undefined
   const running = IN_FLIGHT.includes(a.status)
   const canDecide = a.status === 'awaiting_human'
-  const done = offers.filter((o) => o.status === 'done')
-  const approvals = done.filter((o) => o.decision === 'approve').length
-  const declines = done.filter((o) => o.decision === 'decline')
-  const reasonsTotal = declines.reduce((n, o) => n + o.reasons.length, 0)
-  const reasonsVerified = declines.reduce((n, o) => n + verifiedReasons(checks, o).length, 0)
   const sel = offers.find((o) => o._id === p.selectedOfferId && o.decision === 'approve') ?? best
 
   useEffect(() => {
@@ -64,25 +59,6 @@ export function DecisionSheet(p: Props) {
     window.addEventListener('keydown', onKey)
     return () => window.removeEventListener('keydown', onKey)
   })
-
-  const headline = hard
-    ? 'Hard stop'
-    : chosen
-      ? `Approved · ${LENDERS.find((l) => l.id === chosen.lender)?.label} · ${chosen.apr?.toFixed(2)}%`
-      : a.status === 'declined'
-        ? 'Declined'
-        : running
-          ? 'Lenders are reading the file'
-          : best
-            ? `Best offer · ${LENDERS.find((l) => l.id === best.lender)?.label} · ${best.apr!.toFixed(2)}%`
-            : 'No lender will offer'
-  const sub = hard
-    ? (hs?.note ?? 'A deterministic rule stopped the file before any lender saw it.')
-    : running
-      ? STATUS_WORD[a.status]
-      : best
-        ? `${usd(best.amount)} over ${best.termMonths} months · ${approvals} of ${done.length} lenders said yes`
-        : `${declines.length} of ${done.length} lenders declined · ${reasonsVerified} of ${reasonsTotal} reasons verified by counterfactual test`
 
   return (
     <div className="scrim sheet-scrim" onClick={p.onClose}>
@@ -108,37 +84,15 @@ export function DecisionSheet(p: Props) {
         <header className="sheet-head">
           <h2 className="disp">{a.name}</h2>
           <span className={`status tone-${STATUS_TONE[a.status]} ${running ? 'live' : ''}`}>{STATUS_WORD[a.status]}</span>
-          <span className="muted">
-            {a.purpose} · <span className="mono">{usd(a.amountRequested)}</span> · income <span className="mono">{usd(a.statedIncome)}</span>
-          </span>
         </header>
+        <ApplicantFacts a={a} />
 
-        <section className={`sheet-key ${hard ? 'hard' : best || chosen ? 'good' : running ? '' : 'bad'}`} aria-label="Key points">
-          <div className="headline">{headline}</div>
-          <div className="sub">{sub}</div>
-          <div className="verdicts">
-            {LENDERS.map((l) => {
-              const o = offers.find((x) => x.lender === l.id)
-              const w = o ? offerWord(o) : { word: hard ? 'Skipped' : 'Waiting', tone: 'muted' as const }
-              const top = o?.decision === 'decline' ? (verifiedReasons(checks, o)[0] ?? o.reasons[0]) : undefined
-              return (
-                <div key={l.id} className={`verdict tone-${w.tone}`}>
-                  <span className="lbl">{l.label}</span>
-                  <span className="word">
-                    {w.word}
-                    {o?.decision === 'approve' && o.apr != null ? ` ${o.apr.toFixed(2)}%` : ''}
-                  </span>
-                  <span className="why">{top ? `${fieldLabel(top.field)}: ${top.text}` : o?.decision === 'approve' ? `${usd(o.amount)} · ${o.termMonths} mo` : ''}</span>
-                </div>
-              )
-            })}
-          </div>
-        </section>
+        <div className="sheet-sum">
+          <DecisionSummary applicant={a} offers={offers} hardStop={hs} canDecide={canDecide} onApprove={p.onApprove} onDecline={p.onDecline} />
+        </div>
 
         <div className="sheet-cards">
-          {hard ? (
-            <HardStopCard event={hs} />
-          ) : (
+          {hard ? null : (
             LENDERS.map((l) => {
               const o = offers.find((x) => x.lender === l.id)
               return (
