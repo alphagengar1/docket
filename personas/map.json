@@ -1,0 +1,25 @@
+{
+  "_note": "Draft answer key written by the convex agent from crs.mock.ts and the hard-stop rules in design/contracts.md. Teammate owns this file and should refine it. expected: approve = at least one lender approves; decline = all three decline; hard_stop = rules.ts stops it before any underwriter runs. expectedReasonsIncludes are bundle field references that must appear among the decline reasons (or in the hard-stop audit ref).",
+  "cases": [
+    { "personaId": "P01", "expected": "approve", "expectedReasonsIncludes": [], "note": "prime: all three lenders should approve" },
+    { "personaId": "P02", "expected": "approve", "expectedReasonsIncludes": [], "note": "good: cu + fintech + prime approve" },
+    { "personaId": "P03", "expected": "approve", "expectedReasonsIncludes": [], "note": "fair: fintech approves, cu borderline, prime declines" },
+    { "personaId": "P04", "expected": "decline", "expectedReasonsIncludes": ["credit.fico9"], "note": "subprime: below every floor, late payments, 70% utilization" },
+    { "personaId": "P05", "expected": "approve", "expectedReasonsIncludes": [], "note": "thin file: fintech starter loan on vantage4 with income verification condition" },
+    { "personaId": "P06", "expected": "decline", "expectedReasonsIncludes": ["flags.bankruptcy"], "note": "bankruptcy with score under fintech's 640 bankruptcy floor" },
+    { "personaId": "P07", "expected": "decline", "expectedReasonsIncludes": ["flags.eviction"], "note": "eviction is a decline at all three lenders" },
+    { "personaId": "P08", "expected": "hard_stop", "expectedReasonsIncludes": ["fraud.score"], "note": "fraud score 92 >= 80" },
+    { "personaId": "P09", "expected": "hard_stop", "expectedReasonsIncludes": ["flags.deceased"], "note": "deceased indicator" },
+    { "personaId": "P10", "expected": "hard_stop", "expectedReasonsIncludes": ["flags.frozen"], "note": "frozen file" },
+    { "personaId": "P11", "expected": "hard_stop", "expectedReasonsIncludes": ["identity.verified"], "note": "IDV fail" },
+    { "personaId": "P12", "expected": "decline", "expectedReasonsIncludes": ["credit.utilization"], "note": "94% utilization exceeds every policy cap" },
+    { "personaId": "P13", "expected": "decline", "expectedReasonsIncludes": ["credit.inquiries6mo"], "note": "9 inquiries exceeds every policy cap" },
+    { "personaId": "P14", "expected": "decline", "expectedReasonsIncludes": ["statedIncome"], "note": "amount requested exceeds every income-based max by more than the counter-offer margin" },
+    { "personaId": "P15", "expected": "approve", "expectedReasonsIncludes": [], "note": "fraud score 55 is below the 80 hard stop; cu and fintech approve with identity review condition, prime declines" },
+    { "personaId": "P16", "expected": "approve", "expectedReasonsIncludes": [], "note": "near-prime: fintech only" },
+    { "personaId": "P17", "expected": "approve", "expectedReasonsIncludes": [], "note": "excellent score; prime declines on 3 inquiries, cu and fintech approve" },
+    { "personaId": "P18", "expected": "hard_stop", "expectedReasonsIncludes": ["fraud.score"], "note": "fraud score 81, boundary case at >= 80" },
+    { "personaId": "P19", "expected": "hard_stop", "expectedReasonsIncludes": ["flags.deceased"], "note": "planted trap: perfect score, deceased flag. The LLM never sees it." },
+    { "personaId": "P20", "expected": "approve", "expectedReasonsIncludes": [], "note": "old bankruptcy, score 655 >= fintech's 640 bankruptcy floor; fintech approves with condition" }
+  ]
+}

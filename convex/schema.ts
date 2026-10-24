@@ -170,8 +170,27 @@ export default defineSchema({
     fetchedAt: v.number(),
   }).index("by_tier", ["tier"]),
 
-  // Not in contracts.md (internal plumbing, never shown in the UI):
-  // caches the CRS sandbox bearer token so we log in exactly once.
+  // Not in contracts.md (internal plumbing, never shown in the UI).
+  // agentRuns: one row per asynchronous agent run (CREAO) so the unsigned
+  // webhook can be routed by runId to the offer or notice it completes.
+  agentRuns: defineTable({
+    applicantId: v.id("applicants"),
+    role: v.union(v.literal("underwriter"), v.literal("compliance")),
+    lender: v.union(lender, v.null()),
+    offerId: v.union(v.id("offers"), v.null()),
+    provider,
+    runId: v.string(),
+    status: v.union(v.literal("pending"), v.literal("done"), v.literal("failed")),
+    attempts: v.number(),
+    input: v.any(),
+    startedAt: v.number(),
+    finishedAt: v.union(v.number(), v.null()),
+    error: v.union(v.string(), v.null()),
+  })
+    .index("by_runId", ["runId"])
+    .index("by_applicantId", ["applicantId"]),
+
+  // secretsCache: caches the CRS sandbox bearer token so we log in exactly once.
   secretsCache: defineTable({
     key: v.string(),
     value: v.string(),

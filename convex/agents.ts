@@ -1,0 +1,692 @@
+// runAgent(role, input) with a provider switch per role.
+//   AGENT_PROVIDER_UNDERWRITER = "claude" (default) | "creao" | "stub"
+//   AGENT_PROVIDER_COMPLIANCE  = "claude" (default) | "creao" | "stub"
+// "claude" silently degrades to "stub" when ANTHROPIC_API_KEY is unset so the
+// board always has data; the audit log says which one actually ran.
+//
+// Underwriters: claude-haiku-5-5 (fast). Compliance: claude-sonnet-5-5.
+// The spec said temperature 0; the current Messages API rejects `temperature`,
+// so determinism comes from effort "low" + structured outputs + Zod validation.
+import Anthropic from "@anthropic-ai/sdk";
+import { zodOutputFormat } from "@anthropic-ai/sdk/helpers/zod";
+import { z } from "zod";
+import { v } from "convex/values";
+import { internalAction, internalMutation, internalQuery } from "./_generated/server";
+import { internal } from "./_generated/api";
+import type { Doc, Id } from "./_generated/dataModel";
+import { lender as lenderValidator } from "./schema";
+import {
+  ComplianceOutputSchema,
+  ReasonSchema,
+  UnderwriterOutputSchema,
+  tierForScore,
+  type BundleData,
+  type ComplianceInput,
+  type Lender,
+  type MarketAnchor,
+  type UnderwriterInput,
+  type UnderwriterOutput,
+} from "./types";
+import { POLICIES, LENDER_NAMES } from "./policies";
+import { stubCompliance, stubUnderwrite } from "./stub";
+
+export type Role = "underwriter" | "compliance";
+export type ProviderName = "claude" | "creao" | "stub";
+
+const UNDERWRITER_MODEL = "claude-haiku-5-5";
+const COMPLIANCE_MODEL = "claude-sonnet-5-5";
+
+// Output-format schemas (no refinements; the refined contract schemas in
+// types.ts run on the parsed result afterwards).
+const UnderwriterFormat = z.object({
+  decision: z.enum(["approve", "decline"]),
+  apr: z.number().nullable(),
+  termMonths: z.number().nullable(),
+  amount: z.number().nullable(),
+  conditions: z.array(z.string()),
+  reasons: z.array(ReasonSchema),
+});
+const ComplianceFormat = z.object({ text: z.string() });
+
+export function providerFor(role: Role): ProviderName {
+  const raw = (
+    role === "underwriter" ? process.env.AGENT_PROVIDER_UNDERWRITER : process.env.AGENT_PROVIDER_COMPLIANCE
+  )?.toLowerCase();
+  const chosen: ProviderName = raw === "creao" || raw === "stub" ? raw : "claude";
+  if (chosen === "claude" && !process.env.ANTHROPIC_API_KEY) return "stub";
+  return chosen;
+}
+
+// ---------------------------------------------------------------------------
+// Prompts
+// ---------------------------------------------------------------------------
+function underwriterSystem(lender: Lender): string {
+  return [
+    `You are the ${LENDER_NAMES[lender]} underwriting agent on an automated lending desk. A human loan officer approves every offer; you only recommend.`,
+    `Apply the policy below literally. Quote the actual numbers from the bundle in every reason. Reference bundle fields by path (credit.fico9, credit.utilization, credit.inquiries6mo, credit.vantage4, credit.tradelines, flags.bankruptcy, flags.eviction, fraud.score, fraud.signals, statedIncome, amountRequested).`,
+    `If the market anchor is present, keep an approval's APR inside or within one point of the band; the policy table still wins if they conflict.`,
+    ``,
+    `=== POLICY ===`,
+    POLICIES[lender],
+  ].join("\n");
+}
+
+function underwriterUser(input: UnderwriterInput): string {
+  const { policy: _policy, ...rest } = input;
+  return `Underwrite this application and return the JSON decision.\n\n${JSON.stringify(rest, null, 2)}`;
+}
+
+const COMPLIANCE_SYSTEM = [
+  "You write adverse-action notices for an automated lending desk. Plain English, second person, addressed to the applicant by name.",
+  "Name every lender that declined and every specific reason it gave, quoting the numbers. Group reasons by lender.",
+  "Say the decision was based on information in their consumer credit report and that they may obtain a free copy from the reporting agency within 60 days and dispute inaccuracies. Keep that legal portion to at most two sentences.",
+  "Close with one concrete sentence on what would change the outcome. No marketing. No headings. Return JSON {\"text\": ...} only.",
+].join(" ");
+
+// ---------------------------------------------------------------------------
+// Claude provider
+// ---------------------------------------------------------------------------
+type ClaudeResult<T> = { ok: true; value: T; latencyMs: number } | { ok: false; error: string; latencyMs: number };
+
+async function callClaudeJson<T>(opts: {
+  model: string;
+  system: string;
+  user: string;
+  format: z.ZodType<any>;
+  validate: (raw: unknown) => { success: true; data: T } | { success: false; error: string };
+  effort: "low" | "medium";
+  maxTokens: number;
+}): Promise<ClaudeResult<T>> {
+  const client = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
+  const started = Date.now();
+  const messages: Anthropic.MessageParam[] = [{ role: "user", content: opts.user }];
+  let lastError = "";
+  for (let attempt = 0; attempt < 2; attempt++) {
+    try {
+      const res = await client.messages.create({
+        model: opts.model,
+        max_tokens: opts.maxTokens,
+        system: opts.system,
+        messages,
+        output_config: { format: zodOutputFormat(opts.format), effort: opts.effort },
+      });
+      if (res.stop_reason === "refusal") {
+        return { ok: false, error: "model refused", latencyMs: Date.now() - started };
+      }
+      const text = res.content.find((b) => b.type === "text")?.text ?? "";
+      let parsed: unknown;
+      try {
+        parsed = JSON.parse(text);
+      } catch (e) {
+        lastError = `response was not JSON: ${text.slice(0, 200)}`;
+        messages.push({ role: "assistant", content: text || "(empty)" });
+        messages.push({ role: "user", content: `That was not valid JSON. ${lastError}. Return only the JSON object.` });
+        continue;
+      }
+      const v = opts.validate(parsed);
+      if (v.success) return { ok: true, value: v.data, latencyMs: Date.now() - started };
+      lastError = v.error;
+      messages.push({ role: "assistant", content: text });
+      messages.push({
+        role: "user",
+        content: `Your JSON failed validation: ${v.error}. Fix it and return only the corrected JSON object.`,
+      });
+    } catch (err: any) {
+      // Non-retryable API errors (auth, bad request) should surface immediately.
+      if (err instanceof Anthropic.AuthenticationError || err instanceof Anthropic.BadRequestError) {
+        return { ok: false, error: `${err.name}: ${err.message}`, latencyMs: Date.now() - started };
+      }
+      lastError = `${err?.name ?? "Error"}: ${err?.message ?? String(err)}`;
+    }
+  }
+  return { ok: false, error: lastError || "validation failed twice", latencyMs: Date.now() - started };
+}
+
+const validateUnderwriter = (raw: unknown) => {
+  const r = UnderwriterOutputSchema.safeParse(raw);
+  return r.success ? ({ success: true, data: r.data } as const) : ({ success: false, error: r.error.message } as const);
+};
+const validateCompliance = (raw: unknown) => {
+  const r = ComplianceOutputSchema.safeParse(raw);
+  return r.success ? ({ success: true, data: r.data } as const) : ({ success: false, error: r.error.message } as const);
+};
+
+// ---------------------------------------------------------------------------
+// CREAO provider (async: start a run, finish on webhook or poll)
+// ---------------------------------------------------------------------------
+const CREAO_BASE = () => (process.env.CREAO_BASE_URL ?? "https://agent.creao.ai/api/v1").replace(/\/$/, "");
+// The task spec: POST {base}/runs with appId in the body. The CREAO app API
+// seen elsewhere uses POST {base}/apps/{appId}/runs with no appId in the body.
+// Flip with CREAO_RUNS_STYLE=app-path if the first form 404s.
+function creaoRunsUrl(appId: string): { url: string; includeAppId: boolean } {
+  if (process.env.CREAO_RUNS_STYLE === "app-path") return { url: `${CREAO_BASE()}/apps/${appId}/runs`, includeAppId: false };
+  return { url: `${CREAO_BASE()}/runs`, includeAppId: true };
+}
+function creaoHeaders() {
+  const key = process.env.CREAO_API_KEY;
+  if (!key) throw new Error("CREAO_API_KEY not set");
+  return { authorization: `Bearer ${key}`, "content-type": "application/json", accept: "application/json" };
+}
+function creaoAppId(role: Role, lender: Lender | null): string {
+  const id =
+    role === "compliance"
+      ? process.env.CREAO_COMPLIANCE_APP_ID
+      : (lender ? process.env[`CREAO_APP_ID_${lender.toUpperCase()}`] : undefined) ?? process.env.CREAO_UNDERWRITER_APP_ID;
+  if (!id) throw new Error(`No CREAO app id for ${role}${lender ? ":" + lender : ""} (CREAO_UNDERWRITER_APP_ID / CREAO_APP_ID_CU|FINTECH|PRIME / CREAO_COMPLIANCE_APP_ID)`);
+  return id;
+}
+
+async function creaoStart(role: Role, lender: Lender | null, inputs: unknown, idempotencyKey: string): Promise<string> {
+  const appId = creaoAppId(role, lender);
+  const { url, includeAppId } = creaoRunsUrl(appId);
+  const webhookUrl = process.env.CONVEX_SITE_URL ? `${process.env.CONVEX_SITE_URL}/creao/webhook` : undefined;
+  const body: Record<string, unknown> = { inputs, idempotencyKey };
+  if (includeAppId) body.appId = appId;
+  if (webhookUrl && !/127\.0\.0\.1|localhost/.test(webhookUrl)) body.webhookUrl = webhookUrl;
+  const res = await fetch(url, { method: "POST", headers: creaoHeaders(), body: JSON.stringify(body) });
+  if (!res.ok) throw new Error(`CREAO start ${res.status}: ${(await res.text()).slice(0, 300)}`);
+  const json: any = await res.json();
+  const runId = json?.id ?? json?.runId ?? json?.run_id;
+  if (!runId) throw new Error(`CREAO start returned no run id: ${JSON.stringify(json).slice(0, 300)}`);
+  return String(runId);
+}
+
+export async function creaoFetchRun(runId: string): Promise<{ status: string; text: string | null; error: string | null }> {
+  const res = await fetch(`${CREAO_BASE()}/runs/${encodeURIComponent(runId)}`, { headers: creaoHeaders() });
+  if (!res.ok) throw new Error(`CREAO get run ${res.status}: ${(await res.text()).slice(0, 300)}`);
+  const json: any = await res.json();
+  const status = String(json?.status ?? "unknown").toLowerCase();
+  const text: string | null = json?.result?.chatText ?? json?.result?.text ?? (typeof json?.result === "string" ? json.result : null);
+  const error = json?.error?.message ?? json?.errorCode ?? null;
+  return { status, text, error: error ? String(error) : null };
+}
+
+/** Pull the last ```json block (or the first {...}) out of an agent reply. */
+export function extractJson(text: string): unknown {
+  const fence = [...text.matchAll(/```(?:json)?\s*([\s\S]*?)```/gi)];
+  if (fence.length) {
+    const last = fence[fence.length - 1][1].trim();
+    try {
+      return JSON.parse(last);
+    } catch {}
+  }
+  const start = text.indexOf("{");
+  const end = text.lastIndexOf("}");
+  if (start >= 0 && end > start) return JSON.parse(text.slice(start, end + 1));
+  throw new Error("no JSON object found in agent reply");
+}
+
+// ---------------------------------------------------------------------------
+// Shared reads/writes
+// ---------------------------------------------------------------------------
+export const loadCase = internalQuery({
+  args: { applicantId: v.id("applicants") },
+  handler: async (ctx, { applicantId }) => {
+    const applicant = await ctx.db.get(applicantId);
+    if (!applicant) throw new Error("applicant not found");
+    const bundleDoc = await ctx.db
+      .query("bundles")
+      .withIndex("by_applicantId", (q) => q.eq("applicantId", applicantId))
+      .order("desc")
+      .first();
+    if (!bundleDoc) throw new Error("bundle not pulled yet");
+    const { raw: _raw, _id, _creationTime, applicantId: _a, source: _s, pulledAt: _p, ...bundle } = bundleDoc;
+    const tier = tierForScore(bundle.credit.fico9 ?? bundle.credit.vantage4);
+    const rate = await ctx.db
+      .query("marketRates")
+      .withIndex("by_tier", (q) => q.eq("tier", tier))
+      .order("desc")
+      .first();
+    const marketAnchor: MarketAnchor | null = rate ? { tier, aprLow: rate.aprLow, aprHigh: rate.aprHigh } : null;
+    const offers = await ctx.db
+      .query("offers")
+      .withIndex("by_applicantId", (q) => q.eq("applicantId", applicantId))
+      .collect();
+    return { applicant, bundle: bundle as BundleData, marketAnchor, offers };
+  },
+});
+
+export const insertOffer = internalMutation({
+  args: {
+    applicantId: v.id("applicants"),
+    lender: lenderValidator,
+    provider: v.union(v.literal("claude"), v.literal("creao")),
+    status: v.union(v.literal("pending"), v.literal("done"), v.literal("failed")),
+    output: v.union(v.any(), v.null()),
+    marketAnchor: v.union(v.any(), v.null()),
+    runId: v.union(v.string(), v.null()),
+    latencyMs: v.union(v.number(), v.null()),
+    note: v.string(),
+    actualProvider: v.string(),
+  },
+  handler: async (ctx, a) => {
+    const o = a.output as UnderwriterOutput | null;
+    const offerId = await ctx.db.insert("offers", {
+      applicantId: a.applicantId,
+      lender: a.lender,
+      provider: a.provider,
+      status: a.status,
+      decision: o?.decision ?? null,
+      apr: o?.apr ?? null,
+      termMonths: o?.termMonths ?? null,
+      amount: o?.amount ?? null,
+      conditions: o?.conditions ?? [],
+      reasons: o?.reasons ?? [],
+      marketAnchor: a.marketAnchor,
+      runId: a.runId,
+      shareUrl: null,
+      latencyMs: a.latencyMs,
+      createdAt: Date.now(),
+    });
+    await ctx.db.insert("auditEvents", {
+      applicantId: a.applicantId,
+      at: Date.now(),
+      actor: `underwriter:${a.lender}` as const,
+      action: a.status === "pending" ? "underwrite.started" : a.status === "done" ? `underwrite.${o?.decision}` : "underwrite.failed",
+      ref: String(offerId),
+      note: `${a.note} [provider=${a.actualProvider}]`,
+    });
+    return offerId;
+  },
+});
+
+export const insertAgentRun = internalMutation({
+  args: {
+    applicantId: v.id("applicants"),
+    role: v.union(v.literal("underwriter"), v.literal("compliance")),
+    lender: v.union(lenderValidator, v.null()),
+    offerId: v.union(v.id("offers"), v.null()),
+    runId: v.string(),
+    input: v.any(),
+  },
+  handler: async (ctx, a) => {
+    await ctx.db.insert("agentRuns", {
+      ...a,
+      provider: "creao",
+      status: "pending",
+      attempts: 0,
+      startedAt: Date.now(),
+      finishedAt: null,
+      error: null,
+    });
+  },
+});
+
+export const insertNotice = internalMutation({
+  args: { applicantId: v.id("applicants"), text: v.string(), lendersDeclined: v.array(v.string()), note: v.string() },
+  handler: async (ctx, a) => {
+    const id = await ctx.db.insert("notices", {
+      applicantId: a.applicantId,
+      text: a.text,
+      lendersDeclined: a.lendersDeclined,
+      createdAt: Date.now(),
+    });
+    await ctx.db.insert("auditEvents", {
+      applicantId: a.applicantId,
+      at: Date.now(),
+      actor: "compliance",
+      action: "compliance.notice",
+      ref: String(id),
+      note: a.note,
+    });
+    return id;
+  },
+});
+
+export const getRunByRunId = internalQuery({
+  args: { runId: v.string() },
+  handler: async (ctx, { runId }) => {
+    return await ctx.db
+      .query("agentRuns")
+      .withIndex("by_runId", (q) => q.eq("runId", runId))
+      .first();
+  },
+});
+
+export const pendingRuns = internalQuery({
+  args: { applicantId: v.id("applicants"), role: v.union(v.literal("underwriter"), v.literal("compliance")) },
+  handler: async (ctx, { applicantId, role }) => {
+    const runs = await ctx.db
+      .query("agentRuns")
+      .withIndex("by_applicantId", (q) => q.eq("applicantId", applicantId))
+      .collect();
+    return runs.filter((r) => r.role === role && r.status === "pending");
+  },
+});
+
+/** Finish an async run: validate the agent's text, update the offer or write the notice. */
+export const completeRun = internalMutation({
+  args: {
+    runId: v.string(),
+    outcome: v.union(v.literal("completed"), v.literal("failed")),
+    text: v.union(v.string(), v.null()),
+    error: v.union(v.string(), v.null()),
+  },
+  handler: async (ctx, { runId, outcome, text, error }) => {
+    const run = await ctx.db
+      .query("agentRuns")
+      .withIndex("by_runId", (q) => q.eq("runId", runId))
+      .first();
+    if (!run || run.status !== "pending") return { handled: false };
+    const latencyMs = Date.now() - run.startedAt;
+
+    let failure: string | null = error;
+    let parsed: unknown = null;
+    if (outcome === "completed" && text) {
+      try {
+        parsed = extractJson(text);
+      } catch (e: any) {
+        failure = `agent reply had no JSON: ${e.message}`;
+      }
+    } else if (outcome === "completed") {
+      failure = "run completed with empty result";
+    }
+
+    if (run.role === "underwriter") {
+      const val = parsed ? UnderwriterOutputSchema.safeParse(parsed) : null;
+      if (!failure && val && !val.success) failure = `validation: ${val.error.message}`;
+      if (run.offerId) {
+        if (!failure && val?.success) {
+          const o = val.data;
+          await ctx.db.patch(run.offerId, {
+            status: "done",
+            decision: o.decision,
+            apr: o.apr,
+            termMonths: o.termMonths,
+            amount: o.amount,
+            conditions: o.conditions,
+            reasons: o.reasons,
+            latencyMs,
+          });
+        } else {
+          await ctx.db.patch(run.offerId, { status: "failed", latencyMs });
+        }
+      }
+      await ctx.db.insert("auditEvents", {
+        applicantId: run.applicantId,
+        at: Date.now(),
+        actor: `underwriter:${run.lender ?? "cu"}` as const,
+        action: failure ? "underwrite.failed" : `underwrite.${(parsed as any)?.decision}`,
+        ref: run.offerId ? String(run.offerId) : null,
+        note: failure ? `${failure} [provider=creao runId=${runId}]` : `${latencyMs}ms [provider=creao runId=${runId}]`,
+      });
+    } else {
+      const val = parsed ? ComplianceOutputSchema.safeParse(parsed) : null;
+      if (!failure && val && !val.success) failure = `validation: ${val.error.message}`;
+      if (!failure && val?.success) {
+        const offers = await ctx.db
+          .query("offers")
+          .withIndex("by_applicantId", (q) => q.eq("applicantId", run.applicantId))
+          .collect();
+        await ctx.db.insert("notices", {
+          applicantId: run.applicantId,
+          text: val.data.text,
+          lendersDeclined: offers.filter((o) => o.decision === "decline").map((o) => o.lender),
+          createdAt: Date.now(),
+        });
+      }
+      await ctx.db.insert("auditEvents", {
+        applicantId: run.applicantId,
+        at: Date.now(),
+        actor: "compliance",
+        action: failure ? "compliance.failed" : "compliance.notice",
+        ref: null,
+        note: failure ? `${failure} [provider=creao runId=${runId}]` : `${latencyMs}ms [provider=creao runId=${runId}]`,
+      });
+    }
+
+    await ctx.db.patch(run._id, { status: failure ? "failed" : "done", finishedAt: Date.now(), error: failure });
+    return { handled: true, failed: Boolean(failure) };
+  },
+});
+
+/** Re-fetch a run from CREAO (webhooks are unsigned, so we never trust the payload) and complete it. */
+export const verifyAndCompleteRun = internalAction({
+  args: { runId: v.string() },
+  handler: async (ctx, { runId }): Promise<{ status: string }> => {
+    const run = await ctx.runQuery(internal.agents.getRunByRunId, { runId });
+    if (!run || run.status !== "pending") return { status: run?.status ?? "unknown" };
+    const r = await creaoFetchRun(runId);
+    if (r.status === "completed") {
+      await ctx.runMutation(internal.agents.completeRun, { runId, outcome: "completed", text: r.text, error: null });
+      return { status: "completed" };
+    }
+    if (r.status === "failed" || r.status === "cancelled") {
+      await ctx.runMutation(internal.agents.completeRun, { runId, outcome: "failed", text: null, error: r.error ?? r.status });
+      return { status: "failed" };
+    }
+    return { status: r.status };
+  },
+});
+
+/** Poll every pending CREAO run for an applicant; returns how many are still pending. */
+export const pollPending = internalAction({
+  args: { applicantId: v.id("applicants"), role: v.union(v.literal("underwriter"), v.literal("compliance")) },
+  handler: async (ctx, { applicantId, role }): Promise<number> => {
+    const runs = await ctx.runQuery(internal.agents.pendingRuns, { applicantId, role });
+    let remaining = 0;
+    for (const run of runs) {
+      try {
+        const r = await ctx.runAction(internal.agents.verifyAndCompleteRun, { runId: run.runId });
+        if (r.status !== "completed" && r.status !== "failed") remaining++;
+      } catch (err: any) {
+        console.warn(`poll ${run.runId}: ${err?.message ?? err}`);
+        remaining++;
+      }
+    }
+    return remaining;
+  },
+});
+
+export const failPending = internalMutation({
+  args: {
+    applicantId: v.id("applicants"),
+    role: v.union(v.literal("underwriter"), v.literal("compliance")),
+    why: v.string(),
+  },
+  handler: async (ctx, { applicantId, role, why }) => {
+    const runs = await ctx.db
+      .query("agentRuns")
+      .withIndex("by_applicantId", (q) => q.eq("applicantId", applicantId))
+      .collect();
+    for (const run of runs) {
+      if (run.role !== role || run.status !== "pending") continue;
+      await ctx.db.patch(run._id, { status: "failed", finishedAt: Date.now(), error: why });
+      if (run.offerId) await ctx.db.patch(run.offerId, { status: "failed" });
+      await ctx.db.insert("auditEvents", {
+        applicantId,
+        at: Date.now(),
+        actor: run.role === "underwriter" ? (`underwriter:${run.lender ?? "cu"}` as const) : "compliance",
+        action: run.role === "underwriter" ? "underwrite.failed" : "compliance.failed",
+        ref: run.offerId ? String(run.offerId) : null,
+        note: `${why} [provider=creao runId=${run.runId}]`,
+      });
+    }
+  },
+});
+
+// ---------------------------------------------------------------------------
+// runAgent entry points (called as workflow steps)
+// ---------------------------------------------------------------------------
+export type AgentStepResult = { status: "done" | "pending" | "failed"; decision?: "approve" | "decline" | null; note: string };
+
+export const runUnderwriter = internalAction({
+  args: { applicantId: v.id("applicants"), lender: lenderValidator },
+  handler: async (ctx, { applicantId, lender }): Promise<AgentStepResult> => {
+    const { applicant, bundle, marketAnchor, offers } = await ctx.runQuery(internal.agents.loadCase, { applicantId });
+    // Idempotent under workflow retries.
+    const existing = offers.find((o: Doc<"offers">) => o.lender === lender && o.status !== "failed");
+    if (existing) return { status: existing.status, decision: existing.decision, note: "already present" };
+
+    const input: UnderwriterInput = {
+      bundle,
+      policy: POLICIES[lender],
+      statedIncome: applicant.statedIncome,
+      amountRequested: applicant.amountRequested,
+      purpose: applicant.purpose,
+      marketAnchor,
+    };
+    const provider = providerFor("underwriter");
+
+    if (provider === "creao") {
+      const offerId: Id<"offers"> = await ctx.runMutation(internal.agents.insertOffer, {
+        applicantId,
+        lender,
+        provider: "creao",
+        status: "pending",
+        output: null,
+        marketAnchor,
+        runId: null,
+        latencyMs: null,
+        note: "CREAO run starting",
+        actualProvider: "creao",
+      });
+      try {
+        const runId = await creaoStart("underwriter", lender, { ...input, lender }, `${applicantId}:${lender}`);
+        await ctx.runMutation(internal.agents.insertAgentRun, {
+          applicantId,
+          role: "underwriter",
+          lender,
+          offerId,
+          runId,
+          input,
+        });
+        await ctx.runMutation(internal.agents.setOfferRunId, { offerId, runId });
+        return { status: "pending", note: `creao run ${runId}` };
+      } catch (err: any) {
+        await ctx.runMutation(internal.agents.setOfferRunId, { offerId, runId: null, fail: String(err?.message ?? err) });
+        return { status: "failed", note: String(err?.message ?? err) };
+      }
+    }
+
+    let output: UnderwriterOutput | null = null;
+    let latencyMs: number | null = null;
+    let note = "";
+    let actualProvider = provider;
+    if (provider === "claude") {
+      const r = await callClaudeJson<UnderwriterOutput>({
+        model: UNDERWRITER_MODEL,
+        system: underwriterSystem(lender),
+        user: underwriterUser(input),
+        format: UnderwriterFormat,
+        validate: validateUnderwriter,
+        effort: "low",
+        maxTokens: 4096,
+      });
+      latencyMs = r.latencyMs;
+      if (r.ok) {
+        output = r.value;
+        note = `${UNDERWRITER_MODEL} ${r.latencyMs}ms`;
+      } else {
+        note = `claude failed: ${r.error}`;
+      }
+    } else {
+      const started = Date.now();
+      output = stubUnderwrite(lender, input);
+      latencyMs = Date.now() - started;
+      note = "deterministic stub (no ANTHROPIC_API_KEY or AGENT_PROVIDER_UNDERWRITER=stub)";
+      actualProvider = "stub";
+    }
+
+    await ctx.runMutation(internal.agents.insertOffer, {
+      applicantId,
+      lender,
+      provider: "claude",
+      status: output ? "done" : "failed",
+      output,
+      marketAnchor,
+      runId: null,
+      latencyMs,
+      note,
+      actualProvider,
+    });
+    return { status: output ? "done" : "failed", decision: output?.decision ?? null, note };
+  },
+});
+
+export const setOfferRunId = internalMutation({
+  args: { offerId: v.id("offers"), runId: v.union(v.string(), v.null()), fail: v.optional(v.string()) },
+  handler: async (ctx, { offerId, runId, fail }) => {
+    await ctx.db.patch(offerId, fail ? { runId, status: "failed" } : { runId });
+  },
+});
+
+export const runCompliance = internalAction({
+  args: { applicantId: v.id("applicants") },
+  handler: async (ctx, { applicantId }): Promise<AgentStepResult> => {
+    const { applicant, offers } = await ctx.runQuery(internal.agents.loadCase, { applicantId });
+    const declines = offers
+      .filter((o: Doc<"offers">) => o.status === "done" && o.decision === "decline")
+      .map((o: Doc<"offers">) => ({ lender: o.lender, reasons: o.reasons }));
+    if (declines.length === 0) return { status: "done", note: "no declines; no notice needed" };
+
+    const input: ComplianceInput = {
+      applicant: {
+        name: applicant.name,
+        purpose: applicant.purpose,
+        amountRequested: applicant.amountRequested,
+        statedIncome: applicant.statedIncome,
+      },
+      declines,
+    };
+    const provider = providerFor("compliance");
+
+    if (provider === "creao") {
+      try {
+        const runId = await creaoStart("compliance", null, input, `${applicantId}:compliance`);
+        await ctx.runMutation(internal.agents.insertAgentRun, {
+          applicantId,
+          role: "compliance",
+          lender: null,
+          offerId: null,
+          runId,
+          input,
+        });
+        return { status: "pending", note: `creao run ${runId}` };
+      } catch (err: any) {
+        return { status: "failed", note: String(err?.message ?? err) };
+      }
+    }
+
+    if (provider === "claude") {
+      const r = await callClaudeJson<{ text: string }>({
+        model: COMPLIANCE_MODEL,
+        system: COMPLIANCE_SYSTEM,
+        user: `Write the adverse-action notice for this applicant.\n\n${JSON.stringify(
+          { ...input, lenderNames: LENDER_NAMES },
+          null,
+          2,
+        )}`,
+        format: ComplianceFormat,
+        validate: validateCompliance,
+        effort: "medium",
+        maxTokens: 4096,
+      });
+      if (r.ok) {
+        await ctx.runMutation(internal.agents.insertNotice, {
+          applicantId,
+          text: r.value.text,
+          lendersDeclined: declines.map((d: { lender: Lender }) => d.lender),
+          note: `${COMPLIANCE_MODEL} ${r.latencyMs}ms [provider=claude]`,
+        });
+        return { status: "done", note: `${COMPLIANCE_MODEL} ${r.latencyMs}ms` };
+      }
+      await ctx.runMutation(internal.audit.log, {
+        applicantId,
+        actor: "compliance",
+        action: "compliance.failed",
+        ref: null,
+        note: `claude failed: ${r.error}; falling back to stub notice`,
+      });
+    }
+
+    const out = stubCompliance(input);
+    await ctx.runMutation(internal.agents.insertNotice, {
+      applicantId,
+      text: out.text,
+      lendersDeclined: declines.map((d: { lender: Lender }) => d.lender),
+      note: "deterministic stub notice [provider=stub]",
+    });
+    return { status: "done", note: "stub notice" };
+  },
+});

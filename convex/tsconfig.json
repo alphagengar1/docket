@@ -12,6 +12,8 @@
     "module": "ESNext",
     "isolatedModules": true,
     "noEmit": true,
+    "allowImportingTsExtensions": true,
+    "resolveJsonModule": true,
     "types": ["node"]
   },
   "include": ["./**/*"],
