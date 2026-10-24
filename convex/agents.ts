@@ -215,9 +215,41 @@ export async function creaoFetchRun(runId: string, role: Role, lender: Lender | 
   if (!res.ok) throw new Error(`CREAO get run ${res.status}: ${(await res.text()).slice(0, 300)}`);
   const json: any = await res.json();
   const status = String(json?.status ?? "unknown").toLowerCase();
-  const text: string | null = json?.result?.chatText ?? json?.result?.text ?? (typeof json?.result === "string" ? json.result : null);
+  const primary: string | null = json?.result?.chatText ?? json?.result?.text ?? (typeof json?.result === "string" ? json.result : null);
+  // CREAO builder agents sometimes write the JSON to a saved file/artifact and end the chat with prose.
+  // If the chat text carries no JSON object, fall back to the first string anywhere under `result` that does.
+  const text = primary && hasJsonObject(primary) ? primary : (firstJsonBearingString(json?.result) ?? primary);
   const error = json?.error?.message ?? json?.errorCode ?? null;
   return { status, text, error: error ? String(error) : null };
+}
+
+function hasJsonObject(s: string): boolean {
+  try {
+    extractJson(s);
+    return true;
+  } catch {
+    return false;
+  }
+}
+
+/** Depth-first walk of a run result; returns the first string value that contains a parseable JSON object. */
+function firstJsonBearingString(node: unknown, depth = 0): string | null {
+  if (depth > 6 || node == null) return null;
+  if (typeof node === "string") return hasJsonObject(node) ? node : null;
+  if (Array.isArray(node)) {
+    for (const item of node) {
+      const hit = firstJsonBearingString(item, depth + 1);
+      if (hit) return hit;
+    }
+    return null;
+  }
+  if (typeof node === "object") {
+    for (const v of Object.values(node as Record<string, unknown>)) {
+      const hit = firstJsonBearingString(v, depth + 1);
+      if (hit) return hit;
+    }
+  }
+  return null;
 }
 
 /** Pull the last ```json block (or the first {...}) out of an agent reply. */
