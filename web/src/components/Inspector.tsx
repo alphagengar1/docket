@@ -1,4 +1,4 @@
-import { useEffect, useState, type ReactNode } from 'react'
+import { useEffect, useMemo, useState, type ReactNode } from 'react'
 import type { Applicant, AuditEvent, Bundle, Decision, Notice, Offer, ReasonCheck } from '../types'
 import { LENDERS } from '../types'
 import { clock, monthlyPayment, num, pct, secs, usd } from '../lib/format'
@@ -7,6 +7,7 @@ import { noticeRequired, verifiedReasons } from '../lib/select'
 import { ReasonList } from './ReasonList'
 import { Num } from './OfferCard'
 import { fieldLabel } from '../../../convex/labels'
+import { narrateTrace } from '../../../convex/narrate'
 
 export type InspectorTab = 'offer' | 'trace' | 'notice'
 
@@ -102,7 +103,7 @@ export function Inspector(p: Props) {
 
       <div className="inspector-body" role="tabpanel">
         {tab === 'offer' && <OfferTab applicant={applicant} offer={selectedOffer} decision={decision} offers={offers} checks={checks} />}
-        {tab === 'trace' && <TraceTab applicant={applicant} events={events} />}
+        {tab === 'trace' && <TraceTab applicant={applicant} events={events} noticeText={notice?.text} />}
         {tab === 'notice' && <NoticeTab applicant={applicant} bundle={bundle} notice={notice} declined={declined} offers={offers} decision={decision} checks={checks} />}
       </div>
 
@@ -409,7 +410,7 @@ function noteOf(e: AuditEvent): string | null {
 }
 const tsec = (ms: number) => `${(ms / 1000).toFixed(1)}s`
 
-function TraceTab({ applicant, events }: { applicant: Applicant; events: AuditEvent[] }) {
+function RawEvents({ applicant, events }: { applicant: Applicant; events: AuditEvent[] }) {
   const rows = events.slice().sort((a, b) => a.at - b.at)
   const starts = new Map<string, number>()
   const out: ReactNode[] = []
@@ -465,6 +466,124 @@ function TraceTab({ applicant, events }: { applicant: Applicant; events: AuditEv
       {out}
       {rows.length === 0 && <li className="muted">No events yet.</li>}
     </ol>
+  )
+}
+
+const LENDER_MAP: Record<string, string> = Object.fromEntries(LENDERS.map((l) => [l.id, l.name]))
+
+/** Copy text to the clipboard and flash a confirmation label. */
+function CopyButton({ label, text }: { label: string; text: () => string }) {
+  const [done, setDone] = useState(false)
+  return (
+    <button
+      type="button"
+      className="ghost"
+      onClick={async () => {
+        try {
+          await navigator.clipboard.writeText(text())
+          setDone(true)
+          setTimeout(() => setDone(false), 1500)
+        } catch {
+          /* clipboard unavailable */
+        }
+      }}
+    >
+      {done ? 'Copied' : label}
+    </button>
+  )
+}
+
+/** Trace: "Story" narrates the events in plain sentences (each expands to its evidence); "Events" is the raw list. */
+function TraceTab({ applicant, events, noticeText }: { applicant: Applicant; events: AuditEvent[]; noticeText?: string }) {
+  const [view, setView] = useState<'story' | 'events'>('story')
+  const [open, setOpen] = useState<Set<number>>(new Set())
+  const story = useMemo(() => narrateTrace(events, { name: applicant.name, lenders: LENDER_MAP, noticeText }), [events, applicant.name, noticeText])
+  const expandable = story.lines.map((l, i) => (l.events.length || l.details?.length ? i : -1)).filter((i) => i >= 0)
+  const toggle = (i: number) =>
+    setOpen((o) => {
+      const n = new Set(o)
+      if (n.has(i)) n.delete(i)
+      else n.add(i)
+      return n
+    })
+  return (
+    <>
+      <div className="trace-bar">
+        <div className="seg" role="group" aria-label="Trace view">
+          <button type="button" aria-pressed={view === 'story'} onClick={() => setView('story')}>
+            Story
+          </button>
+          <button type="button" aria-pressed={view === 'events'} onClick={() => setView('events')}>
+            Events
+          </button>
+        </div>
+        {view === 'story' && expandable.length > 0 && (
+          <button type="button" className="link" onClick={() => setOpen(open.size ? new Set() : new Set(expandable))}>
+            {open.size ? 'Collapse all' : 'Expand all'}
+          </button>
+        )}
+      </div>
+      {view === 'story' ? (
+        <>
+          <ol className="story" aria-label="Story">
+            {story.lines.map((l, i) => {
+              const can = expandable.includes(i)
+              const isOpen = open.has(i)
+              return (
+                <li key={i} className={`story-row ${l.tone}`}>
+                  <button type="button" className="story-head" aria-expanded={can ? isOpen : undefined} disabled={!can} onClick={() => toggle(i)}>
+                    <span className="st-t">{clock(l.at)}</span>
+                    <span className="st-s">{l.text}</span>
+                    {can && <span className="st-c" aria-hidden="true">{isOpen ? '−' : '+'}</span>}
+                  </button>
+                  {can && isOpen && (
+                    <div className="story-detail">
+                      {l.details && (
+                        <dl>
+                          {l.details.map((d, k) => (
+                            <div key={k}>
+                              <dt>{d.label}</dt>
+                              <dd>{d.value}</dd>
+                            </div>
+                          ))}
+                        </dl>
+                      )}
+                      {l.events.length > 0 && (
+                        <ul className="st-events" aria-label="Underlying events">
+                          {l.events.map((e, k) => (
+                            <li key={k}>
+                              <span>{clock(e.at)}</span> <b>{e.actor}</b> {e.action}
+                              {e.ref && !CONVEX_ID.test(e.ref) ? ` · ${e.ref}` : ''}
+                              {e.note ? <div>{e.note}</div> : null}
+                            </li>
+                          ))}
+                        </ul>
+                      )}
+                    </div>
+                  )}
+                </li>
+              )
+            })}
+            {story.lines.length === 0 && <li className="muted">No events yet.</li>}
+          </ol>
+          {story.lines.length > 0 && (
+            <div className="trace-actions">
+              <CopyButton label="Copy as text" text={() => story.paragraph} />
+            </div>
+          )}
+        </>
+      ) : (
+        <>
+          <RawEvents applicant={applicant} events={events} />
+          <div className="trace-actions">
+            <CopyButton
+              label="Copy as JSON"
+              text={() => JSON.stringify(events.slice().sort((a, b) => a.at - b.at).map((e) => ({ at: e.at, actor: e.actor, action: e.action, ref: e.ref, note: e.note })), null, 2)}
+            />
+          </div>
+        </>
+      )}
+    </>
   )
 }
 

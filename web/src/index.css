@@ -2513,3 +2513,28 @@ table.grid.tl tr:last-child td {
 /* Decision sheet: centered in the viewport. */
 .sheet-scrim { align-items: center; padding-top: 0; }
 .sheet { max-height: calc(100vh - 64px); }
+
+/* Trace tab: Story (narrated, expandable rows) and Events toggle. */
+.trace-bar { display: flex; align-items: center; justify-content: space-between; gap: var(--sp-2); margin-bottom: var(--sp-3); }
+.trace-bar .link { font-size: var(--fs-label); }
+.trace-actions { display: flex; gap: var(--sp-2); margin-top: var(--sp-3); }
+.story { margin: 0; padding: 0; list-style: none; display: flex; flex-direction: column; gap: 2px; }
+.story-row { border-left: 2px solid var(--text); background: transparent; border-radius: 0; }
+.story-row.good { border-left-color: var(--approve); border-left-width: 4px; }
+.story-row.bad { border-left-color: var(--hard); border-left-width: 4px; border-left-style: dashed; }
+.story-row.human { border-left-color: #000; border-left-width: 6px; border-left-style: double; }
+.story-head { all: unset; box-sizing: border-box; display: grid; grid-template-columns: 72px minmax(0, 1fr) 16px; column-gap: var(--sp-2); width: 100%; padding: 8px var(--sp-2); cursor: pointer; border-radius: 0; }
+.story-head:disabled { cursor: default; }
+.story-head:not(:disabled):hover { background: var(--hover); }
+.story-head:focus-visible { outline: 2px solid var(--accent); outline-offset: -2px; }
+.story-head .st-t { font-family: var(--mono); font-size: 12px; color: var(--muted); padding-top: 3px; white-space: nowrap; }
+.story-head .st-s { font-size: 15px; line-height: 1.4; color: var(--text); }
+.story-head .st-c { font-family: var(--mono); font-size: 14px; color: var(--muted); text-align: right; }
+.story-detail { margin: 0 0 var(--sp-2) calc(72px + var(--sp-2) * 2); padding: var(--sp-2) var(--sp-3); background: var(--panel); border: 1px solid var(--hair); border-radius: 0; font-size: 13px; }
+.story-detail dl { margin: 0 0 var(--sp-2); display: grid; gap: 4px; }
+.story-detail dl > div { display: grid; grid-template-columns: 110px minmax(0, 1fr); column-gap: var(--sp-2); }
+.story-detail dt { font-size: 12px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.04em; }
+.story-detail dd { margin: 0; }
+.st-events { margin: 0; padding: 0; list-style: none; font-family: var(--mono); font-size: 12px; color: var(--muted); display: grid; gap: 4px; }
+.st-events b { color: var(--text); font-weight: 600; }
+.st-events li > div { color: var(--text); overflow-wrap: anywhere; }
