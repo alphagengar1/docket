@@ -2,6 +2,7 @@
 // exercise them. Everything an LLM or CREAO agent receives is built here by
 // allowlist projection: the applicant's name, address, ZIP, SSN, DOB, phone, email
 // and the raw bureau blobs have no path into the agent input.
+import { describeIdentityFlag } from "./labels.ts";
 import type { BundleData, ComplianceInput, MarketAnchor, UnderwriterInput } from "./types";
 
 /** Placeholder the compliance agent writes for the applicant's name; code swaps in the real name. */
@@ -38,13 +39,14 @@ export function agentBundle(b: BundleData): BundleData {
       inquiries6mo: b.credit.inquiries6mo,
       utilization: b.credit.utilization,
     },
-    identity: { verified: b.identity.verified, flags: b.identity.flags.map(scrubText) },
+    identity: { verified: b.identity.verified, flags: b.identity.flags.map((f) => scrubText(describeIdentityFlag(f))) },
     fraud: { score: b.fraud.score, signals: b.fraud.signals.map(scrubText) },
     flags: {
       deceased: b.flags.deceased,
       frozen: b.flags.frozen,
       bankruptcy: b.flags.bankruptcy,
       eviction: b.flags.eviction,
+      lienOrJudgment: b.flags.lienOrJudgment ?? false,
     },
   };
 }

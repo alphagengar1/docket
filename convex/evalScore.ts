@@ -1,10 +1,13 @@
 // Pure scoring for the eval runner (unit-tested in eval.test.ts).
 export type Expected = "approve" | "decline" | "hard_stop";
 export type Got = Expected | "pending" | "error";
+export type PerLenderOutcome = "approve" | "counteroffer" | "decline" | "none";
+export type ExpectedPerLender = { cu: PerLenderOutcome; fintech: PerLenderOutcome; prime: PerLenderOutcome };
+const LENDERS = ["cu", "fintech", "prime"] as const;
 
 export type CaseObservation = {
   status: string;
-  offers: Array<{ status: string; decision: "approve" | "decline" | null; reasons: Array<{ field: string }>; lender?: string; latencyMs?: number | null }>;
+  offers: Array<{ status: string; decision: "approve" | "decline" | null; classification?: "approve" | "counteroffer" | "deny" | null; reasons: Array<{ field: string }>; lender?: string; latencyMs?: number | null }>;
   hardStopRefs: string[]; // auditEvents actor "rules", action "rules.hard_stop" → ref
   reasonChecks?: Array<{ flipped: boolean }>;
 };
@@ -19,7 +22,18 @@ export type CaseResult = {
   offersCount: number;
   checks: { total: number; flipped: number };
   latencies: Array<{ lender: string; ms: number }>;
+  /** Present only when the case has an expectedPerLender key. */
+  perLender?: Array<{ lender: string; expected: PerLenderOutcome; got: PerLenderOutcome; match: boolean }>;
 };
+
+/** What one lender did: none (hard stop or no finished offer), decline, counteroffer or approve. */
+export function observedPerLender(o: CaseObservation, lender: string): PerLenderOutcome {
+  if (o.status === "hard_stop") return "none";
+  const offer = o.offers.find((x) => x.lender === lender && x.status === "done");
+  if (!offer) return "none";
+  if (offer.decision !== "approve") return "decline";
+  return offer.classification === "counteroffer" ? "counteroffer" : "approve";
+}
 
 export function observedOutcome(o: CaseObservation): Got {
   if (o.status === "hard_stop") return "hard_stop";
@@ -35,6 +49,7 @@ export function scoreCase(
   expected: Expected,
   expectedReasonsIncludes: string[],
   o: CaseObservation,
+  expectedPerLender?: ExpectedPerLender | null,
 ): CaseResult {
   const got = observedOutcome(o);
   const declineReasonCounts = o.offers.filter((x) => x.status === "done" && x.decision === "decline").map((x) => x.reasons.length);
@@ -58,6 +73,12 @@ export function scoreCase(
     offersCount: o.offers.length,
     checks: { total: o.reasonChecks?.length ?? 0, flipped: o.reasonChecks?.filter((c) => c.flipped).length ?? 0 },
     latencies: o.offers.filter((x) => x.lender && x.latencyMs != null).map((x) => ({ lender: x.lender!, ms: x.latencyMs! })),
+    perLender: expectedPerLender
+      ? LENDERS.map((l) => {
+          const g = observedPerLender(o, l);
+          return { lender: l, expected: expectedPerLender[l], got: g, match: g === expectedPerLender[l] };
+        })
+      : undefined,
   };
 }
 
@@ -75,7 +96,13 @@ export function aggregate(results: CaseResult[]) {
   const total = results.reduce((a, r) => a + r.checks.total, 0);
   const flipped = results.reduce((a, r) => a + r.checks.flipped, 0);
   const lat = (lender: string) => p50(results.flatMap((r) => r.latencies.filter((l) => l.lender === lender).map((l) => l.ms)));
+  const slots = results.flatMap((r) => (r.perLender ?? []).map((s) => ({ personaId: r.personaId, ...s })));
+  const perLenderMatched = slots.filter((s) => s.match).length;
   return {
+    perLenderAgreement: slots.length ? perLenderMatched / slots.length : null,
+    perLenderMatched,
+    perLenderTotal: slots.length,
+    perLenderMismatches: slots.filter((s) => !s.match).map((s) => ({ personaId: s.personaId, lender: s.lender, expected: s.expected, got: s.got })),
     reasonsVerifiedPct: total ? flipped / total : 0,
     latencyP50Ms: { cu: lat("cu"), fintech: lat("fintech"), prime: lat("prime") },
     cases,

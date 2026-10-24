@@ -56,6 +56,8 @@ export const flags = v.object({
   frozen: v.boolean(),
   bankruptcy: v.boolean(),
   eviction: v.boolean(),
+  // Unsatisfied lien or non-eviction judgment in BLJ public records. Optional: bundles stored before 2026-10-24 lack it (read as false).
+  lienOrJudgment: v.optional(v.boolean()),
 });
 
 export const actor = v.union(
@@ -76,6 +78,8 @@ export const expectedOutcome = v.union(
   v.literal("decline"),
   v.literal("hard_stop"),
 );
+
+export const perLenderOutcome = v.union(v.literal("approve"), v.literal("counteroffer"), v.literal("decline"), v.literal("none"));
 
 export default defineSchema({
   applicants: defineTable({
@@ -202,6 +206,8 @@ export default defineSchema({
     personaId: v.string(),
     expected: expectedOutcome,
     expectedReasonsIncludes: v.array(v.string()),
+    // Per-lender answer key (none = hard stop, no lender ran). Optional for older rows.
+    expectedPerLender: v.optional(v.object({ cu: perLenderOutcome, fintech: perLenderOutcome, prime: perLenderOutcome })),
     note: v.string(),
   }).index("by_personaId", ["personaId"]),
 
@@ -221,6 +227,11 @@ export default defineSchema({
       }),
     ),
     reasonsVerifiedPct: v.optional(v.number()),
+    // Per-lender agreement (fraction of the cases x 3 lender slots matching expectedPerLender); optional for older runs.
+    perLenderAgreement: v.optional(v.union(v.number(), v.null())),
+    perLenderMatched: v.optional(v.number()),
+    perLenderTotal: v.optional(v.number()),
+    perLenderMismatches: v.optional(v.array(v.object({ personaId: v.string(), lender: v.string(), expected: v.string(), got: v.string() }))),
     latencyP50Ms: v.optional(v.object({ cu: v.union(v.number(), v.null()), fintech: v.union(v.number(), v.null()), prime: v.union(v.number(), v.null()) })),
   }).index("by_startedAt", ["startedAt"]),
 

@@ -18,6 +18,22 @@
 //  - Criminal/eviction new-request return results inline; get-response 404s.
 import type { BundleData, Tradeline } from "./types";
 
+/** True for a lien or judgment record that is still outstanding (status not released/satisfied/paid/vacated/dismissed). */
+const isOutstanding = (status: unknown) => !/^\s*(released|satisfied|paid|vacated|dismissed|settled)/i.test(String(status ?? ""));
+const isEvictionType = (type: unknown) => /unlawful detainer|evict/i.test(String(type ?? ""));
+
+/**
+ * flags.lienOrJudgment: at least one unsatisfied tax/other lien or unsatisfied civil judgment in the
+ * BLJ public-records summary (extras.publicRecords). Eviction judgments are excluded: they already
+ * set flags.eviction. Used by the live normalizer and when serving captured fixtures.
+ */
+export function lienOrJudgmentFromPublicRecords(pr: any): boolean {
+  if (!pr) return false;
+  const liens = Array.isArray(pr.lienDetail) ? pr.lienDetail : [];
+  const judgments = Array.isArray(pr.judgmentDetail) ? pr.judgmentDetail : [];
+  return liens.some((l: any) => isOutstanding(l?.status)) || judgments.some((j: any) => !isEvictionType(j?.type) && isOutstanding(j?.status));
+}
+
 export type CrsRequests = {
   tu: Record<string, any>;
   efx: Record<string, any>;
@@ -328,6 +344,7 @@ export function normalizeProducts(p: Record<string, ProductRecord | undefined>):
     lienDetail: arr(blj?.Results?.Liens?.LienRecord).map((r: any) => ({ amount: r?.TotalLienAmount, status: r?.Status, by: r?.Plaintiff?.Name?.UnparsedName })),
     judgmentDetail: judgments.map((r: any) => ({ amount: r?.TotalJudgmentAmount, status: r?.Status, type: r?.JudgmentType })),
   };
+  const lienOrJudgment = lienOrJudgmentFromPublicRecords(extras.publicRecords);
   const cj = j("criminal");
   if (cj) {
     const cands = arr(cj?.cicCriminal?.candidates?.candidate);
@@ -341,7 +358,7 @@ export function normalizeProducts(p: Record<string, ProductRecord | undefined>):
       credit: { fico9: tu.score, vantage4, tradelines, inquiries6mo, utilization },
       identity: { verified, flags: idFlags },
       fraud: { score: fraudScore, signals },
-      flags: { deceased, frozen, bankruptcy, eviction },
+      flags: { deceased, frozen, bankruptcy, eviction, lienOrJudgment },
     },
     bureaus,
     notes,

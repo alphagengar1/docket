@@ -85,3 +85,17 @@ test("mock personas: exactly the hard-stop personas stop", () => {
   const stopped = PERSONAS.filter((p) => evaluateHardStops(p.bundle).stop).map((p) => p.personaId);
   assert.deepEqual(stopped, ["P08", "P09", "P10", "P11", "P18", "P19"]);
 });
+
+test("flags.lienOrJudgment is true only for P08's fixture (unsatisfied lien + judgment); eviction judgments do not count", async () => {
+  const { mockBundle } = await import("./crs.mock.ts");
+  const { lienOrJudgmentFromPublicRecords } = await import("./crs.core.ts");
+  for (let i = 1; i <= 20; i++) {
+    const id = `P${String(i).padStart(2, "0")}`;
+    const b = mockBundle(id) as unknown as BundleData;
+    assert.equal(b.flags.lienOrJudgment, id === "P08", `${id} lienOrJudgment`);
+  }
+  assert.equal(lienOrJudgmentFromPublicRecords(undefined), false);
+  assert.equal(lienOrJudgmentFromPublicRecords({ lienDetail: [{ status: "Released" }], judgmentDetail: [{ status: "Satisfied", type: "Civil Judgment" }] }), false);
+  assert.equal(lienOrJudgmentFromPublicRecords({ lienDetail: [], judgmentDetail: [{ status: "Unsatisfied", type: "Civil Judgment - Unlawful Detainer" }] }), false);
+  assert.equal(lienOrJudgmentFromPublicRecords({ lienDetail: [{ status: "Unreleased" }], judgmentDetail: [] }), true);
+});

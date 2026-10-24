@@ -21,7 +21,7 @@ export type BundleData = {
   };
   identity: { verified: boolean; flags: string[] };
   fraud: { score: number | null; signals: string[] };
-  flags: { deceased: boolean; frozen: boolean; bankruptcy: boolean; eviction: boolean };
+  flags: { deceased: boolean; frozen: boolean; bankruptcy: boolean; eviction: boolean; lienOrJudgment?: boolean };
 };
 
 export type Reason = { text: string; field: string; verified?: boolean | null };

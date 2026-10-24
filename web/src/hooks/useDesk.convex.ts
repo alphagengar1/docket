@@ -27,7 +27,7 @@ import type {
   Offer,
   ReasonCheck,
 } from '../types'
-import type { Desk, DeskConfig, DeskPersona } from './useDesk'
+import type { ApplicantSlice, Desk, DeskConfig, DeskPersona } from './useDesk'
 import * as mock from '../mock/desk'
 import { replayFlagFromUrl } from './useDesk.mock'
 
@@ -174,5 +174,27 @@ export function useConvexDesk(): Desk {
       stopReplay: () => setReplaying(false),
     }),
     [replaying, replayState, live, personas, createApplicant, approveOffer, declineApplicant, disputeTradeline, runEval, resetBoard, configQ],
+  )
+}
+
+/** Per-applicant rows via desk:getApplicantView (not subject to the global list caps). */
+export function useConvexApplicantSlice(id: string | null, replaying: boolean): ApplicantSlice | undefined {
+  const v = useQuery(api.desk.getApplicantView, id && !replaying ? { applicantId: id } : 'skip') as
+    | (Record<string, unknown> & { applicant: Applicant; bundle: Bundle | null; offers: Offer[]; notice: Notice | null; decision: Decision | null; auditEvents: AuditEvent[] })
+    | null
+    | undefined
+  return useMemo(
+    () =>
+      v
+        ? {
+            applicant: v.applicant,
+            offers: v.offers,
+            auditEvents: v.auditEvents,
+            bundles: v.bundle ? [{ ...v.bundle, raw: null }] : [],
+            notices: v.notice ? [v.notice] : [],
+            decisions: v.decision ? [v.decision] : [],
+          }
+        : undefined,
+    [v],
   )
 }

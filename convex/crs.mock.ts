@@ -20,7 +20,7 @@ const tl = (type: string, balance: number, status: string, openedAt: string): Tr
 
 const clean = { verified: true, flags: [] as string[] };
 const noFraud = { score: 8, signals: [] as string[] };
-const noFlags = { deceased: false, frozen: false, bankruptcy: false, eviction: false };
+const noFlags = { deceased: false, frozen: false, bankruptcy: false, eviction: false, lienOrJudgment: false };
 
 const SYNTHETIC_PERSONAS: Persona[] = [
   {
@@ -446,6 +446,7 @@ const SYNTHETIC_PERSONAS: Persona[] = [
 // synthetic generator above is only a fallback for a persona with no fixture.
 // ---------------------------------------------------------------------------
 import { CRS_FIXTURES } from "./crs.fixtures.ts";
+import { lienOrJudgmentFromPublicRecords } from "./crs.core.ts";
 import { personaCodes } from "./crs.personas.ts";
 
 // What the eval types into the intake form for each real CRS persona.
@@ -488,8 +489,15 @@ export function findPersona(personaId: string): Persona | undefined {
     name: fx.displayName,
     hint: fx.about, // never the label: the deck must not reveal the outcome
     defaultIntake: INTAKE[personaId] ?? syn?.defaultIntake ?? { purpose: "personal", amountRequested: 10000, statedIncome: 60000 },
-    bundle: fx.bundle,
+    bundle: fixtureBundle(fx),
   };
+}
+
+/** Captured fixture bundle plus flags.lienOrJudgment derived from its BLJ public-records extras (fixtures predate the flag). */
+function fixtureBundle(fx: (typeof CRS_FIXTURES)[string]): BundleData {
+  const b: BundleData = JSON.parse(JSON.stringify(fx.bundle));
+  b.flags.lienOrJudgment = lienOrJudgmentFromPublicRecords(fx.extras?.publicRecords);
+  return b;
 }
 
 export function listPersonaSummaries() {
@@ -504,7 +512,7 @@ export function mockBundle(personaId: string): BundleData & { raw: unknown } {
   const fx = CRS_FIXTURES[personaId];
   if (fx) {
     return {
-      ...JSON.parse(JSON.stringify(fx.bundle)),
+      ...fixtureBundle(fx),
       raw: { provider: "fixture", personaId, bureaus: fx.bureaus, notes: fx.notes, extras: fx.extras, fixture: `convex/fixtures/crs/${personaId}.json` },
     };
   }

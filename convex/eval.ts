@@ -5,7 +5,7 @@ import { action, internalAction, internalMutation, internalQuery, query } from "
 import { internal } from "./_generated/api";
 import type { Id } from "./_generated/dataModel";
 import { findPersona } from "./crs.mock";
-import { aggregate, scoreCase, type CaseResult, type Expected } from "./evalScore";
+import { aggregate, scoreCase, type CaseResult, type Expected, type ExpectedPerLender } from "./evalScore";
 import map from "../personas/map.json";
 
 const TERMINAL = new Set(["awaiting_human", "hard_stop", "approved", "declined"]);
@@ -44,6 +44,7 @@ export const seedCases = internalMutation({
         personaId: c.personaId,
         expected: c.expected as Expected,
         expectedReasonsIncludes: c.expectedReasonsIncludes,
+        expectedPerLender: (c as { expectedPerLender?: ExpectedPerLender }).expectedPerLender,
         note: c.note,
       });
     }
@@ -73,6 +74,10 @@ export const finishRun = internalMutation({
     avgReasonsPerDenial: v.number(),
     failures: v.array(v.object({ personaId: v.string(), expected: v.string(), got: v.string(), why: v.string() })),
     reasonsVerifiedPct: v.number(),
+    perLenderAgreement: v.optional(v.union(v.number(), v.null())),
+    perLenderMatched: v.optional(v.number()),
+    perLenderTotal: v.optional(v.number()),
+    perLenderMismatches: v.optional(v.array(v.object({ personaId: v.string(), lender: v.string(), expected: v.string(), got: v.string() }))),
     latencyP50Ms: v.object({ cu: v.union(v.number(), v.null()), fintech: v.union(v.number(), v.null()), prime: v.union(v.number(), v.null()) }),
   },
   handler: async (ctx, { runId, ...rest }) => {
@@ -110,6 +115,7 @@ export const observe = internalQuery({
       offers: offers.map((o) => ({
         status: o.status,
         decision: o.decision,
+        classification: o.classification ?? null,
         reasons: o.reasons.map((r) => ({ field: r.field })),
         lender: o.lender,
         latencyMs: o.latencyMs,
@@ -138,12 +144,16 @@ export type EvalSummary = {
   avgReasonsPerDenial: number;
   failures: Array<{ personaId: string; expected: string; got: string; why: string }>;
   reasonsVerifiedPct: number;
+  perLenderAgreement: number | null;
+  perLenderMatched: number;
+  perLenderTotal: number;
+  perLenderMismatches: Array<{ personaId: string; lender: string; expected: string; got: string }>;
   latencyP50Ms: { cu: number | null; fintech: number | null; prime: number | null };
 };
 
 async function runEvalImpl(ctx: any, keep: boolean): Promise<EvalSummary> {
   await ctx.runMutation(internal.eval.seedCases, {});
-  const evalCases: Array<{ personaId: string; expected: Expected; expectedReasonsIncludes: string[] }> = await ctx.runQuery(internal.eval.listCases, {});
+  const evalCases: Array<{ personaId: string; expected: Expected; expectedReasonsIncludes: string[]; expectedPerLender?: ExpectedPerLender }> = await ctx.runQuery(internal.eval.listCases, {});
   const runId: Id<"evalRuns"> = await ctx.runMutation(internal.eval.beginRun, { cases: evalCases.length });
 
   // Start every case in parallel (each is its own durable workflow).
@@ -172,7 +182,7 @@ async function runEvalImpl(ctx: any, keep: boolean): Promise<EvalSummary> {
   for (const s of started) {
     const c = evalCases.find((x) => x.personaId === s.personaId)!;
     const obs = await ctx.runQuery(internal.eval.observe, { applicantId: s.applicantId });
-    results.push(scoreCase(c.personaId, c.expected, c.expectedReasonsIncludes, obs));
+    results.push(scoreCase(c.personaId, c.expected, c.expectedReasonsIncludes, obs, c.expectedPerLender));
   }
   const agg = aggregate(results);
   await ctx.runMutation(internal.eval.finishRun, {
@@ -182,6 +192,10 @@ async function runEvalImpl(ctx: any, keep: boolean): Promise<EvalSummary> {
     avgReasonsPerDenial: agg.avgReasonsPerDenial,
     failures: agg.failures,
     reasonsVerifiedPct: agg.reasonsVerifiedPct,
+    perLenderAgreement: agg.perLenderAgreement,
+    perLenderMatched: agg.perLenderMatched,
+    perLenderTotal: agg.perLenderTotal,
+    perLenderMismatches: agg.perLenderMismatches,
     latencyP50Ms: agg.latencyP50Ms,
   });
 

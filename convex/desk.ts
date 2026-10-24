@@ -17,6 +17,7 @@ import { lenderTimeoutMs, pingClaude } from "./agents";
 import { LENDER_NAMES } from "./policies";
 import { costToBorrow, fcraParagraph, monthlyPayment } from "./classify";
 import { evaluateHardStops } from "./rules";
+import { stopLabel } from "./labels";
 import { LENDERS } from "./types";
 import { noticeRequired } from "./classify";
 
@@ -733,23 +734,15 @@ export const attemptOverride = mutation({
 const BUREAU_CONTACTS =
   "Equifax 1-800-685-1111, Experian 1-888-397-3742, TransUnion 1-800-916-8800";
 
-/** Borrower-language reason for a hard-stop rule field. */
-const STOP_REASON_TEXT: Record<string, string> = {
-  "flags.deceased": "The credit bureau's file for this identity carries a deceased indicator.",
-  "flags.frozen": "The credit file for this identity is frozen at the credit bureaus, so no score could be retrieved.",
-  "identity.verified": "The credit bureau could not verify this identity against its records.",
-  "fraud.score": "Our fraud check rated this application as too risky to continue.",
-};
-
 function hardStopNotice(name: string, amount: number, purpose: string, fields: string[], source: "crs" | "nessie" | "mock", pulledAt: number): string {
-  const reasons = (fields.length ? fields : ["unknown"])
-    .map((f) => `- ${STOP_REASON_TEXT[f] ?? "The application stopped at an automated safety check."}`)
-    .join("\n");
+  const unique = [...new Set(fields.length ? fields : ["unknown"])];
+  const reasons = unique.map((f) => `- ${stopLabel(f)}.`).join("\n");
   return [
     `Dear ${name}, we could not process your request for $${amount.toLocaleString("en-US")} (${purpose}). No lender reviewed your application.`,
-    `The reason${fields.length > 1 ? "s" : ""}:\n${reasons}`,
+    `The reason${unique.length > 1 ? "s" : ""}:\n${reasons}`,
     `If this information is wrong, for example if the file is marked in error, you can correct it: contact the credit bureau directly (${BUREAU_CONTACTS}) and dispute the item. Once it is corrected you are welcome to apply again.`,
     fcraParagraph(source, pulledAt),
+    "The federal Equal Credit Opportunity Act (ECOA) prohibits creditors from discriminating against credit applicants on the basis of race, color, religion, national origin, sex, marital status, age, receipt of public assistance income, or the good-faith exercise of rights under consumer credit laws.",
   ].join("\n\n");
 }
 

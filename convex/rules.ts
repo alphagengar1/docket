@@ -24,7 +24,7 @@ export function evaluateHardStops(bundle: BundleData): RulesResult {
   const fired: Array<{ field: string; reason: string }> = [];
 
   if (bundle.flags.deceased) {
-    fired.push({ field: "flags.deceased", reason: "The credit file carries a deceased indicator." });
+    fired.push({ field: "flags.deceased", reason: "Deceased indicator on the bureau file." });
   }
   // A freeze at one bureau is not a stop when another bureau returned a scorable
   // file (CRS persona P15: TU frozen, EFX/EXP 740). Only stop when no bureau
@@ -39,7 +39,7 @@ export function evaluateHardStops(bundle: BundleData): RulesResult {
   if (bundle.fraud.score != null && bundle.fraud.score >= FRAUD_HARD_STOP_THRESHOLD) {
     fired.push({
       field: "fraud.score",
-      reason: `Fraud score ${bundle.fraud.score} is at or above the ${FRAUD_HARD_STOP_THRESHOLD} hard-stop threshold.`,
+      reason: `Fraud risk score ${bundle.fraud.score} is at or above the ${FRAUD_HARD_STOP_THRESHOLD} hard-stop threshold.`,
     });
   }
 

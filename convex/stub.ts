@@ -18,6 +18,7 @@ type PolicyNumbers = {
   fraudCondition: [number, number] | null;
   fraudConditionText: string;
   bankruptcy: "decline" | { minScore: number; condition: string };
+  lien: "decline" | { minScore: number; condition: string };
   incomePct: number;
   cap: number;
   minAmount: number;
@@ -36,6 +37,7 @@ const P: Record<Lender, PolicyNumbers> = {
     fraudCondition: [40, 59],
     fraudConditionText: "Manual identity review by a loan officer before funding.",
     bankruptcy: "decline",
+    lien: "decline",
     incomePct: 0.35,
     cap: 35000,
     minAmount: 1000,
@@ -59,6 +61,7 @@ const P: Record<Lender, PolicyNumbers> = {
     fraudCondition: [40, 69],
     fraudConditionText: "Complete step-up identity verification (government ID plus selfie).",
     bankruptcy: { minScore: 640, condition: "Provide the bankruptcy discharge letter." },
+    lien: { minScore: 680, condition: "Provide proof of a payment plan or satisfaction for the lien/judgment before funding." },
     incomePct: 0.5,
     cap: 25000,
     minAmount: 1000,
@@ -80,6 +83,7 @@ const P: Record<Lender, PolicyNumbers> = {
     fraudCondition: [30, 49],
     fraudConditionText: "Enhanced identity verification by the fraud team before funding.",
     bankruptcy: "decline",
+    lien: "decline",
     incomePct: 0.4,
     cap: 100000,
     minAmount: 2500,
@@ -117,7 +121,12 @@ export function stubUnderwrite(lender: Lender, input: UnderwriterInput): Underwr
   let score: number | null = fico;
   let scoreField = "credit.fico9";
   if (fico == null) {
-    if (p.requireFico) {
+    if (bundle.flags.frozen && vantage != null) {
+      // Frozen-file exception (all three policies): underwrite on VantageScore 4, not a thin file.
+      score = vantage;
+      scoreField = "credit.vantage4";
+      conditions.push("Lift the TransUnion security freeze before funding.");
+    } else if (p.requireFico) {
       reasons.push({ text: "No TransUnion score score is on file; this policy does not underwrite thin files.", field: "credit.fico9" });
       if (bundle.credit.tradelines.length <= 2) {
         reasons.push({
@@ -170,6 +179,18 @@ export function stubUnderwrite(lender: Lender, input: UnderwriterInput): Underwr
       });
     } else {
       conditions.push(p.bankruptcy.condition);
+    }
+  }
+  if (bundle.flags.lienOrJudgment) {
+    if (p.lien === "decline") {
+      reasons.push({ text: "An unsatisfied lien or judgment is in the public records; this policy declines any unsatisfied lien or judgment.", field: "flags.lienOrJudgment" });
+    } else if (score == null || score < p.lien.minScore) {
+      reasons.push({
+        text: `An unsatisfied lien or judgment is in the public records and the score ${score ?? "n/a"} is below the ${p.lien.minScore} minimum for such files.`,
+        field: "flags.lienOrJudgment",
+      });
+    } else {
+      conditions.push(p.lien.condition);
     }
   }
   if (bundle.flags.eviction) {

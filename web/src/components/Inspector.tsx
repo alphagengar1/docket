@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, type ReactNode } from 'react'
 import type { Applicant, AuditEvent, Bundle, Decision, Notice, Offer, ReasonCheck } from '../types'
 import { LENDERS } from '../types'
 import { clock, monthlyPayment, num, pct, secs, usd } from '../lib/format'
@@ -6,6 +6,7 @@ import { STATUS_TONE, STATUS_WORD, IN_FLIGHT } from '../lib/status'
 import { noticeRequired, verifiedReasons } from '../lib/select'
 import { ReasonList } from './ReasonList'
 import { Num } from './OfferCard'
+import { fieldLabel } from '../../../convex/labels'
 
 export type InspectorTab = 'offer' | 'trace' | 'notice'
 
@@ -336,26 +337,125 @@ function OfferTab({ applicant, offer, decision, offers, checks }: { applicant: A
   )
 }
 
-/** Laminar transcript: actor square, action, right-aligned mono chips. */
+/** Trace: pipeline steps as section rows, events beneath them in plain words. */
+const STEP_TITLE: Record<string, string> = {
+  pull: 'Bureau pull',
+  guardrails: 'Hard-stop rules',
+  underwrite: 'Three lenders',
+  verify: 'Reason verification',
+  compliance: 'Adverse-action notice',
+  human: 'Human review',
+}
+const ACTION_TITLE: Record<string, string> = {
+  'intake.submitted': 'Application received',
+  'intake.replay': 'Replay started',
+  'replay.started': 'Replay started',
+  'rules.pass': 'All hard-stop rules passed',
+  'rules.hard_stop': 'Hard stop',
+  'crs.error': 'Bureau pull failed',
+  'desk.error': 'Desk error',
+  'underwrite.started': 'Started reading the file',
+  'underwrite.start': 'Started reading the file',
+  'underwrite.done': 'Decision returned',
+  'underwrite.failed': 'Lender did not answer',
+  'verify.requested': 'Verification requested',
+  'verify.supported': 'Reason holds up',
+  'verify.unsupported': 'Reason does not hold up',
+  'verify.inconclusive': 'Reason inconclusive',
+  'verify.sanity': 'Sanity check',
+  'compliance.notice': 'Notice drafted',
+  'compliance.failed': 'Notice failed',
+  'compliance.unverified_reasons_used': 'Unverified reasons kept',
+  'notice.approved': 'Notice signed',
+  'offer.chosen': 'Borrower chose an offer',
+  'override.blocked': 'Override refused',
+  'dispute.tradeline': 'Tradeline disputed',
+  'step.compliance.skipped': 'Notice not required',
+}
+const BAD = /hard_stop|failed|blocked|unsupported|error|unverified/
+const GOOD = /rules\.pass|verify\.supported|compliance\.notice|notice\.approved|offer\.chosen|\.done$/
+const CONVEX_ID = /^[a-z0-9]{30,34}$/
+const ACTOR_WORD: Record<string, string> = {
+  'underwriter:cu': 'Credit union',
+  'underwriter:fintech': 'Fintech',
+  'underwriter:prime': 'Prime bank',
+  compliance: 'Compliance',
+  human: 'Reviewer',
+  applicant: 'Borrower',
+}
+function titleOf(e: AuditEvent): string {
+  if (ACTION_TITLE[e.action]) return ACTION_TITLE[e.action]
+  const m = e.action.match(/^step\.([a-z]+)\.(start|done)$/)
+  if (m) return `${STEP_TITLE[m[1]] ?? m[1]} ${m[2] === 'start' ? 'started' : 'finished'}`
+  return e.action.replace(/[._]/g, ' ')
+}
+function refOf(e: AuditEvent): string | null {
+  if (!e.ref || CONVEX_ID.test(e.ref)) return null
+  if (e.action === 'rules.hard_stop') return fieldLabel(e.ref)
+  return e.ref
+}
+function noteOf(e: AuditEvent): string | null {
+  const n = (e.note ?? '').trim()
+  if (!n) return null
+  if (e.action === 'step.pull.done') return n.replace(/^source=\w+;\s*/, '')
+  return n
+}
+const tsec = (ms: number) => `${(ms / 1000).toFixed(1)}s`
+
 function TraceTab({ applicant, events }: { applicant: Applicant; events: AuditEvent[] }) {
   const rows = events.slice().sort((a, b) => a.at - b.at)
+  const starts = new Map<string, number>()
+  const out: ReactNode[] = []
+  for (const e of rows) {
+    const m = e.action.match(/^step\.([a-z]+)\.(start|done)$/)
+    if (m && m[2] === 'start') {
+      starts.set(m[1], e.at)
+      out.push(
+        <li key={e._id} className="step">
+          <span className="d" style={{ ['--actor' as string]: ACTOR_COLOR[e.actor] }} />
+          <span className="body"><div className="title">{STEP_TITLE[m[1]] ?? m[1]}</div></span>
+          <span className="t">+{tsec(e.at - applicant.createdAt)}</span>
+        </li>,
+      )
+      continue
+    }
+    if (m && m[2] === 'done') {
+      const s = starts.get(m[1])
+      const note = noteOf(e)
+      const stopped = /hard stop/i.test(note ?? '')
+      out.push(
+        <li key={e._id} className={`done${stopped ? ' bad' : ''}`}>
+          <span className="d" />
+          <span className="body">
+            <div className="title">{stopped ? note : `Done${note ? ` · ${note}` : ''}`}</div>
+          </span>
+          <span className="t">{s != null ? tsec(e.at - s) : `+${tsec(e.at - applicant.createdAt)}`}</span>
+        </li>,
+      )
+      continue
+    }
+    const tone = BAD.test(e.action) ? ' bad' : GOOD.test(e.action) ? ' good' : ''
+    const ref = refOf(e)
+    const note = noteOf(e)
+    const who = ACTOR_WORD[e.actor]
+    out.push(
+      <li key={e._id} className={`ev${tone}`}>
+        <span className="d" style={{ ['--actor' as string]: ACTOR_COLOR[e.actor] }} />
+        <span className="body">
+          <div className="title">
+            {titleOf(e)}
+            {ref && <span className="chip">{ref}</span>}
+            {who && <span className="who">{who}</span>}
+          </div>
+          {note && <div className="actor">{note}</div>}
+        </span>
+        <span className="t">+{tsec(e.at - applicant.createdAt)}</span>
+      </li>,
+    )
+  }
   return (
     <ol className="timeline" aria-label="Trace">
-      {rows.map((e) => (
-        <li key={e._id}>
-          <span className="d" style={{ ['--actor' as string]: ACTOR_COLOR[e.actor] }} />
-          <span className="body">
-            <div>
-              <span className="mono">{e.action}</span>
-              {e.ref && <span className="chip"> · {e.ref}</span>}
-            </div>
-            <div className="actor">
-              {e.actor} · {e.note}
-            </div>
-          </span>
-          <span className="t">+{((e.at - applicant.createdAt) / 1000).toFixed(2)}s</span>
-        </li>
-      ))}
+      {out}
       {rows.length === 0 && <li className="muted">No events yet.</li>}
     </ol>
   )

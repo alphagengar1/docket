@@ -1702,3 +1702,62 @@ table.grid.tl tr:last-child td {
     transition: none !important;
   }
 }
+
+/* Trace readability: step rows as headers, tone on bad/good events, duration on done rows */
+.timeline li.step {
+  margin-top: var(--sp-2);
+  border-bottom: 1px solid var(--hair-2);
+}
+.timeline li.step .title {
+  font-size: var(--fs-label);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+.timeline li.done { border-bottom: 0; }
+.timeline li.done .title { color: var(--muted); }
+.timeline li.done .d { background: transparent; }
+.timeline .title { display: flex; flex-wrap: wrap; align-items: baseline; gap: var(--sp-1); }
+.timeline li.ev .title { font-weight: 500; }
+.timeline li.bad .title { color: var(--hard); }
+.timeline li.good .title { color: var(--approve); }
+.timeline .who {
+  font-size: var(--fs-label);
+  color: var(--muted);
+  font-weight: 400;
+}
+.timeline .chip { margin-left: 2px; }
+
+/* Waterfall: tie each label to its bar. Row stripes, a dotted leader from the label to the bar,
+   and a hover highlight across the whole row. */
+.wf-row {
+  border-bottom: 1px solid var(--hair);
+  transition: background 120ms ease;
+}
+.wf-row:last-child { border-bottom: 0; }
+.wf-row:hover { background: color-mix(in srgb, var(--text) 4%, transparent); }
+.wf-row .lane::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 50%;
+  border-top: 1px dotted var(--hair-2);
+  pointer-events: none;
+}
+.wf-row.queued .lane::before,
+.wf-row.skipped .lane::before { border-top-style: none; }
+.wf-row .bar { z-index: 1; }
+.wf-row .lbl::after {
+  content: '';
+  flex: 1;
+  min-width: 8px;
+  border-top: 1px dotted var(--hair-2);
+  align-self: center;
+  margin-left: var(--sp-1);
+}
+.wf-row.queued .lbl::after,
+.wf-row.skipped .lbl::after { border-top-style: none; }
+.wf-row .bar .t { color: var(--text); }
+.wf-row.failed .bar .t { color: var(--hard); }
+.wf-row.child .bar .t { color: var(--muted); }

@@ -7,7 +7,7 @@ bundles     { _id, applicantId, source: "crs"|"nessie"|"mock", pulledAt: number,
               credit: { fico9: number|null, vantage4: number|null, tradelines: Array<{type, balance, status, openedAt}> , inquiries6mo: number, utilization: number|null },
               identity: { verified: boolean, flags: string[] },
               fraud: { score: number|null, signals: string[] },
-              flags: { deceased: boolean, frozen: boolean, bankruptcy: boolean, eviction: boolean },
+              flags: { deceased: boolean, frozen: boolean, bankruptcy: boolean, eviction: boolean, lienOrJudgment?: boolean },  // lienOrJudgment (optional, absent = false): >=1 unsatisfied lien or non-eviction civil judgment in BLJ public records
               raw: any }
 offers      { _id, applicantId, lender: "cu"|"fintech"|"prime", provider: "claude"|"creao", status: "pending"|"done"|"failed",
               decision: "approve"|"decline"|null, apr: number|null, termMonths: number|null, amount: number|null,
@@ -17,7 +17,7 @@ notices     { _id, applicantId, text: string, lendersDeclined: string[], created
 decisions   { _id, applicantId, chosenOfferId: string|null, outcome: "approved"|"declined"|"hard_stop", approvedBy: "human", at: number, note: string }
 auditEvents { _id, applicantId, at: number, actor: "intake"|"desk"|"crs"|"rules"|"underwriter:cu"|"underwriter:fintech"|"underwriter:prime"|"compliance"|"human",
               action: string, ref: string|null, note: string }
-evalCases   { _id, personaId, expected: "approve"|"decline"|"hard_stop", expectedReasonsIncludes: string[], note: string }
+evalCases   { _id, personaId, expected: "approve"|"decline"|"hard_stop", expectedReasonsIncludes: string[], expectedPerLender?: {cu,fintech,prime: "approve"|"counteroffer"|"decline"|"none"}, note: string }
 evalRuns    { _id, startedAt, finishedAt: number|null, cases: number, agreement: number, fraudZeroOffers: boolean, avgReasonsPerDenial: number,
               failures: Array<{ personaId, expected, got, why }> }
 marketRates { _id, tier: "excellent"|"good"|"fair"|"poor", aprLow: number, aprHigh: number, source: string, fetchedAt: number }

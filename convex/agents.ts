@@ -65,7 +65,7 @@ export function providerFor(role: Role): ProviderName {
 function underwriterSystem(lender: Lender): string {
   return [
     `You are the ${LENDER_NAMES[lender]} underwriting agent on an automated lending desk. A human loan officer approves every offer; you only recommend.`,
-    `Apply the policy below literally. Quote the actual numbers from the bundle in every reason. Reference bundle fields by path (credit.fico9, credit.utilization, credit.inquiries6mo, credit.vantage4, credit.tradelines, flags.bankruptcy, flags.eviction, fraud.score, fraud.signals, statedIncome, amountRequested).`,
+    `Apply the policy below literally. Quote the actual numbers from the bundle in every reason. Reference bundle fields by path (credit.fico9, credit.utilization, credit.inquiries6mo, credit.vantage4, credit.tradelines, flags.bankruptcy, flags.eviction, flags.lienOrJudgment, fraud.score, fraud.signals, statedIncome, amountRequested).`,
     `Refer to credit.fico9 as the TransUnion score; never write FICO.`,
     `If the market anchor is present, keep an approval's APR inside or within one point of the band; the policy table still wins if they conflict.`,
     ``,

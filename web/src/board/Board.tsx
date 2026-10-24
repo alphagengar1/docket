@@ -2,22 +2,12 @@
 // Follows the newest applicant (or ?applicant=<id>). Keys: E eval view, B board, R replay.
 import { useEffect, useMemo, useState, type ReactNode } from 'react'
 import { PRODUCT_NAME } from '../config'
-import { useDesk, type Desk } from '../hooks/useDesk'
+import { useApplicantSlice, useDesk, type Desk } from '../hooks/useDesk'
 import { LENDERS, type Applicant, type AuditEvent, type Bundle, type Decision, type Notice, type Offer } from '../types'
 import { clock, monthlyPayment, usd } from '../lib/format'
 import { eventsFor, offersFor, stepTimings } from '../lib/select'
+import { fieldLabel } from '../../../convex/labels'
 import './board.css'
-
-const FIELD_LABELS: Record<string, string> = {
-  fico9: 'score', vantage4: 'score (V4)', utilization: 'utilization', inquiries6mo: 'inquiries',
-  'fraud.score': 'fraud', 'identity.verified': 'identity', 'flags.deceased': 'deceased indicator',
-  'flags.frozen': 'frozen file', 'flags.bankruptcy': 'bankruptcy', 'flags.eviction': 'eviction', policy: 'policy', timeout: 'timeout',
-}
-export function fieldLabel(field: string): string {
-  const key = field.replace(/^credit\./, '')
-  return FIELD_LABELS[key] ?? key
-}
-
 
 type Stage = 'done' | 'now' | 'next' | 'cancelled'
 
@@ -131,7 +121,6 @@ function Title() {
         <Wordmark big />
         <Strip stage={['next', 'next', 'next', 'next']} />
         <div className="bd-cursor" aria-hidden="true" />
-        <div className="lbl">Lender floor · Sandbox · Waiting for an applicant</div>
       </div>
     </div>
   )
@@ -264,7 +253,12 @@ function HardStop({ events, offers, notice, decision }: { events: AuditEvent[]; 
   const stop = events.find((e) => e.action === 'rules.hard_stop' || e.action === 'hard_stop')
   const field = stop?.ref ?? 'policy'
   const sentence = HARD_SENTENCE[field] ?? 'A coded safety rule stopped this application before any lender saw it.'
-  const log = events.filter((e) => !e.action.startsWith('step.')).slice(-3)
+  const isRule = (e: AuditEvent) => e.action.startsWith('rules.') || e.action === 'hard_stop'
+  const visible = events.filter((e) => !e.action.startsWith('step.'))
+  const ruleLines = visible.filter(isRule)
+  const overrideLine = visible.filter((e) => e.action.startsWith('override.')).slice(-1)
+  // Rule lines first, then the latest override attempt; cap at 8 (keep newest rule lines if over).
+  const log = [...ruleLines.slice(-(8 - overrideLine.length)), ...overrideLine]
   const n = noticeCount(notice)
   return (
     <>
@@ -330,11 +324,21 @@ function Approved({ a, decision, offer }: { a: Applicant; decision?: Decision; o
   )
 }
 
-function BoardMain({ desk, applicantId }: { desk: Desk; applicantId: string | null }) {
-  const a = useMemo(() => {
-    if (applicantId) return desk.applicants.find((x) => x._id === applicantId)
-    return desk.applicants.slice().sort((x, y) => y.createdAt - x.createdAt)[0]
-  }, [desk.applicants, applicantId])
+function BoardMain({ desk: globalDesk, applicantId }: { desk: Desk; applicantId: string | null }) {
+  const picked = useMemo(() => {
+    if (applicantId) return globalDesk.applicants.find((x) => x._id === applicantId)
+    return globalDesk.applicants.slice().sort((x, y) => y.createdAt - x.createdAt)[0]
+  }, [globalDesk.applicants, applicantId])
+  // Per-applicant query (desk:getApplicantView) so the global caps (200/600/300) never hide this applicant's rows.
+  const slice = useApplicantSlice(applicantId ?? picked?._id ?? null, globalDesk.replaying)
+  const desk = useMemo<Desk>(
+    () =>
+      slice
+        ? { ...globalDesk, applicants: slice.applicant ? [slice.applicant, ...globalDesk.applicants.filter((x) => x._id !== slice.applicant!._id)] : globalDesk.applicants, offers: slice.offers, auditEvents: slice.auditEvents, bundles: slice.bundles, notices: slice.notices, decisions: slice.decisions }
+        : globalDesk,
+    [globalDesk, slice],
+  )
+  const a = slice?.applicant ?? picked
   if (!a) return <Title />
   const offers = offersFor(desk.offers, a._id)
   const events = eventsFor(desk.auditEvents, a._id).slice().sort((x, y) => x.at - y.at)

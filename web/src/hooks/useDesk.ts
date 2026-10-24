@@ -4,9 +4,9 @@
 //   VITE_DATA=convex  -> live Convex backend (useDesk.convex.ts)
 //   unset             -> convex when VITE_CONVEX_URL is set, else mock
 // Replay mode (?replay=1) is local in both implementations.
-import type { IntakeInput, PersonaCard } from '../types'
+import type { Applicant, AuditEvent, Bundle, Decision, IntakeInput, Notice, Offer, PersonaCard } from '../types'
 import type { DeskState } from '../mock/store'
-import { useConvexDesk } from './useDesk.convex'
+import { useConvexApplicantSlice, useConvexDesk } from './useDesk.convex'
 import { useMockDesk } from './useDesk.mock'
 
 export type Connection = 'mock' | 'replay' | 'live'
@@ -47,3 +47,16 @@ export const DATA_SOURCE: 'mock' | 'convex' =
   wanted === 'mock' || wanted === 'convex' ? wanted : import.meta.env.VITE_CONVEX_URL ? 'convex' : 'mock'
 
 export const useDesk: () => Desk = DATA_SOURCE === 'convex' ? useConvexDesk : useMockDesk
+
+/** One applicant's rows from a per-applicant query. Undefined while loading, in mock/replay mode, or when no id. */
+export interface ApplicantSlice {
+  applicant: Applicant | null
+  offers: Offer[]
+  auditEvents: AuditEvent[]
+  bundles: Bundle[]
+  notices: Notice[]
+  decisions: Decision[]
+}
+const noSlice = (_id: string | null, _replaying: boolean): ApplicantSlice | undefined => undefined
+export const useApplicantSlice: (id: string | null, replaying: boolean) => ApplicantSlice | undefined =
+  DATA_SOURCE === 'convex' ? useConvexApplicantSlice : noSlice

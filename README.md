@@ -121,4 +121,4 @@ Swaraj Adhikari, UCLA. Matthew Pun, UC Berkeley.
 
 ## License
 
-[LICENSE: add a LICENSE file and name it here]
+MIT. See [LICENSE](LICENSE).

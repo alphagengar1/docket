@@ -55,11 +55,12 @@ export function buildCounterfactual(input: UnderwriterInput, rawField: string): 
       return set(input.bundle.fraud.score, 5);
     case "flags.bankruptcy":
     case "flags.eviction":
+    case "flags.lienOrJudgment":
     case "flags.deceased":
     case "flags.frozen": {
       const k = field.split(".")[1] as keyof typeof b.flags;
       b.flags[k] = false;
-      return set(input.bundle.flags[k], false);
+      return set(input.bundle.flags[k] ?? false, false);
     }
     case "identity.verified":
       b.identity.verified = true;

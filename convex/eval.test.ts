@@ -51,3 +51,27 @@ test("aggregate", () => {
   assert.equal(agg.failures.length, 1);
   assert.equal(agg.failures[0].personaId, "D");
 });
+
+test("per-lender key: counts matches per lender slot, hard stop is none", () => {
+  const offer = (lender: string, decision: "approve" | "decline", classification?: "approve" | "counteroffer" | "deny") => ({
+    status: "done",
+    lender,
+    decision,
+    classification,
+    reasons: decision === "decline" ? [{ field: "a" }, { field: "b" }] : [],
+  });
+  const r = scoreCase(
+    "P02",
+    "approve",
+    [],
+    { status: "awaiting_human", offers: [offer("cu", "approve", "approve"), offer("fintech", "approve", "counteroffer"), offer("prime", "decline", "deny")], hardStopRefs: [] },
+    { cu: "approve", fintech: "counteroffer", prime: "approve" },
+  );
+  assert.deepEqual(r.perLender?.map((s) => s.match), [true, true, false]);
+  const hs = scoreCase("P12", "hard_stop", [], { status: "hard_stop", offers: [], hardStopRefs: ["identity.verified"] }, { cu: "none", fintech: "none", prime: "none" });
+  assert.equal(hs.perLender?.every((s) => s.match), true);
+  const agg = aggregate([r, hs]);
+  assert.equal(agg.perLenderTotal, 6);
+  assert.equal(agg.perLenderMatched, 5);
+  assert.equal(agg.perLenderMismatches[0].lender, "prime");
+});
