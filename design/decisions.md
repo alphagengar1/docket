@@ -8,3 +8,4 @@
 - 2026-10-24 01:45 Underwriter "temperature 0" implemented as structured outputs + Zod + effort "low" (the current Messages API rejects `temperature`).
 - 2026-10-24 01:45 CREAO completion = webhook (re-fetch, never trust payload) AND a 5 s poll loop inside the workflow, so it works without a public URL.
 - 2026-10-24 02:05 Added three differentiators (reason verification, approve/counteroffer/deny classification + FCRA statement, dispute-and-replay). Lead with reason verification. Banned claims list in design/differentiators.md.
+- 2026-10-24 02:10 web: product name constant "Docket" (web/src/config.ts); every visual value lives in web/src/tokens.css; useDesk.ts is the only data module, mock-backed until morning wiring (useDesk.convex.ts).
