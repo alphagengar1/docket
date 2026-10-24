@@ -2153,3 +2153,162 @@ table.grid.tl tr:last-child td {
 .card-foot .chips .link {
   margin-left: var(--sp-2);
 }
+
+/* ---------------- Editor-style chrome: rail + sliding panels ---------------- */
+
+:root {
+  --rail-w: 44px;
+  --assistant-w: 340px;
+  --slide: 180ms cubic-bezier(0.2, 0, 0, 1);
+}
+.main {
+  grid-template-columns: var(--rail-w) var(--qcol, 0px) minmax(0, 1fr) var(--icol, 0px) var(--acol, 0px);
+  transition: grid-template-columns var(--slide);
+  overflow: hidden;
+}
+.main:has(.slot-q.open) { --qcol: var(--queue-w); }
+.main:has(.slot-i.open) { --icol: var(--inspector-w); }
+.main:has(.slot-a.open) { --acol: var(--assistant-w); }
+
+.rail {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 2px;
+  padding: var(--sp-2) 0;
+  background: var(--surface);
+  border-right: 1px solid var(--hair);
+}
+.rail-btn {
+  position: relative;
+  height: 46px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 3px;
+  padding: 0;
+  border: none;
+  border-left: 2px solid transparent;
+  border-radius: 0;
+  background: transparent;
+  color: var(--muted);
+}
+.rail-btn:hover:not(:disabled) { color: var(--text); background: var(--hover); }
+.rail-btn[aria-pressed='true'] { color: var(--text); border-left-color: var(--accent); background: var(--selected); }
+.rail-lbl { font-family: var(--mono); font-size: 8px; letter-spacing: 0.06em; text-transform: uppercase; line-height: 1; }
+.rail-badge {
+  position: absolute;
+  top: 4px;
+  right: 4px;
+  min-width: 14px;
+  height: 14px;
+  padding: 0 3px;
+  font: 600 9px/14px var(--mono);
+  text-align: center;
+  background: var(--accent);
+  color: var(--accent-ink, #fff);
+}
+
+/* Horizontal slots: the column animates, the inner box keeps its width so content never reflows. */
+.slot {
+  min-width: 0;
+  overflow: hidden;
+  visibility: hidden;
+  transition: visibility 0s linear 180ms;
+}
+.slot.open { visibility: visible; transition-delay: 0s; }
+.slot-q.open { border-right: 1px solid var(--hair); }
+.slot-i.open, .slot-a.open { border-left: 1px solid var(--hair); }
+.slot-in { height: 100%; min-height: 0; }
+.slot-in > .pane { height: 100%; }
+
+/* Bottom drawer slot */
+.slot-h {
+  height: 0;
+  overflow: hidden;
+  visibility: hidden;
+  transition: height var(--slide), visibility 0s linear 180ms;
+}
+.slot-h.open { height: var(--drawer-h); visibility: visible; transition-delay: 0s, 0s; }
+.slot-h .drawer { height: var(--drawer-h); }
+
+/* Everything closed: a centered, wide work surface */
+.main.bare .work { justify-items: center; }
+.main.bare .board { width: 100%; max-width: 1480px; border-inline: 1px solid var(--hair); }
+.main.bare .pane-body { max-width: 1480px; width: 100%; }
+
+@media (prefers-reduced-motion: reduce) {
+  .main, .slot, .slot-h { transition: none; }
+}
+
+/* Overflow menu */
+.menu-wrap { position: relative; }
+.menu-btn { font-size: 18px; line-height: 1; padding: 0 10px; }
+.menu {
+  position: absolute;
+  right: 0;
+  top: calc(100% + 6px);
+  z-index: 40;
+  min-width: 232px;
+  padding: 4px;
+  background: var(--surface);
+  border: 1px solid var(--hair-2);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.18);
+  display: flex;
+  flex-direction: column;
+}
+.menu button {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: var(--sp-3);
+  height: 30px;
+  padding: 0 var(--sp-2);
+  border: none;
+  background: transparent;
+  text-align: left;
+}
+.menu button:hover { background: var(--hover); }
+
+/* Assistant */
+.ast-scope { font-size: 11px; max-width: 180px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.ast-msgs { padding: var(--sp-3); display: flex; flex-direction: column; gap: var(--sp-3); }
+.ast-empty { color: var(--muted); font-size: var(--fs-small); line-height: 1.5; }
+.ast-msg { display: flex; flex-direction: column; gap: 4px; max-width: 100%; }
+.ast-msg.user { align-self: flex-end; max-width: 88%; }
+.ast-msg.user .ast-text { background: var(--hair-2); padding: 6px 10px; }
+.ast-text { white-space: pre-wrap; overflow-wrap: anywhere; line-height: 1.5; font-size: var(--fs-small); }
+.ast-meta { font-size: 10px; color: var(--muted-2); letter-spacing: 0.04em; }
+.ast-foot { flex: none; border-top: 1px solid var(--hair); padding: var(--sp-2) var(--sp-3) var(--sp-3); display: flex; flex-direction: column; gap: var(--sp-2); }
+.ast-chips { display: flex; flex-direction: column; gap: 4px; }
+.ast-chips button { height: auto; min-height: var(--control-h); padding: 4px 8px; text-align: left; white-space: normal; }
+.ast-form { display: flex; gap: var(--sp-2); }
+.ast-form input {
+  flex: 1;
+  min-width: 0;
+  height: var(--control-h);
+  padding: 0 8px;
+  background: var(--card);
+  color: var(--text);
+  border: 1px solid var(--hair-2);
+  font: inherit;
+}
+.ast-link { margin-left: var(--sp-3); font-size: var(--fs-small); }
+
+/* Tag theme: square corners, ink rules, mono labels */
+:root[data-theme='tag'] .rail { border-right: 1px solid var(--text); }
+:root[data-theme='tag'] .slot-q.open { border-right: 1px solid var(--text); }
+:root[data-theme='tag'] .slot-i.open,
+:root[data-theme='tag'] .slot-a.open { border-left: 1px solid var(--text); }
+:root[data-theme='tag'] .slot-h.open .drawer { border-top: 1px solid var(--text); }
+:root[data-theme='tag'] .rail-btn[aria-pressed='true'] { border-left-color: var(--text); background: var(--bg); }
+:root[data-theme='tag'] .rail-badge { background: var(--hard); color: #141514; }
+:root[data-theme='tag'] .menu { border: 1px solid var(--text); box-shadow: 4px 4px 0 var(--text); }
+:root[data-theme='tag'] .menu button { font-family: var(--mono); font-size: 11px; letter-spacing: 0.04em; text-transform: uppercase; }
+:root[data-theme='tag'] .ast-form input,
+:root[data-theme='tag'] .ast-msg.user .ast-text { border-radius: 0; }
+:root[data-theme='tag'] .ast-msg.user .ast-text { background: var(--text); color: var(--surface); }
+:root[data-theme='tag'] .ast-chips button { font-family: var(--mono); font-size: 11px; }
+:root[data-theme='tag'] .main.bare .board { border-inline: 1px solid var(--text); }
+:root[data-theme='dark'] .menu { box-shadow: 0 8px 24px rgba(0, 0, 0, 0.6); }

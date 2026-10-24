@@ -9,6 +9,7 @@
  */
 
 import type * as agents from "../agents.js";
+import type * as assistant from "../assistant.js";
 import type * as audit from "../audit.js";
 import type * as classify from "../classify.js";
 import type * as crons from "../crons.js";
@@ -35,6 +36,7 @@ import type {
 
 declare const fullApi: ApiFromModules<{
   agents: typeof agents;
+  assistant: typeof assistant;
   audit: typeof audit;
   classify: typeof classify;
   crons: typeof crons;

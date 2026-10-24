@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useDesk } from './hooks/useDesk'
 import { LENDERS, type IntakeInput } from './types'
 import { useNow } from './hooks/useNow'
@@ -17,8 +17,27 @@ import { Inspector, type InspectorTab } from './components/Inspector'
 import { Drawer } from './components/Drawer'
 import { ApplicantView } from './components/ApplicantView'
 import { DecisionSheet } from './components/DecisionSheet'
+import { Rail, type PanelId } from './components/Rail'
+import { Assistant } from './components/Assistant'
+import { useAssistant } from './hooks/useAssistant'
 
 type Theme = 'tag' | 'dark' | 'light'
+
+const PANEL_KEY = 'docket.panels'
+const NO_PANELS: Record<PanelId, boolean> = { queue: false, inspector: false, log: false, assistant: false }
+function loadPanels(): Record<PanelId, boolean> {
+  try {
+    const raw = JSON.parse(localStorage.getItem(PANEL_KEY) ?? '{}') as Partial<Record<PanelId, unknown>>
+    return {
+      queue: raw.queue === true,
+      inspector: raw.inspector === true,
+      log: raw.log === true,
+      assistant: raw.assistant === true,
+    }
+  } catch {
+    return NO_PANELS
+  }
+}
 
 export default function App() {
   const desk = useDesk()
@@ -40,6 +59,51 @@ export default function App() {
     }
   })
   const [timing, setTiming] = useState(false)
+  // Editor-style chrome: every side panel starts hidden and slides in when toggled or needed.
+  const [panels, setPanels] = useState<Record<PanelId, boolean>>(loadPanels)
+  const [summonKey, setSummonKey] = useState(0)
+  const assistantApi = useAssistant()
+  const setPanel = useCallback((id: PanelId, on: boolean) => setPanels((p) => (p[id] === on ? p : { ...p, [id]: on })), [])
+  const togglePanel = useCallback((id: PanelId) => setPanels((p) => ({ ...p, [id]: !p[id] })), [])
+  useEffect(() => {
+    try {
+      localStorage.setItem(PANEL_KEY, JSON.stringify(panels))
+    } catch {
+      /* storage blocked: panel state just does not persist */
+    }
+  }, [panels])
+  const inspect = useCallback((t: InspectorTab) => {
+    setTab(t)
+    setPanel('inspector', true)
+  }, [setPanel])
+  const changeFocus = (v: boolean) => {
+    setFocus(v)
+    if (!v) setPanels((p) => ({ ...p, inspector: true, log: true }))
+  }
+  // Cmd/Ctrl+1..4 toggle queue, inspector, log, assistant.
+  useEffect(() => {
+    const ids: PanelId[] = ['queue', 'inspector', 'log', 'assistant']
+    const onKey = (e: KeyboardEvent) => {
+      if (!(e.metaKey || e.ctrlKey) || e.altKey || e.shiftKey) return
+      const i = ['1', '2', '3', '4'].indexOf(e.key)
+      if (i < 0) return
+      e.preventDefault()
+      togglePanel(ids[i])
+    }
+    window.addEventListener('keydown', onKey)
+    return () => window.removeEventListener('keydown', onKey)
+  }, [togglePanel])
+  // The queue slides open when an applicant newly reaches "awaiting_human" and nothing else is open.
+  const prevStatus = useRef(new Map<string, string>())
+  useEffect(() => {
+    let arrived = false
+    for (const a of desk.applicants) {
+      const before = prevStatus.current.get(a._id)
+      if (before !== undefined && before !== 'awaiting_human' && a.status === 'awaiting_human') arrived = true
+      prevStatus.current.set(a._id, a.status)
+    }
+    if (arrived) setPanels((p) => (Object.values(p).some(Boolean) ? p : { ...p, queue: true }))
+  }, [desk.applicants])
 
   useEffect(() => {
     document.documentElement.dataset.theme = theme
@@ -184,7 +248,8 @@ export default function App() {
     <div className={`app ${focus ? 'focus' : ''}`}>
       <TopBar
         focus={focus}
-        onFocus={setFocus}
+        onFocus={changeFocus}
+        onNew={() => openIntake(null)}
         sandbox={desk.sandbox}
         onReset={desk.resetBoard ? () => { if (window.confirm('Reset the board? This deletes every applicant.')) { setSelectedId(null); setSelectedOfferId(null); void desk.resetBoard?.() } } : undefined}
         connection={desk.connection}
@@ -206,17 +271,22 @@ export default function App() {
         theme={theme}
         onTheme={() => setTheme((t) => (t === 'tag' ? 'dark' : t === 'dark' ? 'light' : 'tag'))}
       />
-      <div className="main">
-        <Queue
-          applicants={desk.applicants}
-          offers={desk.offers}
-          selectedId={intakeOpen ? null : selectedId}
-          onSelect={open}
-          onNew={() => openIntake(null)}
-          onApproveBest={(aid, oid) => void quickApprove(aid, oid)}
-          onDecline={(aid) => void quickDecline(aid)}
-          disabled={desk.replaying}
-        />
+      <div className={`main ${Object.values(panels).some(Boolean) ? '' : 'bare'}`}>
+        <Rail open={panels} onToggle={togglePanel} waiting={ranked.length} />
+        <div className={`slot slot-q ${panels.queue ? 'open' : ''}`}>
+          <div className="slot-in" style={{ width: 'var(--queue-w)' }}>
+            <Queue
+              applicants={desk.applicants}
+              offers={desk.offers}
+              selectedId={intakeOpen ? null : selectedId}
+              onSelect={open}
+              onNew={() => openIntake(null)}
+              onApproveBest={(aid, oid) => void quickApprove(aid, oid)}
+              onDecline={(aid) => void quickDecline(aid)}
+              disabled={desk.replaying}
+            />
+          </div>
+        </div>
 
         <main className="pane work" aria-label="Work surface">
           {intakeOpen ? (
@@ -306,7 +376,7 @@ export default function App() {
                               setSelectedOfferId((cur) => (cur === o._id ? null : o._id))
                               setTab('offer')
                             }}
-                            onTrace={() => setTab('trace')}
+                            onTrace={() => inspect('trace')}
                             compact={focus}
                           />
                         )}
@@ -318,44 +388,59 @@ export default function App() {
                 </div>
             </div>
           )}
-          <Drawer
-            events={desk.auditEvents}
-            applicants={desk.applicants}
-            selectedId={selectedId}
-            evalRuns={desk.evalRuns}
-            evalCases={desk.evalCases.length}
-            onRunEval={desk.runEval}
-            defaultOpen={!focus}
-          />
+          <div className={`slot-h ${panels.log ? 'open' : ''}`}>
+            <Drawer
+              events={desk.auditEvents}
+              applicants={desk.applicants}
+              selectedId={selectedId}
+              evalRuns={desk.evalRuns}
+              evalCases={desk.evalCases.length}
+              onRunEval={desk.runEval}
+              onClose={() => setPanel('log', false)}
+              onAsk={() => {
+                setPanel('assistant', true)
+                setSummonKey((k) => k + 1)
+              }}
+            />
+          </div>
         </main>
 
-        <Inspector
-          applicant={applicant}
-          original={original}
-          bundle={bundle}
-          offers={offers}
-          notice={notice}
-          decision={decision}
-          events={events}
-          checks={desk.reasonChecks}
-          selectedOffer={selectedOffer}
-          tab={tab}
-          onTab={setTab}
-          compact={focus}
-          onApprove={async () => {
-            if (applicant && selectedOffer) await desk.approveOffer(applicant._id, selectedOffer._id)
-          }}
-          onDecline={async (note) => {
-            if (applicant) await desk.declineApplicant(applicant._id, note)
-          }}
-          onDispute={async (index) => {
-            if (!applicant) return
-            const id = await desk.disputeTradeline(applicant._id, index)
-            setSelectedId(id)
-            setSelectedOfferId(null)
-            setTab('offer')
-          }}
-        />
+        <div className={`slot slot-i ${panels.inspector ? 'open' : ''}`}>
+          <div className="slot-in" style={{ width: 'var(--inspector-w)' }}>
+            <Inspector
+              applicant={applicant}
+              original={original}
+              bundle={bundle}
+              offers={offers}
+              notice={notice}
+              decision={decision}
+              events={events}
+              checks={desk.reasonChecks}
+              selectedOffer={selectedOffer}
+              tab={tab}
+              onTab={setTab}
+              compact={focus}
+              onApprove={async () => {
+                if (applicant && selectedOffer) await desk.approveOffer(applicant._id, selectedOffer._id)
+              }}
+              onDecline={async (note) => {
+                if (applicant) await desk.declineApplicant(applicant._id, note)
+              }}
+              onDispute={async (index) => {
+                if (!applicant) return
+                const id = await desk.disputeTradeline(applicant._id, index)
+                setSelectedId(id)
+                setSelectedOfferId(null)
+                setTab('offer')
+              }}
+            />
+          </div>
+        </div>
+        <div className={`slot slot-a ${panels.assistant ? 'open' : ''}`}>
+          <div className="slot-in" style={{ width: 'var(--assistant-w)' }}>
+            <Assistant api={assistantApi} applicant={applicant} summonKey={summonKey} />
+          </div>
+        </div>
       </div>
       {sheetOpen && applicant && (
         <DecisionSheet
@@ -376,7 +461,7 @@ export default function App() {
           onApprove={(offerId) => void quickApprove(applicant._id, offerId)}
           onDecline={() => void quickDecline(applicant._id)}
           onInspect={(t) => {
-            setTab(t)
+            inspect(t)
             setSheetOpen(false)
           }}
         />

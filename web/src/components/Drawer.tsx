@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useState } from 'react'
 import type { Applicant, AuditEvent, EvalRun } from '../types'
 import { clockMs, pct } from '../lib/format'
 import { newestFirst } from '../lib/select'
@@ -13,15 +13,16 @@ interface Props {
   evalRuns: EvalRun[]
   evalCases: number
   onRunEval: () => Promise<void>
-  /** Focus mode starts the drawer collapsed; the tabs still open it. */
-  defaultOpen?: boolean
+  /** Closes the drawer's slot (the rail also toggles it). */
+  onClose: () => void
+  /** Opens the assistant with a summary of the selected applicant. */
+  onAsk: () => void
 }
 
 /** Respan log table for the audit log; Laminar eval list for eval metrics. */
-export function Drawer({ events, applicants, selectedId, evalRuns, evalCases, onRunEval, defaultOpen = true }: Props) {
+export function Drawer({ events, applicants, selectedId, evalRuns, evalCases, onRunEval, onClose, onAsk }: Props) {
   const [tab, setTab] = useState<DrawerTab>('audit')
-  const [open, setOpen] = useState(defaultOpen)
-  useEffect(() => setOpen(defaultOpen), [defaultOpen])
+  const open = true
   const [scope, setScope] = useState<'this' | 'all'>('all')
   const [running, setRunning] = useState(false)
 
@@ -39,19 +40,24 @@ export function Drawer({ events, applicants, selectedId, evalRuns, evalCases, on
   const last = evalRuns.slice().sort((a, b) => b.startedAt - a.startedAt)[0]
 
   return (
-    <section className={`drawer ${open ? '' : 'collapsed'}`} aria-label="Audit log and eval">
+    <section className="drawer" aria-label="Audit log and eval">
       <div className="drawer-bar">
         <div role="tablist" style={{ display: 'flex', gap: 2 }}>
-          <button type="button" role="tab" className="tab" aria-selected={tab === 'audit'} onClick={() => { setTab('audit'); setOpen(true) }}>
+          <button type="button" role="tab" className="tab" aria-selected={tab === 'audit'} onClick={() => { setTab('audit')}}>
             Audit log <span className="chip">{events.length}</span>
           </button>
-          <button type="button" role="tab" className="tab" aria-selected={tab === 'eval'} onClick={() => { setTab('eval'); setOpen(true) }}>
+          <button type="button" role="tab" className="tab" aria-selected={tab === 'eval'} onClick={() => { setTab('eval')}}>
             Eval{' '}
             {last && (
               <span className={`chip ${last.finishedAt == null ? '' : last.agreement >= 0.9 ? 'tone-approve' : 'tone-decline'}`}>{last.finishedAt == null ? '…' : pct(last.agreement)}</span>
             )}
           </button>
         </div>
+        {selectedId && (
+          <button type="button" className="link ast-link" onClick={onAsk}>
+            Ask the assistant to summarize
+          </button>
+        )}
         <span style={{ flex: 1 }} />
         {tab === 'audit' && open && (
           <button type="button" className="ghost tab" onClick={() => setScope((s) => (s === 'all' ? 'this' : 'all'))} disabled={!selectedId}>
@@ -63,8 +69,8 @@ export function Drawer({ events, applicants, selectedId, evalRuns, evalCases, on
             {running ? 'Running…' : 'Run eval'}
           </button>
         )}
-        <button type="button" className="ghost tab" onClick={() => setOpen((o) => !o)} aria-expanded={open}>
-          {open ? 'Collapse' : 'Expand'}
+        <button type="button" className="ghost tab" onClick={onClose}>
+          Close
         </button>
       </div>
       {open && (

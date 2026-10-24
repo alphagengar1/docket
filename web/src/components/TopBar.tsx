@@ -1,3 +1,4 @@
+import { useEffect, useRef, useState } from 'react'
 import { PRODUCT_NAME } from '../config'
 import { Mark } from './Logo'
 import type { Connection } from '../hooks/useDesk'
@@ -9,6 +10,7 @@ interface Props {
   view: 'desk' | 'applicant'
   onView: (v: 'desk' | 'applicant') => void
   onDeck: () => void
+  onNew: () => void
   onReplay: () => void
   onStopReplay: () => void
   theme: 'tag' | 'dark' | 'light'
@@ -20,46 +22,57 @@ interface Props {
   onFocus: (v: boolean) => void
 }
 
-/** Laminar top bar: title, segmented control, outlined 28px controls, metric chips. */
-export function TopBar({ connection, inFlight, replaying, view, onView, onDeck, onReplay, onStopReplay, theme, onTheme, sandbox, onReset, focus, onFocus }: Props) {
+/** Top bar: brand, status, the three things you do constantly. Everything else lives in the "…" menu. */
+export function TopBar({ connection, inFlight, replaying, view, onView, onDeck, onNew, onReplay, onStopReplay, theme, onTheme, sandbox, onReset, focus, onFocus }: Props) {
+  const [menu, setMenu] = useState(false)
+  const box = useRef<HTMLDivElement>(null)
+  useEffect(() => {
+    if (!menu) return
+    const down = (e: MouseEvent) => {
+      if (!box.current?.contains(e.target as Node)) setMenu(false)
+    }
+    const key = (e: KeyboardEvent) => e.key === 'Escape' && setMenu(false)
+    window.addEventListener('mousedown', down)
+    window.addEventListener('keydown', key)
+    return () => {
+      window.removeEventListener('mousedown', down)
+      window.removeEventListener('keydown', key)
+    }
+  }, [menu])
+  const item = (label: string, fn: () => void, hint?: string) => (
+    <button
+      type="button"
+      role="menuitem"
+      onClick={() => {
+        setMenu(false)
+        fn()
+      }}
+    >
+      <span>{label}</span>
+      {hint && <span className="mono muted">{hint}</span>}
+    </button>
+  )
   return (
     <header className="topbar">
       <span className="brand">
         <Mark size={18} className="brand-mark" />
         {PRODUCT_NAME}
       </span>
-      <span className="label">lending desk</span>
-      <span className="sep" />
-      <div className="seg" role="group" aria-label="View">
-        <button type="button" aria-pressed={view === 'desk'} onClick={() => onView('desk')}>
-          Desk
-        </button>
-        <button type="button" aria-pressed={view === 'applicant'} onClick={() => onView('applicant')}>
-          Applicant
-        </button>
-      </div>
-      <div className="seg" role="group" aria-label="Density">
-        <button type="button" aria-pressed={focus} onClick={() => onFocus(true)} title="Only what the decision needs">
-          Focus
-        </button>
-        <button type="button" aria-pressed={!focus} onClick={() => onFocus(false)} title="Every panel, timing and log">
-          Detail
-        </button>
-      </div>
-      <span className="sep" />
       <span className={`pill ${inFlight > 0 ? 'live' : ''}`}>{inFlight > 0 ? `Running ${inFlight}` : 'Idle'}</span>
       {!focus && <span className="chip">{connection}</span>}
+      {replaying && <span className="chip">replay</span>}
       {sandbox && (
         <span className="chip" title="Sandbox data only: CRS test personas" style={{ color: 'var(--warn, #ff8a3d)' }}>
           SANDBOX
         </span>
       )}
       <span className="spacer" />
-      {onReset && (
-        <button type="button" className="ghost" onClick={onReset} title="Delete every applicant on the board">
-          Reset
-        </button>
-      )}
+      <button type="button" onClick={onDeck}>
+        Persona deck
+      </button>
+      <button type="button" onClick={onNew} disabled={replaying}>
+        New applicant
+      </button>
       <button
         type="button"
         className="ghost"
@@ -68,21 +81,20 @@ export function TopBar({ connection, inFlight, replaying, view, onView, onDeck, 
       >
         Open board
       </button>
-      <button type="button" onClick={onDeck}>
-        Persona deck
-      </button>
-      {replaying ? (
-        <button type="button" onClick={onStopReplay}>
-          Exit replay
+      <div className="menu-wrap" ref={box}>
+        <button type="button" className="ghost menu-btn" aria-haspopup="menu" aria-expanded={menu} aria-label="More" onClick={() => setMenu((m) => !m)}>
+          …
         </button>
-      ) : (
-        <button type="button" className="ghost" onClick={onReplay} title="Play the recorded fixture (demo insurance)">
-          Replay
-        </button>
-      )}
-      <button type="button" className="ghost" onClick={onTheme} aria-label={`Theme: ${theme}`} title="Toggle theme">
-        {theme === 'tag' ? 'Tag' : theme === 'dark' ? 'Dark' : 'Light'}
-      </button>
+        {menu && (
+          <div className="menu" role="menu">
+            {item(`Theme: ${theme === 'tag' ? 'Tag' : theme === 'dark' ? 'Dark' : 'Light'}`, onTheme, 'next')}
+            {item(focus ? 'Switch to Detail' : 'Switch to Focus', () => onFocus(!focus), focus ? 'Focus' : 'Detail')}
+            {item(view === 'desk' ? 'Applicant view' : 'Desk view', () => onView(view === 'desk' ? 'applicant' : 'desk'))}
+            {replaying ? item('Exit replay', onStopReplay) : item('Replay recorded run', onReplay)}
+            {onReset && item('Reset board', onReset, 'deletes all')}
+          </div>
+        )}
+      </div>
     </header>
   )
 }
