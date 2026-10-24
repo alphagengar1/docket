@@ -1,6 +1,5 @@
-// 20 synthetic personas in the bundle shape. No real PII; every name and number
-// is invented. personaId is what the judge's card shows. `hint` is the one-line
-// description the UI may show in the persona picker (never the outcome).
+// FALLBACK ONLY: 20 synthetic personas in the bundle shape (used when a persona has no CRS fixture).
+// Names and numbers here are invented. `hint` is the one-line description shown in the picker (never the outcome).
 // `defaultIntake` is what the eval runner types into the intake form.
 import type { BundleData, Tradeline } from "./types";
 
@@ -23,7 +22,7 @@ const clean = { verified: true, flags: [] as string[] };
 const noFraud = { score: 8, signals: [] as string[] };
 const noFlags = { deceased: false, frozen: false, bankruptcy: false, eviction: false };
 
-export const PERSONAS: Persona[] = [
+const SYNTHETIC_PERSONAS: Persona[] = [
   {
     personaId: "P01",
     name: "Avery Lindqvist",
@@ -441,16 +440,74 @@ export const PERSONAS: Persona[] = [
   },
 ];
 
+// ---------------------------------------------------------------------------
+// Serving layer. Default = fixtures captured from the live CRS sandbox
+// (convex/crs.fixtures.ts, full raw in convex/fixtures/crs/Pxx.json). The old
+// synthetic generator above is only a fallback for a persona with no fixture.
+// ---------------------------------------------------------------------------
+import { CRS_FIXTURES } from "./crs.fixtures.ts";
+
+// What the eval types into the intake form for each real CRS persona.
+const INTAKE: Record<string, { purpose: string; amountRequested: number; statedIncome: number }> = {
+  P01: { purpose: "home improvement", amountRequested: 20000, statedIncome: 142000 },
+  P02: { purpose: "home improvement", amountRequested: 30000, statedIncome: 210000 },
+  P03: { purpose: "first car repair", amountRequested: 5000, statedIncome: 38000 },
+  P04: { purpose: "moving costs", amountRequested: 8000, statedIncome: 52000 },
+  P05: { purpose: "debt consolidation", amountRequested: 7000, statedIncome: 41000 },
+  P06: { purpose: "debt consolidation", amountRequested: 9000, statedIncome: 58000 },
+  P07: { purpose: "debt consolidation", amountRequested: 8000, statedIncome: 47000 },
+  P08: { purpose: "debt consolidation", amountRequested: 15000, statedIncome: 96000 },
+  P09: { purpose: "personal", amountRequested: 10000, statedIncome: 64000 },
+  P10: { purpose: "home improvement", amountRequested: 12000, statedIncome: 72000 },
+  P11: { purpose: "moving costs", amountRequested: 6000, statedIncome: 44000 },
+  P12: { purpose: "debt consolidation", amountRequested: 18000, statedIncome: 82000 },
+  P13: { purpose: "personal", amountRequested: 10000, statedIncome: 55000 },
+  P14: { purpose: "personal", amountRequested: 10000, statedIncome: 60000 },
+  P15: { purpose: "home improvement", amountRequested: 15000, statedIncome: 88000 },
+  P16: { purpose: "medical expenses", amountRequested: 12000, statedIncome: 79000 },
+  P17: { purpose: "home improvement", amountRequested: 20000, statedIncome: 105000 },
+  P18: { purpose: "debt consolidation", amountRequested: 9000, statedIncome: 62000 },
+  P19: { purpose: "business equipment", amountRequested: 25000, statedIncome: 130000 },
+  P20: { purpose: "medical expenses", amountRequested: 5000, statedIncome: 34000 },
+};
+
+/** The old synthetic generator (kept for rules.test.ts and as a per-persona fallback). */
+export const PERSONAS = SYNTHETIC_PERSONAS;
+
+export function findSynthetic(personaId: string): Persona | undefined {
+  return SYNTHETIC_PERSONAS.find((p) => p.personaId === personaId);
+}
+
 export function findPersona(personaId: string): Persona | undefined {
-  return PERSONAS.find((p) => p.personaId === personaId);
+  const fx = CRS_FIXTURES[personaId];
+  const syn = findSynthetic(personaId);
+  if (!fx) return syn;
+  return {
+    personaId,
+    name: fx.displayName,
+    hint: fx.about, // never the label: the deck must not reveal the outcome
+    defaultIntake: INTAKE[personaId] ?? syn?.defaultIntake ?? { purpose: "personal", amountRequested: 10000, statedIncome: 60000 },
+    bundle: fx.bundle,
+  };
 }
 
 export function listPersonaSummaries() {
-  return PERSONAS.map((p) => ({ personaId: p.personaId, name: p.name, hint: p.hint }));
+  const ids = [...new Set([...Object.keys(CRS_FIXTURES), ...SYNTHETIC_PERSONAS.map((p) => p.personaId)])].sort();
+  return ids.map((id) => {
+    const p = findPersona(id)!;
+    return { personaId: p.personaId, name: p.name, hint: p.hint };
+  });
 }
 
 export function mockBundle(personaId: string): BundleData & { raw: unknown } {
-  const p = findPersona(personaId);
+  const fx = CRS_FIXTURES[personaId];
+  if (fx) {
+    return {
+      ...JSON.parse(JSON.stringify(fx.bundle)),
+      raw: { provider: "fixture", personaId, bureaus: fx.bureaus, notes: fx.notes, extras: fx.extras, fixture: `convex/fixtures/crs/${personaId}.json` },
+    };
+  }
+  const p = findSynthetic(personaId);
   if (!p) throw new Error(`unknown personaId ${personaId}`);
-  return { ...p.bundle, raw: { provider: "mock", personaId, name: p.name } };
+  return { ...p.bundle, raw: { provider: "mock-synthetic", personaId, name: p.name } };
 }

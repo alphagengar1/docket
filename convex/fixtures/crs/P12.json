@@ -1,0 +1,513 @@
+{
+ "personaId": "P12",
+ "displayName": "Victor Anand",
+ "label": "DECLINE",
+ "about": "Identity mismatch",
+ "source": "crs",
+ "capturedAt": "2026-10-24",
+ "calls": 9,
+ "sandboxMs": 2073,
+ "bundle": {
+  "credit": {
+   "fico9": null,
+   "vantage4": null,
+   "tradelines": [],
+   "inquiries6mo": 0,
+   "utilization": null
+  },
+  "identity": {
+   "verified": false,
+   "flags": [
+    "2201 INPUT SSN NOT ASSOCIATED WITH INPUT NAME",
+    "2202 INPUT DATE OF BIRTH DOES NOT MATCH FILE",
+    "2101 INPUT CURRENT ADDRESS DOES NOT MATCH FILE CURRENT ADDRESS",
+    "KMSG07 ADDRESS RELATED ALERT"
+   ]
+  },
+  "fraud": {
+   "score": 85,
+   "signals": [
+    "email_tumbling_risk",
+    "email_velocity_high(6)",
+    "email_recently_seen(longevity 3)",
+    "phone_owner_name_address_mismatch",
+    "ip_far_from_address(>1000 miles)"
+   ]
+  },
+  "flags": {
+   "deceased": false,
+   "frozen": false,
+   "bankruptcy": false,
+   "eviction": false
+  }
+ },
+ "bureaus": {
+  "tu": {
+   "status": "no_file",
+   "score": null,
+   "model": null,
+   "note": "NoFileReturnedNoHit"
+  },
+  "efx": {
+   "status": "no_file",
+   "score": null,
+   "model": null,
+   "note": "NoFileReturnedNoHit"
+  },
+  "exp": {
+   "status": "no_file",
+   "score": null,
+   "model": null,
+   "note": "NoFileReturnedNoHit"
+  }
+ },
+ "notes": [],
+ "extras": {
+  "publicRecords": {
+   "bankruptcies": 0,
+   "liens": 0,
+   "judgments": 0,
+   "bankruptcyDetail": [],
+   "lienDetail": [],
+   "judgmentDetail": []
+  },
+  "fraudAlertOnFile": false
+ },
+ "raw": {
+  "tu": {
+   "requestData": {
+    "firstName": "VICTOR",
+    "lastName": "ANAND",
+    "ssn": "666701012",
+    "addresses": [
+     {
+      "borrowerResidencyType": "Current",
+      "addressLine1": "55 WATER ST FL 20",
+      "city": "NEW YORK",
+      "state": "NY",
+      "postalCode": "10041"
+     }
+    ]
+   },
+   "repositoryIncluded": {
+    "transunion": true,
+    "experian": false,
+    "equifax": false
+   },
+   "responseDetail": {
+    "dateRequested": "2026-10-24T09:12:08.112483Z",
+    "requestingParty": {
+     "name": "CALHACKS13"
+    },
+    "creditBureauContact": {
+     "name": "CREDIT REPORTING SERVICES, INC",
+     "address": {
+      "addressLine1": "1024 IRON POINT ROAD",
+      "city": "FOLSOM",
+      "state": "CA",
+      "postalCode": "95630"
+     }
+    }
+   },
+   "responseAlertMessages": [
+    {
+     "borrowerSourceType": "Borrower",
+     "sourceType": "TransUnion",
+     "responseAlertMessageCategoryType": "SSNVerification",
+     "responseAlertMessageText": "SSN Alert: NO SSN ON FILE"
+    }
+   ],
+   "creditFiles": [
+    {
+     "creditFileDetail": {
+      "borrowerSourceType": "Borrower",
+      "creditFileInfileDate": "2024-11-19",
+      "creditFileResultStatusType": "NoFileReturnedNoHit",
+      "sourceType": "TransUnion"
+     }
+    }
+   ],
+   "summaries": {
+    "tradeSummary": {},
+    "derogatorySummary": {}
+   }
+  },
+  "efx": {
+   "requestData": {
+    "firstName": "VICTOR",
+    "lastName": "ANAND",
+    "ssn": "666701012",
+    "addresses": [
+     {
+      "borrowerResidencyType": "Current",
+      "addressLine1": "55 WATER ST FL 20",
+      "city": "NEW YORK",
+      "state": "NY",
+      "postalCode": "10041"
+     }
+    ]
+   },
+   "repositoryIncluded": {
+    "transunion": false,
+    "experian": false,
+    "equifax": true
+   },
+   "responseDetail": {
+    "dateRequested": "2026-10-24T09:12:09.324476Z",
+    "requestingParty": {
+     "name": "CALHACKS13"
+    },
+    "creditBureauContact": {
+     "name": "CREDIT REPORTING SERVICES, INC",
+     "address": {
+      "addressLine1": "1024 IRON POINT ROAD",
+      "city": "FOLSOM",
+      "state": "CA",
+      "postalCode": "95630"
+     }
+    }
+   },
+   "responseAlertMessages": [
+    {
+     "borrowerSourceType": "Borrower",
+     "sourceType": "Equifax",
+     "responseAlertMessageCategoryType": "DemographicsVerification",
+     "responseAlertMessageServiceType": "EquifaxIdentityScanAlert",
+     "responseAlertMessageCode": "S",
+     "responseAlertMessageText": "ID Scan: S - IDENTITY SCAN DID NOT DETECT ANY ALERTS"
+    }
+   ],
+   "creditFiles": [
+    {
+     "creditFileDetail": {
+      "borrowerSourceType": "Borrower",
+      "creditFileResultStatusType": "NoFileReturnedNoHit",
+      "sourceType": "Equifax"
+     }
+    }
+   ],
+   "summaries": {
+    "tradeSummary": {},
+    "derogatorySummary": {}
+   }
+  },
+  "exp": {
+   "requestData": {
+    "firstName": "VICTOR",
+    "lastName": "ANAND",
+    "ssn": "666701012",
+    "addresses": [
+     {
+      "borrowerResidencyType": "Current",
+      "addressLine1": "55 WATER ST FL 20",
+      "city": "NEW YORK",
+      "state": "NY",
+      "postalCode": "10041"
+     }
+    ]
+   },
+   "repositoryIncluded": {
+    "transunion": false,
+    "experian": true,
+    "equifax": false
+   },
+   "responseDetail": {
+    "dateRequested": "2026-10-24T09:12:10.574424Z",
+    "requestingParty": {
+     "name": "CALHACKS13"
+    },
+    "creditBureauContact": {
+     "name": "CREDIT REPORTING SERVICES, INC",
+     "address": {
+      "addressLine1": "1024 IRON POINT ROAD",
+      "city": "FOLSOM",
+      "state": "CA",
+      "postalCode": "95630"
+     }
+    }
+   },
+   "responseAlertMessages": [],
+   "creditFiles": [
+    {
+     "creditFileDetail": {
+      "borrowerSourceType": "Borrower",
+      "creditFileInfileDate": "2026-10-18",
+      "creditFileResultStatusType": "NoFileReturnedNoHit",
+      "sourceType": "Experian"
+     }
+    }
+   ],
+   "summaries": {
+    "tradeSummary": {},
+    "derogatorySummary": {}
+   }
+  },
+  "identity": {
+   "fileNumber": "01",
+   "fileSummary": {
+    "fileHitIndicator": "SUBJECT_HIT",
+    "creditDataStatus": {
+     "suppressed": false,
+     "doNotPromote": {
+      "indicator": false
+     },
+     "freeze": {
+      "indicator": false
+     },
+     "minor": false,
+     "disputed": false
+    }
+   },
+   "indicative": {
+    "names": [
+     {
+      "person": {
+       "first": "VICTOR",
+       "last": "ANAND"
+      },
+      "source": "INPUT"
+     }
+    ],
+    "addresses": [
+     {
+      "status": "CURRENT",
+      "street": {
+       "unparseds": [],
+       "number": "55",
+       "name": "WATER ST FL 20"
+      },
+      "location": {
+       "city": "NEW YORK",
+       "state": "NY",
+       "zipCode": "10041"
+      },
+      "source": "INPUT"
+     }
+    ],
+    "socialSecurities": [
+     {
+      "number": "666701012",
+      "identificationIssuance": {
+       "type": "SSN",
+       "status": "ISSUED_AFTER_21",
+       "yearRange": {
+        "startYear": "2001",
+        "endYear": "2001"
+       },
+       "state": "KY",
+       "ageObtained": {
+        "rangeStart": "+35",
+        "rangeEnd": "+36"
+       }
+      },
+      "source": "INPUT",
+      "masked": false
+     },
+     {
+      "number": "666701012",
+      "source": "FILE",
+      "masked": false
+     }
+    ],
+    "dateOfBirths": [
+     {
+      "value": "1968-08-08T00:00:00.000+00:00",
+      "source": "INPUT"
+     }
+    ],
+    "ages": [],
+    "phones": [
+     {
+      "number": {
+       "qualifier": "PERSONAL"
+      },
+      "source": "INPUT"
+     }
+    ],
+    "employments": [],
+    "creditCards": [],
+    "genders": [],
+    "vehicles": []
+   },
+   "originalInputs": [],
+   "custom": {
+    "idmanagerVerAnalysisV2": {
+     "verificationSummary": {
+      "riskIndicator": "MEDIUM",
+      "bestMatch": "FILE",
+      "verificationPoint": 30,
+      "lowerThreshold": 5,
+      "upperThreshold": 49,
+      "keyMessages": {
+       "keyMessages": [
+        {
+         "code": "KMSG07",
+         "text": "ADDRESS RELATED ALERT"
+        }
+       ]
+      }
+     },
+     "fraudAnalysis": {
+      "region": {
+       "zipVsCity": "INVALID",
+       "zipVsState": "VALID",
+       "phoneVsState": "NOT_AVAILABLE",
+       "phoneVsZIP": "NOT_AVAILABLE",
+       "phoneVsZIPDistance": "0000.000",
+       "source": "INPUT"
+      },
+      "employment": {},
+      "distance": {
+       "minimum": {
+        "noAnalysisReason": "NOT_AVAILABLE"
+       },
+       "maximum": {
+        "noAnalysisReason": "NOT_AVAILABLE"
+       },
+       "source": "INPUT"
+      }
+     },
+     "verificationAnalysises": [
+      {
+       "verificationStatus": "SUBJECT_FOUND",
+       "firstNameVerification": "MATCH",
+       "middleNameVerification": "INPUT_NOT_AVAILABLE",
+       "lastNameVerification": "MATCH",
+       "nameSuffixVerification": "MATCH_NOT_PERFORMED",
+       "currentAddressVerification": "NO_MATCH",
+       "previousAddressVerification": "INPUT_NOT_AVAILABLE",
+       "phoneNumberVerification": "INPUT_NOT_AVAILABLE",
+       "ssnVerification": "MATCH",
+       "dateOfBirthVerification": "NOT_FOUND",
+       "source": "FILE"
+      },
+      {
+       "verificationStatus": "SUBJECT_NOT_FOUND",
+       "firstNameVerification": "NOT_FOUND",
+       "middleNameVerification": "MATCH_NOT_PERFORMED",
+       "lastNameVerification": "NOT_FOUND",
+       "nameSuffixVerification": "MATCH_NOT_PERFORMED",
+       "currentAddressVerification": "NOT_FOUND",
+       "previousAddressVerification": "MATCH_NOT_PERFORMED",
+       "phoneNumberVerification": "INPUT_NOT_AVAILABLE",
+       "ssnVerification": "NOT_FOUND",
+       "dateOfBirthVerification": "NOT_FOUND",
+       "source": "VENDOR_FILE"
+      }
+     ]
+    }
+   },
+   "addOnProducts": [
+    {
+     "code": "FRDMS",
+     "status": "DELIVERED",
+     "idMismatchAlerts": [],
+     "addressAnalysises": [],
+     "idManagerVerification": {
+      "messages": [
+       {
+        "code": "2201",
+        "text": "INPUT SSN NOT ASSOCIATED WITH INPUT NAME",
+        "source": "INPUT"
+       },
+       {
+        "code": "2202",
+        "text": "INPUT DATE OF BIRTH DOES NOT MATCH FILE",
+        "source": "INPUT"
+       },
+       {
+        "code": "2101",
+        "text": "INPUT CURRENT ADDRESS DOES NOT MATCH FILE CURRENT ADDRESS",
+        "source": "INPUT"
+       }
+      ],
+      "deceases": [],
+      "identificationIssuances": [],
+      "returnMessage": "CODES_AND_TEXT",
+      "searchStatus": "HIT"
+     },
+     "creditorContacts": []
+    }
+   ]
+  },
+  "fraud": {
+   "eam": {
+    "date_first_seen": "2024-10-01",
+    "longevity": 3,
+    "velocity": 6,
+    "popularity": 2
+   },
+   "dam": {
+    "date_first_seen": "1995-08-13",
+    "longevity": 10,
+    "velocity": 1,
+    "popularity": 10
+   },
+   "risk": {
+    "score": 85,
+    "tumbling_risk": 1,
+    "query_id": "calhacks-P12-0001",
+    "domain": {
+     "domain_risk_score": 0
+    },
+    "ip": {
+     "routing_type": "fixed",
+     "organization": "comcast cable communications llc",
+     "proxy_type": "",
+     "hosting_facility": false,
+     "latitude": "51.51",
+     "longitude": "-0.13"
+    },
+    "postal": {
+     "first_name_match": "match",
+     "last_name_match": "match",
+     "street_match": "match",
+     "city_match": "match",
+     "zip_match": "match",
+     "address_type": "Street",
+     "deliverability": "deliverable",
+     "ip_postal_distance": "> 1000 miles"
+    },
+    "phone": {
+     "line_type": "mobile",
+     "carrier": "VERIZON WIRELESS",
+     "status": "valid",
+     "prepaid": false,
+     "owner": {
+      "first_name_match": "no_match",
+      "last_name_match": "no_match",
+      "street_match": "no_match",
+      "city_match": "no_match",
+      "zip_match": "no_match",
+      "type": "person"
+     }
+    }
+   },
+   "email_validation": {
+    "address": "v.anand.1968@example.com",
+    "status": "valid",
+    "status_code": 50,
+    "domain_type": "freeisp"
+   }
+  },
+  "blj": {
+   "DetailedBLJReport": {
+    "JudgmentsFound": 0,
+    "Filters": {
+     "ExcludeBankruptcies": false,
+     "FilterVerbiage": "Judgment satisfied = 7 years; Judgment unsatisfied = 7 years; Lien released = 7 years; Lien unreleased = 10 years; Bankruptcy chapter 7 or 11 dismissed or discharged = 10 years; Bankruptcy chapter 7 or 11 not dismissed or discharged = 10 years; Bankruptcy chapter 13 dismissed or discharged = 7 years; Bankruptcy chapter 13 not dismissed or discharged = 10 years",
+     "SkipNameValidation": false
+    },
+    "Messages": {
+     "Message": {
+      "Text": "No Errors",
+      "Code": 0
+     }
+    },
+    "Results": "",
+    "BankruptciesFound": 0,
+    "LiensFound": 0
+   }
+  }
+ }
+}

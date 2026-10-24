@@ -1,0 +1,1133 @@
+{
+ "personaId": "P03",
+ "displayName": "Jasmine Reyes",
+ "label": "REVIEW",
+ "about": "Thin file / Gen Z",
+ "source": "crs",
+ "capturedAt": "2026-10-24",
+ "calls": 9,
+ "sandboxMs": 2319,
+ "bundle": {
+  "credit": {
+   "fico9": 660,
+   "vantage4": 660,
+   "tradelines": [
+    {
+     "type": "credit_card",
+     "balance": 465,
+     "status": "open",
+     "openedAt": "2026-02-10"
+    },
+    {
+     "type": "personal_loan",
+     "balance": 155,
+     "status": "open",
+     "openedAt": "2026-02-10"
+    }
+   ],
+   "inquiries6mo": 1,
+   "utilization": 0.31
+  },
+  "identity": {
+   "verified": true,
+   "flags": [
+    "KMSG07 ADDRESS RELATED ALERT"
+   ]
+  },
+  "fraud": {
+   "score": 14,
+   "signals": []
+  },
+  "flags": {
+   "deceased": false,
+   "frozen": false,
+   "bankruptcy": false,
+   "eviction": false
+  }
+ },
+ "bureaus": {
+  "tu": {
+   "status": "ok",
+   "score": 660,
+   "model": "TransUnionVantageScore4.0"
+  },
+  "efx": {
+   "status": "ok",
+   "score": 660,
+   "model": "Vantage 4.0"
+  },
+  "exp": {
+   "status": "ok",
+   "score": 660,
+   "model": "VantageScore 4.0"
+  }
+ },
+ "notes": [
+  "credit.fico9 is a proxy: the tu-prequal-fico9 product returned TransUnionVantageScore4.0 = 660 (sandbox does not issue FICO 9 values)."
+ ],
+ "extras": {
+  "publicRecords": {
+   "bankruptcies": 0,
+   "liens": 0,
+   "judgments": 0,
+   "bankruptcyDetail": [],
+   "lienDetail": [],
+   "judgmentDetail": []
+  },
+  "fraudAlertOnFile": false
+ },
+ "raw": {
+  "tu": {
+   "requestData": {
+    "firstName": "JASMINE",
+    "lastName": "REYES",
+    "ssn": "666701003",
+    "addresses": [
+     {
+      "borrowerResidencyType": "Current",
+      "addressLine1": "2210 UNIVERSITY AVE APT 4B",
+      "city": "BERKELEY",
+      "state": "CA",
+      "postalCode": "94704"
+     }
+    ]
+   },
+   "repositoryIncluded": {
+    "transunion": true,
+    "experian": false,
+    "equifax": false
+   },
+   "responseDetail": {
+    "dateRequested": "2026-10-24T09:11:07.978087Z",
+    "requestingParty": {
+     "name": "CALHACKS13"
+    },
+    "creditBureauContact": {
+     "name": "CREDIT REPORTING SERVICES, INC",
+     "address": {
+      "addressLine1": "1024 IRON POINT ROAD",
+      "city": "FOLSOM",
+      "state": "CA",
+      "postalCode": "95630"
+     }
+    }
+   },
+   "responseAlertMessages": [],
+   "creditFiles": [
+    {
+     "creditFileDetail": {
+      "borrowerSourceType": "Borrower",
+      "creditFileInfileDate": "2024-10-01",
+      "creditFileResultStatusType": "FileReturned",
+      "sourceType": "TransUnion"
+     },
+     "aliases": [
+      {
+       "firstName": "JASMINE",
+       "lastName": "REYES"
+      }
+     ],
+     "employments": [
+      {
+       "employerName": "JOE",
+       "employmentReportedDate": "2024-10-10"
+      },
+      {
+       "employerName": "AGF",
+       "employmentReportedDate": "2024-10-10"
+      }
+     ]
+    }
+   ],
+   "inquiries": [
+    {
+     "creditorName": "RICHTEST",
+     "accountOwnershipType": "Individual",
+     "borrowerSourceType": "Borrower",
+     "inquiryDate": "2026-02-10",
+     "businessType": "RealEstateAndPublicAccommodation",
+     "subscriberCode": "R 00001962",
+     "sourceType": "TransUnion"
+    },
+    {
+     "creditorName": "RICHTEST",
+     "accountOwnershipType": "Individual",
+     "borrowerSourceType": "Borrower",
+     "inquiryDate": "2026-09-01",
+     "businessType": "RealEstateAndPublicAccommodation",
+     "subscriberCode": "R 00001962",
+     "sourceType": "TransUnion"
+    }
+   ],
+   "tradelines": [
+    {
+     "accountIdentifier": "CALHACKS-CARD-1",
+     "accountOpenedDate": "2026-02-10",
+     "accountOwnershipType": "Individual",
+     "accountReportedDate": "2026-09-01",
+     "accountStatusType": "Open",
+     "accountType": "Revolving",
+     "borrowerSourceType": "Borrower",
+     "creditLimitAmount": "1500",
+     "derogatoryDataIndicator": false,
+     "highBalanceAmount": "510",
+     "lastActivityDate": "2026-08-20",
+     "monthlyPaymentAmount": "75",
+     "monthsReviewedCount": "8",
+     "creditorName": "CAMPUS REWARDS CARD",
+     "subscriberCode": "B 01597029",
+     "pastDueAmount": "0",
+     "termsDescription": "48 months at $75 per month",
+     "termsMonthsCount": "48",
+     "currentBalanceAmount": "465",
+     "businessType": "Banking",
+     "loanType": "CreditCard",
+     "currentRatingCode": "C",
+     "currentRatingType": "AsAgreed",
+     "paymentPatternData": "CCCCCCCCCCCCC",
+     "paymentPatternStartDate": "2026-09-01",
+     "sourceType": "TransUnion"
+    },
+    {
+     "accountIdentifier": "CALHACKS-PHONE-1",
+     "accountOpenedDate": "2026-02-10",
+     "accountOwnershipType": "Individual",
+     "accountReportedDate": "2026-09-01",
+     "accountStatusType": "Open",
+     "accountType": "Installment",
+     "borrowerSourceType": "Borrower",
+     "derogatoryDataIndicator": false,
+     "highBalanceAmount": "960",
+     "lastActivityDate": "2026-08-20",
+     "monthlyPaymentAmount": "40",
+     "monthsReviewedCount": "8",
+     "creditorName": "VERIZON WIRELESS DEVICE PAYMENT",
+     "subscriberCode": "B 01597029",
+     "pastDueAmount": "0",
+     "termsDescription": "24 months at $40 per month",
+     "termsMonthsCount": "24",
+     "currentBalanceAmount": "155",
+     "businessType": "Banking",
+     "loanType": "InstallmentSalesContract",
+     "currentRatingCode": "C",
+     "currentRatingType": "AsAgreed",
+     "paymentPatternData": "CCCCCCCCCCCCC",
+     "paymentPatternStartDate": "2026-09-01",
+     "sourceType": "TransUnion"
+    }
+   ],
+   "publicRecords": [],
+   "scores": [
+    {
+     "borrowerSourceType": "Borrower",
+     "modelName": "TransUnionVantageScore4.0",
+     "modelNameType": "001NN",
+     "sourceType": "TransUnion",
+     "factaInquiriesIndicator": false,
+     "scoreValue": "660",
+     "scoreRankPercentileValue": "28",
+     "scoreMaximumValue": "850",
+     "scoreMinimumValue": "300",
+     "scoreFactors": [
+      {
+       "scoreFactorCode": "27",
+       "scoreFactorText": "Delinquent or derogatory status on revolving accounts is too recent"
+      },
+      {
+       "scoreFactorCode": "16",
+       "scoreFactorText": "Total of credit limits and loan amounts is too low"
+      },
+      {
+       "scoreFactorCode": "15",
+       "scoreFactorText": "Lack of recently reported accounts"
+      },
+      {
+       "scoreFactorCode": "8",
+       "scoreFactorText": ""
+      }
+     ]
+    }
+   ],
+   "summaries": {
+    "tradeSummary": {
+     "mortgageTradesCount": "0",
+     "mortgageBalanceTotal": "0",
+     "mortgageHighCreditTotal": "0",
+     "mortgagePaymentsTotal": "0",
+     "mortgagePastDueTotal": "0",
+     "autoTradesCount": "0",
+     "autoBalanceTotal": "0",
+     "autoHighCreditTotal": "0",
+     "autoPaymentsTotal": "0",
+     "autoPastDueTotal": "0",
+     "educationTradesCount": "0",
+     "educationBalanceTotal": "0",
+     "educationHighCreditTotal": "0",
+     "educationPaymentsTotal": "0",
+     "educationPastDueTotal": "0",
+     "openTradesCount": "0",
+     "openBalanceTotal": "0",
+     "openHighCreditTotal": "0",
+     "openPaymentsTotal": "0",
+     "openPastDueTotal": "0",
+     "revolvingTradesCount": "1",
+     "revolvingBalanceTotal": "465",
+     "revolvingHighCreditTotal": "1500",
+     "revolvingPaymentsTotal": "75",
+     "revolvingPastDueTotal": "0",
+     "unknownTradesCount": "0",
+     "unknownBalanceTotal": "0",
+     "unknownHighCreditTotal": "0",
+     "unknownPaymentsTotal": "0",
+     "unknownPastDueTotal": "0",
+     "installmentOtherTradesCount": "1",
+     "installmentOtherBalanceTotal": "155",
+     "installmentOtherHighCreditTotal": "960",
+     "installmentOtherPaymentsTotal": "40",
+     "installmentOtherPastDueTotal": "0",
+     "applicableMortgagePaymentsTotal": "0",
+     "applicableAutoPaymentsTotal": "0",
+     "applicableEducationPaymentsTotal": "0",
+     "applicableOpenPaymentsTotal": "0",
+     "applicableRevolvingPaymentsTotal": "75",
+     "applicableUnknownPaymentsTotal": "0",
+     "applicableInstallmentPaymentsTotal": "40",
+     "applicableInstallmentOtherPaymentsTotal": "40",
+     "applicableMortgageHighCreditTotal": "0",
+     "applicableAutoHighCreditTotal": "0",
+     "applicableEducationHighCreditTotal": "0",
+     "applicableOpenHighCreditTotal": "0",
+     "applicableRevolvingHighCreditTotal": "1500",
+     "applicableUnknownHighCreditTotal": "0",
+     "applicableInstallmentHighCreditTotal": "960",
+     "applicableInstallmentOtherHighCreditTotal": "960",
+     "tradesCount": "2",
+     "balanceTotal": "620",
+     "applicablePaymentsTotal": "115",
+     "applicableHighCreditTotal": "2460",
+     "highCreditTotal": "2460",
+     "paymentsTotal": "115",
+     "pastDueTotal": "0",
+     "securedDebtBalanceTotal": "0",
+     "unsecuredDebtBalanceTotal": "620",
+     "oldestTradelineDate": "2026-02-10",
+     "oldestTradelineCreditorName": "CAMPUS REWARDS CARD",
+     "revolvingCreditUtilization": "31",
+     "totalDebtHighCreditRatio": "25"
+    },
+    "derogatorySummary": {
+     "chargeOffsCount": "0",
+     "collectionsCount": "0",
+     "bankruptciesCount": "0",
+     "publicRecordsCount": "0",
+     "satisfactoryTradelineCount": "2",
+     "_30DayLates": "0",
+     "_60DayLates": "0",
+     "_90DayLates": "0",
+     "inquiriesCount": "2",
+     "mostRecentLateDate": "",
+     "disputesCount": "0",
+     "currentAdverseTradelineCount": "0",
+     "priorAdverseTradelineCount": "0",
+     "otherCount": "0",
+     "securedDebtBalanceTotal": "0",
+     "unsecuredDebtBalanceTotal": "620"
+    }
+   }
+  },
+  "efx": {
+   "requestData": {
+    "firstName": "JASMINE",
+    "lastName": "REYES",
+    "ssn": "666701003",
+    "addresses": [
+     {
+      "borrowerResidencyType": "Current",
+      "addressLine1": "2210 UNIVERSITY AVE APT 4B",
+      "city": "BERKELEY",
+      "state": "CA",
+      "postalCode": "94704"
+     }
+    ]
+   },
+   "repositoryIncluded": {
+    "transunion": false,
+    "experian": false,
+    "equifax": true
+   },
+   "responseDetail": {
+    "dateRequested": "2026-10-24T09:11:09.469555Z",
+    "requestingParty": {
+     "name": "CALHACKS13"
+    },
+    "creditBureauContact": {
+     "name": "CREDIT REPORTING SERVICES, INC",
+     "address": {
+      "addressLine1": "1024 IRON POINT ROAD",
+      "city": "FOLSOM",
+      "state": "CA",
+      "postalCode": "95630"
+     }
+    }
+   },
+   "responseAlertMessages": [
+    {
+     "borrowerSourceType": "Borrower",
+     "sourceType": "Equifax",
+     "responseAlertMessageCategoryType": "FACTARiskScoreValue",
+     "responseAlertMessageText": "FACTA: Risk Score Value - The borrower's Risk Score Value was negatively affected by the presence of credit inquiry records on their credit file"
+    }
+   ],
+   "creditFiles": [
+    {
+     "creditFileDetail": {
+      "borrowerSourceType": "Borrower",
+      "creditFileInfileDate": "2013-06-12",
+      "creditFileResultStatusType": "FileReturned",
+      "sourceType": "Equifax"
+     },
+     "aliases": [
+      {
+       "firstName": "JASMINE",
+       "lastName": "REYES"
+      }
+     ],
+     "ssns": [],
+     "employments": [
+      {
+       "employerName": "ASULEBCFL",
+       "employmentStatusType": "Current",
+       "employmentPositionDescription": "FHGXVJDQFPXBDFYL"
+      },
+      {
+       "employerName": "GLZIZKGCINQFZB",
+       "employmentStatusType": "Previous"
+      }
+     ]
+    }
+   ],
+   "inquiries": [
+    {
+     "creditorName": "EQUIFAX TEST DATA",
+     "borrowerSourceType": "Borrower",
+     "inquiryDate": "2026-02-10",
+     "businessType": "Finance",
+     "subscriberCode": "999FA05015",
+     "sourceType": "Equifax"
+    },
+    {
+     "creditorName": "EQUIFAX TEST DATA",
+     "borrowerSourceType": "Borrower",
+     "inquiryDate": "2026-09-01",
+     "businessType": "Finance",
+     "subscriberCode": "999FA05015",
+     "sourceType": "Equifax"
+    }
+   ],
+   "tradelines": [
+    {
+     "accountIdentifier": "CALHACKS-CARD-1",
+     "accountOpenedDate": "2026-02-10",
+     "accountOwnershipType": "Individual",
+     "accountReportedDate": "2026-09-01",
+     "accountStatusType": "Open",
+     "accountType": "Revolving",
+     "borrowerSourceType": "Borrower",
+     "creditLimitAmount": "1500",
+     "derogatoryDataIndicator": false,
+     "highBalanceAmount": "510",
+     "lastActivityDate": "2026-08-20",
+     "monthsReviewedCount": "8",
+     "creditorName": "CAMPUS REWARDS CARD",
+     "subscriberCode": "999BB44497",
+     "pastDueAmount": "0",
+     "currentBalanceAmount": "465",
+     "businessType": "Finance",
+     "loanType": "CreditCard",
+     "currentRatingCode": "C",
+     "currentRatingType": "AsAgreed",
+     "paymentPatternData": "CCCCCCCCCCCCC",
+     "paymentPatternStartDate": "2026-09-01",
+     "sourceType": "Equifax"
+    },
+    {
+     "accountIdentifier": "CALHACKS-PHONE-1",
+     "accountOpenedDate": "2026-02-10",
+     "accountOwnershipType": "Individual",
+     "accountReportedDate": "2026-09-01",
+     "accountStatusType": "Open",
+     "accountType": "Installment",
+     "borrowerSourceType": "Borrower",
+     "derogatoryDataIndicator": false,
+     "highBalanceAmount": "960",
+     "lastActivityDate": "2026-08-20",
+     "monthlyPaymentAmount": "40",
+     "monthsReviewedCount": "8",
+     "creditorName": "VERIZON WIRELESS DEVICE PAYMENT",
+     "subscriberCode": "999BB44497",
+     "pastDueAmount": "0",
+     "termsDescription": "24 months at $40 per month",
+     "termsMonthsCount": "24",
+     "currentBalanceAmount": "155",
+     "businessType": "Finance",
+     "loanType": "InstallmentSalesContract",
+     "currentRatingCode": "C",
+     "currentRatingType": "AsAgreed",
+     "paymentPatternData": "CCCCCCCCCCCCC",
+     "paymentPatternStartDate": "2026-09-01",
+     "sourceType": "Equifax"
+    }
+   ],
+   "publicRecords": [],
+   "scores": [
+    {
+     "borrowerSourceType": "Borrower",
+     "modelName": "Vantage 4.0",
+     "modelNameType": "05402",
+     "sourceType": "Equifax",
+     "factaInquiriesIndicator": true,
+     "scoreValue": "660",
+     "scoreRankPercentileValue": "28",
+     "scoreMaximumValue": "850",
+     "scoreMinimumValue": "300",
+     "scoreFactors": [
+      {
+       "scoreFactorCode": "68",
+       "scoreFactorText": "LACK OF REAL ESTATE SECURED LOAN INFORMATION"
+      },
+      {
+       "scoreFactorCode": "38",
+       "scoreFactorText": "LACK OF BANKCARD ACCOUNT INFORMATION"
+      },
+      {
+       "scoreFactorCode": "7",
+       "scoreFactorText": "TOO MANY DELINQUENT OR DEROGATORY ACCOUNTS"
+      },
+      {
+       "scoreFactorCode": "57",
+       "scoreFactorText": "NO OPEN INSTALLMENT ACCOUNTS IN YOUR CREDIT FILE"
+      }
+     ]
+    },
+    {
+     "borrowerSourceType": "Borrower",
+     "modelName": "02958",
+     "modelNameType": "FICO SCORE 5",
+     "sourceType": "Equifax",
+     "factaInquiriesIndicator": true,
+     "scoreValue": "660",
+     "scoreFactors": [
+      {
+       "scoreFactorCode": "38",
+       "scoreFactorText": "SERIOUS DELINQUENCY AND PUBLIC RECORD OR COLLECTION FILED"
+      },
+      {
+       "scoreFactorCode": "18",
+       "scoreFactorText": "NUMBER OF ACCOUNTS WITH DELINQUENCY"
+      },
+      {
+       "scoreFactorCode": "14",
+       "scoreFactorText": "LENGTH OF TIME ACCOUNTS HAVE BEEN ESTABLISHED"
+      },
+      {
+       "scoreFactorCode": "16",
+       "scoreFactorText": "LACK OF RECENT REVOLVING ACCOUNT INFORMATION"
+      }
+     ]
+    }
+   ],
+   "summaries": {
+    "tradeSummary": {
+     "mortgageTradesCount": "0",
+     "mortgageBalanceTotal": "0",
+     "mortgageHighCreditTotal": "0",
+     "mortgagePaymentsTotal": "0",
+     "mortgagePastDueTotal": "0",
+     "autoTradesCount": "0",
+     "autoBalanceTotal": "0",
+     "autoHighCreditTotal": "0",
+     "autoPaymentsTotal": "0",
+     "autoPastDueTotal": "0",
+     "educationTradesCount": "0",
+     "educationBalanceTotal": "0",
+     "educationHighCreditTotal": "0",
+     "educationPaymentsTotal": "0",
+     "educationPastDueTotal": "0",
+     "openTradesCount": "0",
+     "openBalanceTotal": "0",
+     "openHighCreditTotal": "0",
+     "openPaymentsTotal": "0",
+     "openPastDueTotal": "0",
+     "revolvingTradesCount": "1",
+     "revolvingBalanceTotal": "465",
+     "revolvingHighCreditTotal": "1500",
+     "revolvingPaymentsTotal": "0",
+     "revolvingPastDueTotal": "0",
+     "unknownTradesCount": "0",
+     "unknownBalanceTotal": "0",
+     "unknownHighCreditTotal": "0",
+     "unknownPaymentsTotal": "0",
+     "unknownPastDueTotal": "0",
+     "installmentOtherTradesCount": "1",
+     "installmentOtherBalanceTotal": "155",
+     "installmentOtherHighCreditTotal": "960",
+     "installmentOtherPaymentsTotal": "40",
+     "installmentOtherPastDueTotal": "0",
+     "applicableMortgagePaymentsTotal": "0",
+     "applicableAutoPaymentsTotal": "0",
+     "applicableEducationPaymentsTotal": "0",
+     "applicableOpenPaymentsTotal": "0",
+     "applicableRevolvingPaymentsTotal": "0",
+     "applicableUnknownPaymentsTotal": "0",
+     "applicableInstallmentPaymentsTotal": "40",
+     "applicableInstallmentOtherPaymentsTotal": "40",
+     "applicableMortgageHighCreditTotal": "0",
+     "applicableAutoHighCreditTotal": "0",
+     "applicableEducationHighCreditTotal": "0",
+     "applicableOpenHighCreditTotal": "0",
+     "applicableRevolvingHighCreditTotal": "1500",
+     "applicableUnknownHighCreditTotal": "0",
+     "applicableInstallmentHighCreditTotal": "960",
+     "applicableInstallmentOtherHighCreditTotal": "960",
+     "tradesCount": "2",
+     "balanceTotal": "620",
+     "applicablePaymentsTotal": "40",
+     "applicableHighCreditTotal": "2460",
+     "highCreditTotal": "2460",
+     "paymentsTotal": "40",
+     "pastDueTotal": "0",
+     "securedDebtBalanceTotal": "0",
+     "unsecuredDebtBalanceTotal": "620",
+     "oldestTradelineDate": "2026-02-10",
+     "oldestTradelineCreditorName": "CAMPUS REWARDS CARD",
+     "revolvingCreditUtilization": "31",
+     "totalDebtHighCreditRatio": "25"
+    },
+    "derogatorySummary": {
+     "chargeOffsCount": "0",
+     "collectionsCount": "0",
+     "bankruptciesCount": "0",
+     "publicRecordsCount": "0",
+     "satisfactoryTradelineCount": "2",
+     "_30DayLates": "0",
+     "_60DayLates": "0",
+     "_90DayLates": "0",
+     "inquiriesCount": "2",
+     "mostRecentLateDate": "",
+     "disputesCount": "0",
+     "currentAdverseTradelineCount": "0",
+     "priorAdverseTradelineCount": "0",
+     "otherCount": "0",
+     "securedDebtBalanceTotal": "0",
+     "unsecuredDebtBalanceTotal": "620"
+    }
+   }
+  },
+  "exp": {
+   "requestData": {
+    "firstName": "JASMINE",
+    "lastName": "REYES",
+    "ssn": "666701003",
+    "addresses": [
+     {
+      "borrowerResidencyType": "Current",
+      "addressLine1": "2210 UNIVERSITY AVE APT 4B",
+      "city": "BERKELEY",
+      "state": "CA",
+      "postalCode": "94704"
+     }
+    ]
+   },
+   "repositoryIncluded": {
+    "transunion": false,
+    "experian": true,
+    "equifax": false
+   },
+   "responseDetail": {
+    "dateRequested": "2026-10-24T09:11:10.689046Z",
+    "requestingParty": {
+     "name": "CALHACKS13"
+    },
+    "creditBureauContact": {
+     "name": "CREDIT REPORTING SERVICES, INC",
+     "address": {
+      "addressLine1": "1024 IRON POINT ROAD",
+      "city": "FOLSOM",
+      "state": "CA",
+      "postalCode": "95630"
+     }
+    }
+   },
+   "responseAlertMessages": [],
+   "creditFiles": [
+    {
+     "creditFileDetail": {
+      "borrowerSourceType": "Borrower",
+      "creditFileInfileDate": "2024-11-19",
+      "creditFileResultStatusType": "FileReturned",
+      "sourceType": "Experian"
+     },
+     "aliases": [
+      {
+       "firstName": "JASMINE",
+       "lastName": "REYES"
+      }
+     ],
+     "employments": [
+      {
+       "employerName": "GABY JEWLERS HAIR",
+       "employmentStartDate": "2022-02-28",
+       "employmentReportedDate": "2022-02-28"
+      },
+      {
+       "employerName": "SCOTT KAY PLATINUM",
+       "employmentStartDate": "2019-11-02",
+       "employmentReportedDate": "2021-09-08"
+      }
+     ]
+    }
+   ],
+   "inquiries": [
+    {
+     "creditorName": "LEGAL AND RELATED SERV",
+     "borrowerSourceType": "Borrower",
+     "inquiryDate": "2026-02-10",
+     "businessType": "PersonalServicesNotMedical",
+     "subscriberCode": "2996505",
+     "sourceType": "Experian"
+    },
+    {
+     "creditorName": "LEGAL AND RELATED SERV",
+     "borrowerSourceType": "Borrower",
+     "inquiryDate": "2026-09-01",
+     "businessType": "PersonalServicesNotMedical",
+     "subscriberCode": "2996505",
+     "sourceType": "Experian"
+    }
+   ],
+   "tradelines": [
+    {
+     "accountIdentifier": "CALHACKS-CARD-1",
+     "accountOpenedDate": "2026-02-10",
+     "accountOwnershipType": "Individual",
+     "accountReportedDate": "2026-09-01",
+     "accountStatusType": "Open",
+     "accountType": "Revolving",
+     "borrowerSourceType": "Borrower",
+     "creditLimitAmount": "1500",
+     "derogatoryDataIndicator": false,
+     "highBalanceAmount": "510",
+     "lastActivityDate": "2026-08-20",
+     "monthsReviewedCount": "8",
+     "creditorName": "CAMPUS REWARDS CARD",
+     "subscriberCode": "3698728",
+     "pastDueAmount": "0",
+     "currentBalanceAmount": "465",
+     "businessType": "Finance",
+     "loanType": "CreditCard",
+     "currentRatingCode": "C",
+     "currentRatingType": "AsAgreed",
+     "paymentPatternData": "CCCCCCCCCCCC",
+     "paymentPatternStartDate": "2026-09-01",
+     "sourceType": "Experian"
+    },
+    {
+     "accountIdentifier": "CALHACKS-PHONE-1",
+     "accountOpenedDate": "2026-02-10",
+     "accountOwnershipType": "Individual",
+     "accountReportedDate": "2026-09-01",
+     "accountStatusType": "Open",
+     "accountType": "Installment",
+     "borrowerSourceType": "Borrower",
+     "derogatoryDataIndicator": false,
+     "highBalanceAmount": "960",
+     "lastActivityDate": "2026-08-20",
+     "monthlyPaymentAmount": "40",
+     "monthsReviewedCount": "8",
+     "creditorName": "VERIZON WIRELESS DEVICE PAYMENT",
+     "subscriberCode": "3698728",
+     "pastDueAmount": "0",
+     "termsDescription": "24 months at $40 per month",
+     "termsMonthsCount": "24",
+     "currentBalanceAmount": "155",
+     "businessType": "Finance",
+     "loanType": "InstallmentSalesContract",
+     "currentRatingCode": "C",
+     "currentRatingType": "AsAgreed",
+     "paymentPatternData": "CCCCCCCCCCCC",
+     "paymentPatternStartDate": "2026-09-01",
+     "sourceType": "Experian"
+    }
+   ],
+   "publicRecords": [],
+   "scores": [
+    {
+     "borrowerSourceType": "Borrower",
+     "modelName": "VantageScore 4.0",
+     "modelNameType": "V4",
+     "sourceType": "Experian",
+     "factaInquiriesIndicator": false,
+     "scoreValue": "660",
+     "scoreRankPercentileValue": "28",
+     "scoreMaximumValue": "850",
+     "scoreMinimumValue": "300",
+     "scoreFactors": [
+      {
+       "scoreFactorCode": "68",
+       "scoreFactorText": "Lack of real estate secured loan information"
+      },
+      {
+       "scoreFactorCode": "37",
+       "scoreFactorText": "No open bankcards in your credit file"
+      },
+      {
+       "scoreFactorCode": "17",
+       "scoreFactorText": "No open accounts in your credit file"
+      },
+      {
+       "scoreFactorCode": "87",
+       "scoreFactorText": "Unpaid collections"
+      }
+     ]
+    }
+   ],
+   "summaries": {
+    "tradeSummary": {
+     "mortgageTradesCount": "0",
+     "mortgageBalanceTotal": "0",
+     "mortgageHighCreditTotal": "0",
+     "mortgagePaymentsTotal": "0",
+     "mortgagePastDueTotal": "0",
+     "autoTradesCount": "0",
+     "autoBalanceTotal": "0",
+     "autoHighCreditTotal": "0",
+     "autoPaymentsTotal": "0",
+     "autoPastDueTotal": "0",
+     "educationTradesCount": "0",
+     "educationBalanceTotal": "0",
+     "educationHighCreditTotal": "0",
+     "educationPaymentsTotal": "0",
+     "educationPastDueTotal": "0",
+     "openTradesCount": "0",
+     "openBalanceTotal": "0",
+     "openHighCreditTotal": "0",
+     "openPaymentsTotal": "0",
+     "openPastDueTotal": "0",
+     "revolvingTradesCount": "1",
+     "revolvingBalanceTotal": "465",
+     "revolvingHighCreditTotal": "1500",
+     "revolvingPaymentsTotal": "0",
+     "revolvingPastDueTotal": "0",
+     "unknownTradesCount": "0",
+     "unknownBalanceTotal": "0",
+     "unknownHighCreditTotal": "0",
+     "unknownPaymentsTotal": "0",
+     "unknownPastDueTotal": "0",
+     "installmentOtherTradesCount": "1",
+     "installmentOtherBalanceTotal": "155",
+     "installmentOtherHighCreditTotal": "960",
+     "installmentOtherPaymentsTotal": "40",
+     "installmentOtherPastDueTotal": "0",
+     "applicableMortgagePaymentsTotal": "0",
+     "applicableAutoPaymentsTotal": "0",
+     "applicableEducationPaymentsTotal": "0",
+     "applicableOpenPaymentsTotal": "0",
+     "applicableRevolvingPaymentsTotal": "0",
+     "applicableUnknownPaymentsTotal": "0",
+     "applicableInstallmentPaymentsTotal": "40",
+     "applicableInstallmentOtherPaymentsTotal": "40",
+     "applicableMortgageHighCreditTotal": "0",
+     "applicableAutoHighCreditTotal": "0",
+     "applicableEducationHighCreditTotal": "0",
+     "applicableOpenHighCreditTotal": "0",
+     "applicableRevolvingHighCreditTotal": "1500",
+     "applicableUnknownHighCreditTotal": "0",
+     "applicableInstallmentHighCreditTotal": "960",
+     "applicableInstallmentOtherHighCreditTotal": "960",
+     "tradesCount": "2",
+     "balanceTotal": "620",
+     "applicablePaymentsTotal": "40",
+     "applicableHighCreditTotal": "2460",
+     "highCreditTotal": "2460",
+     "paymentsTotal": "40",
+     "pastDueTotal": "0",
+     "securedDebtBalanceTotal": "0",
+     "unsecuredDebtBalanceTotal": "620",
+     "oldestTradelineDate": "2026-02-10",
+     "oldestTradelineCreditorName": "CAMPUS REWARDS CARD",
+     "revolvingCreditUtilization": "31",
+     "totalDebtHighCreditRatio": "25"
+    },
+    "derogatorySummary": {
+     "chargeOffsCount": "0",
+     "collectionsCount": "0",
+     "bankruptciesCount": "0",
+     "publicRecordsCount": "0",
+     "satisfactoryTradelineCount": "2",
+     "_30DayLates": "0",
+     "_60DayLates": "0",
+     "_90DayLates": "0",
+     "inquiriesCount": "2",
+     "mostRecentLateDate": "",
+     "disputesCount": "0",
+     "currentAdverseTradelineCount": "0",
+     "priorAdverseTradelineCount": "0",
+     "otherCount": "0",
+     "securedDebtBalanceTotal": "0",
+     "unsecuredDebtBalanceTotal": "620"
+    }
+   }
+  },
+  "identity": {
+   "fileNumber": "01",
+   "fileSummary": {
+    "fileHitIndicator": "SUBJECT_HIT",
+    "creditDataStatus": {
+     "suppressed": false,
+     "doNotPromote": {
+      "indicator": false
+     },
+     "freeze": {
+      "indicator": false
+     },
+     "minor": false,
+     "disputed": false
+    }
+   },
+   "indicative": {
+    "names": [
+     {
+      "person": {
+       "first": "JASMINE",
+       "last": "REYES"
+      },
+      "source": "INPUT"
+     }
+    ],
+    "addresses": [
+     {
+      "status": "CURRENT",
+      "street": {
+       "unparseds": [],
+       "number": "2210",
+       "name": "UNIVERSITY AVE APT 4B"
+      },
+      "location": {
+       "city": "BERKELEY",
+       "state": "CA",
+       "zipCode": "94704"
+      },
+      "source": "INPUT"
+     }
+    ],
+    "socialSecurities": [
+     {
+      "number": "666701003",
+      "identificationIssuance": {
+       "type": "SSN",
+       "status": "ISSUED_AFTER_21",
+       "yearRange": {
+        "startYear": "2001",
+        "endYear": "2001"
+       },
+       "state": "KY",
+       "ageObtained": {
+        "rangeStart": "+35",
+        "rangeEnd": "+36"
+       }
+      },
+      "source": "INPUT",
+      "masked": false
+     },
+     {
+      "number": "666701003",
+      "source": "FILE",
+      "masked": false
+     }
+    ],
+    "dateOfBirths": [
+     {
+      "value": "2004-06-21T00:00:00.000+00:00",
+      "source": "INPUT"
+     }
+    ],
+    "ages": [],
+    "phones": [
+     {
+      "number": {
+       "qualifier": "PERSONAL"
+      },
+      "source": "INPUT"
+     }
+    ],
+    "employments": [],
+    "creditCards": [],
+    "genders": [],
+    "vehicles": []
+   },
+   "originalInputs": [],
+   "custom": {
+    "idmanagerVerAnalysisV2": {
+     "verificationSummary": {
+      "riskIndicator": "MEDIUM",
+      "bestMatch": "FILE",
+      "verificationPoint": 30,
+      "lowerThreshold": 5,
+      "upperThreshold": 49,
+      "keyMessages": {
+       "keyMessages": [
+        {
+         "code": "KMSG07",
+         "text": "ADDRESS RELATED ALERT"
+        }
+       ]
+      }
+     },
+     "fraudAnalysis": {
+      "region": {
+       "zipVsCity": "INVALID",
+       "zipVsState": "VALID",
+       "phoneVsState": "NOT_AVAILABLE",
+       "phoneVsZIP": "NOT_AVAILABLE",
+       "phoneVsZIPDistance": "0000.000",
+       "source": "INPUT"
+      },
+      "employment": {},
+      "distance": {
+       "minimum": {
+        "noAnalysisReason": "NOT_AVAILABLE"
+       },
+       "maximum": {
+        "noAnalysisReason": "NOT_AVAILABLE"
+       },
+       "source": "INPUT"
+      }
+     },
+     "verificationAnalysises": [
+      {
+       "verificationStatus": "SUBJECT_FOUND",
+       "firstNameVerification": "MATCH",
+       "middleNameVerification": "INPUT_NOT_AVAILABLE",
+       "lastNameVerification": "MATCH",
+       "nameSuffixVerification": "MATCH_NOT_PERFORMED",
+       "currentAddressVerification": "NO_MATCH",
+       "previousAddressVerification": "INPUT_NOT_AVAILABLE",
+       "phoneNumberVerification": "INPUT_NOT_AVAILABLE",
+       "ssnVerification": "MATCH",
+       "dateOfBirthVerification": "NOT_FOUND",
+       "source": "FILE"
+      },
+      {
+       "verificationStatus": "SUBJECT_NOT_FOUND",
+       "firstNameVerification": "NOT_FOUND",
+       "middleNameVerification": "MATCH_NOT_PERFORMED",
+       "lastNameVerification": "NOT_FOUND",
+       "nameSuffixVerification": "MATCH_NOT_PERFORMED",
+       "currentAddressVerification": "NOT_FOUND",
+       "previousAddressVerification": "MATCH_NOT_PERFORMED",
+       "phoneNumberVerification": "INPUT_NOT_AVAILABLE",
+       "ssnVerification": "NOT_FOUND",
+       "dateOfBirthVerification": "NOT_FOUND",
+       "source": "VENDOR_FILE"
+      }
+     ]
+    }
+   },
+   "addOnProducts": [
+    {
+     "code": "FRDMS",
+     "status": "DELIVERED",
+     "idMismatchAlerts": [],
+     "addressAnalysises": [],
+     "idManagerVerification": {
+      "messages": [],
+      "deceases": [],
+      "identificationIssuances": [],
+      "returnMessage": "CODES_AND_TEXT",
+      "searchStatus": "HIT"
+     },
+     "creditorContacts": []
+    }
+   ]
+  },
+  "fraud": {
+   "eam": {
+    "date_first_seen": "2023-08-30",
+    "longevity": 4,
+    "velocity": 2,
+    "popularity": 3
+   },
+   "dam": {
+    "date_first_seen": "1995-08-13",
+    "longevity": 10,
+    "velocity": 1,
+    "popularity": 10
+   },
+   "risk": {
+    "score": 14,
+    "tumbling_risk": 0,
+    "query_id": "calhacks-P03-0001",
+    "domain": {
+     "domain_risk_score": 0
+    },
+    "ip": {
+     "routing_type": "fixed",
+     "organization": "comcast cable communications llc",
+     "proxy_type": "",
+     "hosting_facility": false,
+     "latitude": "37.87",
+     "longitude": "-122.27"
+    },
+    "postal": {
+     "first_name_match": "match",
+     "last_name_match": "match",
+     "street_match": "match",
+     "city_match": "match",
+     "zip_match": "match",
+     "address_type": "Street",
+     "deliverability": "deliverable",
+     "ip_postal_distance": "5 miles"
+    },
+    "phone": {
+     "line_type": "mobile",
+     "carrier": "VERIZON WIRELESS",
+     "status": "valid",
+     "prepaid": false,
+     "owner": {
+      "first_name_match": "match",
+      "last_name_match": "match",
+      "street_match": "match",
+      "city_match": "match",
+      "zip_match": "match",
+      "type": "person"
+     }
+    }
+   },
+   "email_validation": {
+    "address": "jasmine.reyes@example.com",
+    "status": "valid",
+    "status_code": 50,
+    "domain_type": "freeisp"
+   }
+  },
+  "blj": {
+   "DetailedBLJReport": {
+    "JudgmentsFound": 0,
+    "Filters": {
+     "ExcludeBankruptcies": false,
+     "FilterVerbiage": "Judgment satisfied = 7 years; Judgment unsatisfied = 7 years; Lien released = 7 years; Lien unreleased = 10 years; Bankruptcy chapter 7 or 11 dismissed or discharged = 10 years; Bankruptcy chapter 7 or 11 not dismissed or discharged = 10 years; Bankruptcy chapter 13 dismissed or discharged = 7 years; Bankruptcy chapter 13 not dismissed or discharged = 10 years",
+     "SkipNameValidation": false
+    },
+    "Messages": {
+     "Message": {
+      "Text": "No Errors",
+      "Code": 0
+     }
+    },
+    "Results": "",
+    "BankruptciesFound": 0,
+    "LiensFound": 0
+   }
+  }
+ }
+}

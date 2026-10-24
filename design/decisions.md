@@ -12,3 +12,4 @@
 - 2026-10-24 02:30 Reason verification runs BEFORE compliance (not after) so the notice is composed only from verified reasons; single-field flip first, leave-one-out second for jointly sufficient reasons, all-fixed sanity run gates pass 2.
 - 2026-10-24 02:30 Classification and the FCRA paragraph are code, not prompt output; the compliance agent is told not to write legal boilerplate.
 - 2026-10-24 02:35 Dispute replay on mock data removes the tradeline, rescales utilization by the removed card's balance share and bumps scores +5 (+25 if derogatory); on live CRS it re-pulls.
+2026-10-24 crs-agent: credit.fico9 = TransUnion score even though the sandbox returns VantageScore 4.0 under tu-prequal-fico9 (noted per bundle in raw.notes); fraud.score = AtData risk.score as-is (0-100, high=risky); credit 'retrieve' step skipped because the order response already holds the report.

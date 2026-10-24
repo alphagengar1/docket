@@ -1,25 +1,145 @@
 {
-  "_note": "Draft answer key written by the convex agent from crs.mock.ts and the hard-stop rules in design/contracts.md. Teammate owns this file and should refine it. expected: approve = at least one lender approves; decline = all three decline; hard_stop = rules.ts stops it before any underwriter runs. expectedReasonsIncludes are bundle field references that must appear among the decline reasons (or in the hard-stop audit ref).",
+  "_note": "Answer key regenerated against REAL CRS sandbox data (fixtures in convex/fixtures/crs). expected: approve = at least one lender approves; decline = all three decline; hard_stop = rules.ts stops it first. Notes record the CRS label and where policy and label disagree. Teammate: refine.",
   "cases": [
-    { "personaId": "P01", "expected": "approve", "expectedReasonsIncludes": [], "note": "prime: all three lenders should approve" },
-    { "personaId": "P02", "expected": "approve", "expectedReasonsIncludes": [], "note": "good: cu + fintech + prime approve" },
-    { "personaId": "P03", "expected": "approve", "expectedReasonsIncludes": [], "note": "fair: fintech approves, cu borderline, prime declines" },
-    { "personaId": "P04", "expected": "decline", "expectedReasonsIncludes": ["credit.fico9"], "note": "subprime: below every floor, late payments, 70% utilization" },
-    { "personaId": "P05", "expected": "approve", "expectedReasonsIncludes": [], "note": "thin file: fintech starter loan on vantage4 with income verification condition" },
-    { "personaId": "P06", "expected": "decline", "expectedReasonsIncludes": ["flags.bankruptcy"], "note": "bankruptcy with score under fintech's 640 bankruptcy floor" },
-    { "personaId": "P07", "expected": "decline", "expectedReasonsIncludes": ["flags.eviction"], "note": "eviction is a decline at all three lenders" },
-    { "personaId": "P08", "expected": "hard_stop", "expectedReasonsIncludes": ["fraud.score"], "note": "fraud score 92 >= 80" },
-    { "personaId": "P09", "expected": "hard_stop", "expectedReasonsIncludes": ["flags.deceased"], "note": "deceased indicator" },
-    { "personaId": "P10", "expected": "hard_stop", "expectedReasonsIncludes": ["flags.frozen"], "note": "frozen file" },
-    { "personaId": "P11", "expected": "hard_stop", "expectedReasonsIncludes": ["identity.verified"], "note": "IDV fail" },
-    { "personaId": "P12", "expected": "decline", "expectedReasonsIncludes": ["credit.utilization"], "note": "94% utilization exceeds every policy cap" },
-    { "personaId": "P13", "expected": "decline", "expectedReasonsIncludes": ["credit.inquiries6mo"], "note": "9 inquiries exceeds every policy cap" },
-    { "personaId": "P14", "expected": "decline", "expectedReasonsIncludes": ["statedIncome"], "note": "amount requested exceeds every income-based max by more than the counter-offer margin" },
-    { "personaId": "P15", "expected": "approve", "expectedReasonsIncludes": [], "note": "fraud score 55 is below the 80 hard stop; cu and fintech approve with identity review condition, prime declines" },
-    { "personaId": "P16", "expected": "approve", "expectedReasonsIncludes": [], "note": "near-prime: fintech only" },
-    { "personaId": "P17", "expected": "approve", "expectedReasonsIncludes": [], "note": "excellent score; prime declines on 3 inquiries, cu and fintech approve" },
-    { "personaId": "P18", "expected": "hard_stop", "expectedReasonsIncludes": ["fraud.score"], "note": "fraud score 81, boundary case at >= 80" },
-    { "personaId": "P19", "expected": "hard_stop", "expectedReasonsIncludes": ["flags.deceased"], "note": "planted trap: perfect score, deceased flag. The LLM never sees it." },
-    { "personaId": "P20", "expected": "approve", "expectedReasonsIncludes": [], "note": "old bankruptcy, score 655 >= fintech's 640 bankruptcy floor; fintech approves with condition" }
+    {
+      "personaId": "P01",
+      "expected": "approve",
+      "expectedReasonsIncludes": [],
+      "note": "CRS APPROVE. 790 all three bureaus, util 8%, fraud 11: cu, fintech and prime all approve."
+    },
+    {
+      "personaId": "P02",
+      "expected": "approve",
+      "expectedReasonsIncludes": [],
+      "note": "CRS APPROVE. 815, util 4%: all three approve (fintech counter-offers at its $25k cap)."
+    },
+    {
+      "personaId": "P03",
+      "expected": "approve",
+      "expectedReasonsIncludes": [],
+      "note": "CRS REVIEW (thin file, 660, 2 tradelines, util 31%). Policies: cu 12.9% and fintech 21.9% approve, prime declines (fico9<720, util>30%). Label and policy differ only in strictness; approve = at least one lender."
+    },
+    {
+      "personaId": "P04",
+      "expected": "decline",
+      "expectedReasonsIncludes": [
+        "credit.fico9"
+      ],
+      "note": "CRS NO_FILE. All three bureaus NoFileReturnedNoHit, no scores, no tradelines; identity and fraud (18) clean so no hard stop. All lenders decline on missing score."
+    },
+    {
+      "personaId": "P05",
+      "expected": "decline",
+      "expectedReasonsIncludes": [
+        "credit.fico9"
+      ],
+      "note": "CRS DECLINE. 540, util 95%, 6 inquiries, 2 collections, fraud 52: all three decline."
+    },
+    {
+      "personaId": "P06",
+      "expected": "decline",
+      "expectedReasonsIncludes": [
+        "flags.bankruptcy"
+      ],
+      "note": "CRS REVIEW (Ch.7 discharged 2024, 580). Policies: any bankruptcy declines at cu/prime; fintech needs score>=640. All decline, so label REVIEW vs policy DECLINE disagree; change policy only if a seasoned discharge should be eligible."
+    },
+    {
+      "personaId": "P07",
+      "expected": "decline",
+      "expectedReasonsIncludes": [
+        "flags.bankruptcy"
+      ],
+      "note": "CRS DECLINE. Active Ch.13 (BLJ + TU public record), 560, util 55%: all decline."
+    },
+    {
+      "personaId": "P08",
+      "expected": "approve",
+      "expectedReasonsIncludes": [],
+      "note": "CRS REVIEW (unsatisfied $12.3k civil judgment + $7.4k state tax lien, 690). BLJ liens/judgments have no bundle flag, so no policy sees them: cu and fintech approve, prime declines on util 38%. Disagreement: needs a lien/judgment rule (see design/open.md)."
+    },
+    {
+      "personaId": "P09",
+      "expected": "approve",
+      "expectedReasonsIncludes": [],
+      "note": "CRS DECLINE (felony burglary conviction 2021). Criminal search is skipped by default and no policy has a criminal rule, so cu 9.9% and fintech approve (score 700, util 29%). Disagreement: add a criminal flag + policy rule if felony should decline."
+    },
+    {
+      "personaId": "P10",
+      "expected": "approve",
+      "expectedReasonsIncludes": [],
+      "note": "CRS APPROVE (old dismissed misdemeanor). 720, util 15%: all three approve."
+    },
+    {
+      "personaId": "P11",
+      "expected": "decline",
+      "expectedReasonsIncludes": [
+        "flags.eviction"
+      ],
+      "note": "CRS DECLINE. Eviction judgment in BLJ (unlawful detainer, $4,850), 610, util 72%: flags.eviction declines at all three."
+    },
+    {
+      "personaId": "P12",
+      "expected": "hard_stop",
+      "expectedReasonsIncludes": [
+        "identity.verified"
+      ],
+      "note": "CRS DECLINE (identity mismatch). TU identity returns 2201 SSN not associated with name + 2202 DOB mismatch -> identity.verified=false; fraud 85 also >=80; bureaus return no file."
+    },
+    {
+      "personaId": "P13",
+      "expected": "hard_stop",
+      "expectedReasonsIncludes": [
+        "identity.verified"
+      ],
+      "note": "CRS DECLINE (synthetic identity). Identity 2201/2202 -> unverified and fraud 88 (>=80), though bureaus return a 640 file with 9 inquiries."
+    },
+    {
+      "personaId": "P14",
+      "expected": "hard_stop",
+      "expectedReasonsIncludes": [
+        "flags.deceased"
+      ],
+      "note": "CRS DECLINE (deceased). Identity 2301 SSN belongs to a deceased person, bureaus return E1200 deceased-file error; fraud 80 also trips the threshold."
+    },
+    {
+      "personaId": "P15",
+      "expected": "hard_stop",
+      "expectedReasonsIncludes": [
+        "flags.frozen"
+      ],
+      "note": "CRS REVIEW (freeze at one bureau). TU returns NoFileReturnedCreditFreeze; EFX and EXP return 740. Rule flags.frozen fires on ANY bureau freeze, so it hard-stops although fintech would approve on the other two files. Label REVIEW vs rule disagree; change rule to all-bureaus-frozen (or alert) if REVIEW is intended."
+    },
+    {
+      "personaId": "P16",
+      "expected": "approve",
+      "expectedReasonsIncludes": [],
+      "note": "CRS REVIEW (initial fraud alert on file). Identity returns 2401 VERIFIED, step-up recommended, so identity.verified=true with a fraud-alert flag; fraud 50, score 730. cu and fintech approve with step-up conditions, prime declines (fraud score 50 is not below its 50 limit). No hard stop."
+    },
+    {
+      "personaId": "P17",
+      "expected": "approve",
+      "expectedReasonsIncludes": [],
+      "note": "CRS REVIEW (bureau divergence). TU 760, EXP 700, EFX NoFile. fico9=760 (TU), vantage4=700 (EXP). All three approve; the divergence is only visible in raw.bureaus."
+    },
+    {
+      "personaId": "P18",
+      "expected": "approve",
+      "expectedReasonsIncludes": [],
+      "note": "CRS REVIEW (rebuilding, 650, util 33%). Only fintech approves (21.9%); cu and prime decline on fico9 floor."
+    },
+    {
+      "personaId": "P19",
+      "expected": "approve",
+      "expectedReasonsIncludes": [],
+      "note": "CRS APPROVE. 770, util 12%: all three approve."
+    },
+    {
+      "personaId": "P20",
+      "expected": "decline",
+      "expectedReasonsIncludes": [
+        "credit.fico9"
+      ],
+      "note": "CRS REVIEW (retiree, stale file). TU/EFX/EXP return a file but ScoringNotAvailable, all tradelines paid/closed, util 0: no score so every lender declines. Label REVIEW vs policy DECLINE; a manual review path would need a no-score exception."
+    }
   ]
 }

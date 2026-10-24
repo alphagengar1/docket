@@ -29,12 +29,11 @@ npx convex run eval:runEval '{}'         # 20 personas → evalRuns row (add {"k
 | `ANTHROPIC_API_KEY` | unset | Enables the Claude provider. **Unset → agents run the deterministic stub** (same thresholds as policies/*.md) and every offer's audit note says `[provider=stub]`. A local `ant auth login` profile does not reach the Convex runtime; a key is required. |
 | `AGENT_PROVIDER_UNDERWRITER` | `claude` | `claude` \| `creao` \| `stub`. Underwriters use `claude-haiku-5-5`, effort low. |
 | `AGENT_PROVIDER_COMPLIANCE` | `claude` | `claude` \| `creao` \| `stub`. Compliance uses `claude-sonnet-5-5`, effort medium. |
-| `CRS_PROVIDER` | `mock` | `mock` \| `crs`. On `crs` any failure falls back to mock with a `crs.error` audit event unless `CRS_STRICT=1`. |
+| `CRS_PROVIDER` | `mock` | `mock` serves the captured CRS sandbox fixtures (`convex/crs.fixtures.ts`; synthetic generator only if a fixture is missing) \| `crs` pulls the live sandbox. On `crs` any failure falls back to the fixture with a `crs.error` audit event unless `CRS_STRICT=1`. |
 | `CRS_BASE_URL` | `https://api-sandbox.stitchcredit.com/api` | |
-| `CRS_USERNAME`, `CRS_PASSWORD` | unset | Login is `POST /users/login`; token cached in `secretsCache` (~50 min). A failed login is recorded and **not retried for 30 min** (repeated failures disable the sandbox account). |
-| `CRS_PATH_PREQUAL`, `CRS_PATH_IDENTITY`, `CRS_PATH_FRAUD` | `TODO` | Fill from the Postman collection (or edit the constants in `crs.ts`). The client refuses to call a `TODO` path. |
-| `CRS_DATA_METHOD` | `POST` | Method for the three data calls. |
-| `CRS_PERSONA_MAP` | unset | JSON `{"P01": {<sandbox consumer body>}, ...}`; or fill `CRS_PERSONA_REQUESTS` in `crs.ts`. |
+| `CRS_USERNAME`, `CRS_PASSWORD` | unset | Login is `POST /users/login`; bearer (~1h) and refreshToken cached in `secretsCache`; refresh via `/users/refresh-token` before any re-login. A failed login is recorded and **not retried for 30 min**; a 401 on a data call clears the token and surfaces an error (never loops). **Set per deployment: re-run `convex env set CRS_USERNAME ...` / `CRS_PASSWORD ...` after `npx convex login` moves you to a cloud deployment.** |
+| `CRS_PERSONA_MAP` | unset | Optional JSON override `{"P01": {tu,efx,exp,identity,fraud,blj,...}}`; defaults come from `convex/crs.personas.ts`. |
+| `CRS_INCLUDE_CRIMINAL`, `CRS_INCLUDE_EVICTION`, `CRS_ALWAYS_RETRIEVE` | unset | `1` adds the CIC criminal / eviction searches (off for lending by default), or always runs the redundant credit "retrieve" step. |
 | `CREAO_API_KEY` | unset | Bearer for `agent.creao.ai`. |
 | `CREAO_UNDERWRITER_APP_ID`, `CREAO_APP_ID_CU|FINTECH|PRIME`, `CREAO_COMPLIANCE_APP_ID` | unset | Per-lender ids override the shared underwriter id. |
 | `CREAO_BASE_URL` | `https://agent.creao.ai/api/v1` | |
@@ -45,7 +44,8 @@ npx convex run eval:runEval '{}'         # 20 personas → evalRuns row (add {"k
 - Claude everywhere: set `ANTHROPIC_API_KEY`. Done.
 - CREAO for compliance only (the plan if runs are slow): `AGENT_PROVIDER_COMPLIANCE=creao` + `CREAO_API_KEY` + `CREAO_COMPLIANCE_APP_ID`.
 - CREAO runs are async: the offer row is inserted `pending` with `runId`; `/creao/webhook` re-fetches `GET /runs/{id}` (webhooks are unsigned) and completes it; the workflow also polls every 5 s for up to 4 min and marks leftovers `failed`.
-- Live CRS: `CRS_PROVIDER=crs` + creds + the three paths + the persona map. Then check `normalizeCrsBundle()` in `crs.ts` against a real response.
+- Live CRS: `convex env set CRS_PROVIDER crs` (creds already set). Optionally `CRS_STRICT 1` to fail loudly instead of falling back. Flip back with `CRS_PROVIDER mock`. Refresh a fixture: `convex run crs:captureFixture '{"personaId":"P01"}'`.
+  Live latency measured 2026-10-24: 6 sandbox calls per persona (TU, EFX, EXP, identity, FraudFinder, BLJ; 9 when the order response lacks a report, e.g. the deceased file), 2.1-4.4 s wall (avg 3.0 s) with 200 ms spacing; 20 personas in parallel took 45 s end-to-end including the three underwriters. Each call is 0.2-0.7 s.
 
 ## The three differentiators (design/differentiators.md)
 1. **Reason verification** — `verify.ts`. For every decline, each reason's field is set to a passing value and that one lender is re-run (`underwriteOnce`); a second leave-one-out pass handles jointly sufficient reasons. Rows land in `reasonChecks`; `offers.reasons[].verified` is set; the notice only uses reasons with `verified !== false`. Runs automatically (`step.verify.*`, before compliance) and on demand via `verify:verifyReasonsNow {offerId}`. Query `verify:reasonChecks {applicantId|offerId}`; also included in `desk:getApplicantView` as `reasonChecks`.
@@ -62,7 +62,11 @@ Passing values used by the counterfactuals: fico9/vantage4 → 780, utilization 
 | `rules.ts` | Deterministic hard stops (pure). `rules.test.ts`. |
 | `verify.ts` | Counterfactual reason test (two passes), `verifyReasonsNow` button, `reasonChecks` query. |
 | `classify.ts` | approve / counteroffer / deny, notice-required rule, FCRA paragraph. `classify.test.ts`. |
-| `crs.ts`, `crs.mock.ts` | Provider switch; 20 personas P01..P20 with `defaultIntake` for the eval. |
+| `crs.ts` | Provider switch, token cache/refresh, `pullBundle`, `captureFixture`. |
+| `crs.core.ts` | Pure: sandbox product calls + `normalizeProducts` (bundle, `bureaus`, notes). Fraud score mapping: FraudFinder `risk.score` is already 0-100, high = risky, used as-is. `credit.fico9` is the TU score (sandbox TU returns VantageScore 4.0 under the fico9 product, noted per bundle); `bureaus` {tu,efx,exp:{status,score,model}} lives in `bundles.raw`. |
+| `crs.personas.ts` | Real CRS test personas P01..P20 (names, labels, request bodies per product). |
+| `crs.fixtures.ts`, `fixtures/crs/Pxx.json` | Normalized bundles (served by the mock) and full raw sandbox responses captured live. |
+| `crs.mock.ts` | Serves the fixtures, `defaultIntake` per persona for the eval; old synthetic personas are fallback only. |
 | `agents.ts` | `runUnderwriter` / `runCompliance` steps; Claude (structured outputs + Zod, one retry), CREAO (async), stub. |
 | `stub.ts` | Deterministic policies. Keep its numbers in sync with `policies/*.md`. |
 | `policies.ts` | GENERATED from `policies/*.md` by `npm run policies:sync`. |
