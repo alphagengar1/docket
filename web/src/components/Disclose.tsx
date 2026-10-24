@@ -34,7 +34,7 @@ import {
 } from 'react'
 import '../styles/disclose.css'
 
-export type DiscloseTone = 'info' | 'good' | 'bad' | 'human' | 'muted'
+export type DiscloseTone = 'info' | 'good' | 'warn' | 'bad' | 'human' | 'muted'
 export type DiscloseDensity = 'row' | 'card'
 
 export interface DiscloseProps {
@@ -60,6 +60,7 @@ export interface DiscloseProps {
 const TONE_WORD: Record<DiscloseTone, string> = {
   info: 'Note',
   good: 'OK',
+  warn: 'Declined',
   bad: 'Flag',
   human: 'Human',
   muted: 'Idle',

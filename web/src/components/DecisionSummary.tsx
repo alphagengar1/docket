@@ -26,7 +26,7 @@ interface Props {
 export function lenderTone(line: LenderLine): DiscloseTone {
   if (line.tone === 'approve') return 'good'
   if (line.tone === 'hard') return 'bad'
-  if (line.tone === 'decline') return 'info'
+  if (line.tone === 'decline') return 'warn'
   return 'muted'
 }
 
@@ -267,10 +267,10 @@ export function DecisionSummary({ applicant: a, offers, hardStop, canDecide, onA
         <span className="ax-label">Decision summary</span>
         <span className="ax-pill ink">{STATUS_WORD[a.status]}</span>
         {!hard && (
-          <span className="ax-counts">
-            <span className="ax-pill outline">{s.declined} declined</span>
-            <span className="ax-pill outline">{s.offered} {s.offered === 1 ? 'offer' : 'offers'}</span>
-            <span className="ax-pill outline">{s.counter} {s.counter === 1 ? 'counteroffer' : 'counteroffers'}</span>
+          <span className="ax-counts mono">
+            <span className="ax-count ax-count--warn">{s.declined} declined</span>
+            <span className="ax-count ax-count--good">{s.offered} {s.offered === 1 ? 'offer' : 'offers'}</span>
+            {s.counter > 0 && <span className="ax-count ax-count--good">{s.counter} {s.counter === 1 ? 'counteroffer' : 'counteroffers'}</span>}
           </span>
         )}
       </div>

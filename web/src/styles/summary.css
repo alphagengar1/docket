@@ -252,3 +252,9 @@
 .lg .diff-label {
   margin: 0 0 8px;
 }
+
+/* Quieter lender rows: plain mono letter instead of a black square; counts as colored text, not boxes. */
+.lg-letter { background: transparent; color: var(--muted); width: auto; height: auto; margin-right: 10px; font-weight: 600; }
+.ax-counts { display: inline-flex; gap: 14px; font-size: 12px; letter-spacing: 0.04em; text-transform: uppercase; }
+.ax-count--good { color: var(--accent); }
+.ax-count--warn { color: var(--decline); }

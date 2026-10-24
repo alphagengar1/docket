@@ -306,3 +306,16 @@
 }
 /* Tone word for screen readers only on quiet rows (info, OK, idle); Flag and Human keep the visible tag. */
 .disclose__sr { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+
+/* Quieter rows: the chevron only appears on hover, focus or when open; declines get an amber rule and amber meta,
+   offers blue, failures orange. Group controls are text, not boxes. */
+.disclose[data-tone='warn'] { --disclose-rule: var(--decline); }
+.disclose--row .disclose__chevron { opacity: 0; transition: opacity 120ms ease; }
+.disclose--row:hover .disclose__chevron,
+.disclose--row:focus-within .disclose__chevron,
+.disclose--row.is-open .disclose__chevron { opacity: 1; }
+.disclose[data-tone='good'] .disclose__meta { color: var(--accent); }
+.disclose[data-tone='warn'] .disclose__meta { color: var(--decline); }
+.disclose[data-tone='bad'] .disclose__meta { color: var(--hard); }
+.disclose-group__toggle { border: 0; background: transparent; padding: 0; text-decoration: underline; text-underline-offset: 3px; color: var(--muted); }
+.disclose-group__toggle:hover:not(:disabled) { color: var(--text); background: transparent; }
