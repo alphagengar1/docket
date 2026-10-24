@@ -1189,3 +1189,12 @@ table.grid tr.enter td {
     transform: translateY(-50%);
   }
 }
+
+@media (max-width: 1439px) {
+  .eval {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+  }
+  .eval > .stat:last-child {
+    grid-column: 1 / -1;
+  }
+}
