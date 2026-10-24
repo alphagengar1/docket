@@ -52,7 +52,7 @@
       "purpose": "home improvement",
       "amountRequested": 25000,
       "status": "awaiting_human",
-      "approvals": 3,
+      "approvals": 2,
       "lenders": 5,
       "best": {
         "lender": "fintech",
@@ -184,7 +184,7 @@
         "state": "done",
         "startedAt": 1792870851000,
         "finishedAt": 1792870851910,
-        "metric": "0.91s · crs"
+        "metric": "0.91s \u00b7 crs"
       },
       {
         "id": "guardrails",
@@ -192,7 +192,7 @@
         "state": "done",
         "startedAt": 1792870851910,
         "finishedAt": 1792870852840,
-        "metric": "0.93s · 0 rules fired"
+        "metric": "0.93s \u00b7 0 rules fired"
       },
       {
         "id": "underwrite",
@@ -200,7 +200,7 @@
         "state": "done",
         "startedAt": 1792870852840,
         "finishedAt": 1792870856100,
-        "metric": "3.26s · 5/5 done"
+        "metric": "3.26s \u00b7 5/5 done"
       },
       {
         "id": "verify",
@@ -208,7 +208,7 @@
         "state": "done",
         "startedAt": 1792870856100,
         "finishedAt": 1792870858400,
-        "metric": "2.30s · 5/7 reasons verified"
+        "metric": "2.30s \u00b7 5/7 reasons verified"
       },
       {
         "id": "compliance",
@@ -216,7 +216,7 @@
         "state": "done",
         "startedAt": 1792870858400,
         "finishedAt": 1792870859800,
-        "metric": "1.40s · notice drafted"
+        "metric": "1.40s \u00b7 notice drafted"
       },
       {
         "id": "human",
@@ -481,7 +481,7 @@
         "state": "done",
         "startedAt": 1792870791000,
         "finishedAt": 1792870791910,
-        "metric": "0.91s · crs"
+        "metric": "0.91s \u00b7 crs"
       },
       {
         "id": "guardrails",
@@ -489,7 +489,7 @@
         "state": "done",
         "startedAt": 1792870791910,
         "finishedAt": 1792870792840,
-        "metric": "0.93s · 0 rules fired"
+        "metric": "0.93s \u00b7 0 rules fired"
       },
       {
         "id": "underwrite",
@@ -497,7 +497,7 @@
         "state": "done",
         "startedAt": 1792870792840,
         "finishedAt": 1792870796100,
-        "metric": "3.26s · 5/5 done"
+        "metric": "3.26s \u00b7 5/5 done"
       },
       {
         "id": "verify",
@@ -505,7 +505,7 @@
         "state": "done",
         "startedAt": 1792870796100,
         "finishedAt": 1792870798400,
-        "metric": "2.30s · 5/7 reasons verified"
+        "metric": "2.30s \u00b7 5/7 reasons verified"
       },
       {
         "id": "compliance",
@@ -513,7 +513,7 @@
         "state": "done",
         "startedAt": 1792870798400,
         "finishedAt": 1792870799800,
-        "metric": "1.40s · notice drafted"
+        "metric": "1.40s \u00b7 notice drafted"
       },
       {
         "id": "human",
