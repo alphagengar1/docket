@@ -1935,3 +1935,24 @@ table.grid.tl tr:last-child td {
 :root[data-theme='tag'] .pane-foot { font-size: 11px; white-space: nowrap; gap: var(--sp-2); }
 :root[data-theme='tag'] .pane-foot span { overflow: hidden; text-overflow: ellipsis; }
 :root[data-theme='tag'] .board-head h2 { font-size: 22px; }
+
+/* Tag theme, quieter: two greys instead of three, no tick grid or row stripes in the waterfall,
+   sentence-case step names, pre-run metrics hidden, a little more air. */
+:root[data-theme='tag'] { --panel: #e3e4df; --card-2: #e3e4df; --hair: #d6d8d1; --wf-row-h: 28px; }
+:root[data-theme='tag'] .wf-row { border-bottom: 0; }
+:root[data-theme='tag'] .wf-row .lane { background-image: none; }
+:root[data-theme='tag'] .wf-row .lane::before { border-top: 0; }
+:root[data-theme='tag'] .wf-row .lbl::after { border-top-color: var(--hair); }
+:root[data-theme='tag'] .wf-row.queued .met,
+:root[data-theme='tag'] .wf-row.skipped .met { display: none; }
+:root[data-theme='tag'] .wf-row .nm { font-family: var(--sans); text-transform: none; letter-spacing: 0; font-size: var(--fs-small); }
+:root[data-theme='tag'] .wf-row.child .nm { color: var(--muted); }
+:root[data-theme='tag'] .wf-ruler .ticks { color: var(--hair-2); }
+:root[data-theme='tag'] .waterfall { padding-top: var(--sp-3); padding-bottom: var(--sp-3); }
+:root[data-theme='tag'] .col-head .nm { font-family: var(--sans); text-transform: none; letter-spacing: 0; font-weight: var(--wt-medium); }
+:root[data-theme='tag'] .col-head .chip { display: none; }
+:root[data-theme='tag'] .card { padding: var(--sp-4) var(--sp-4) var(--sp-3); }
+:root[data-theme='tag'] .card-foot .chip { text-transform: none; letter-spacing: 0; }
+:root[data-theme='tag'] .topbar .ghost { color: var(--muted); }
+:root[data-theme='tag'] .board-head { border-bottom: 1px solid var(--hair-2); }
+:root[data-theme='tag'] .inspector-head .name { font-family: var(--sans); }
