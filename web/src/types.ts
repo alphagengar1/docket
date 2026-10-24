@@ -21,13 +21,15 @@ export interface Applicant {
   consentAt: number
   status: ApplicantStatus
   createdAt: number
+  /** Proposed addition (design/open.md): set on the re-run created by a tradeline dispute. */
+  replayOf?: string | null
 }
 
 export interface Tradeline {
   type: string
   balance: number
   status: string
-  openedAt: number
+  openedAt: string
 }
 
 export interface Bundle {
@@ -80,6 +82,23 @@ export interface Offer {
   shareUrl: string | null
   latencyMs: number | null
   createdAt: number
+  /** Proposed addition (design/open.md): code-derived from requested vs offered terms. */
+  classification?: OfferClassification
+}
+
+export type OfferClassification = 'approve' | 'counteroffer' | 'deny'
+
+/** Proposed table (design/open.md): counterfactual test of one decline reason. */
+export interface ReasonCheck {
+  _id: string
+  offerId: string
+  applicantId: string
+  field: string
+  original: unknown
+  counterfactual: unknown
+  flipped: boolean
+  latencyMs: number
+  createdAt: number
 }
 
 export interface Notice {
@@ -110,6 +129,7 @@ export type Actor =
   | 'underwriter:prime'
   | 'compliance'
   | 'human'
+  | 'applicant'
 
 export interface AuditEvent {
   _id: string
@@ -145,6 +165,8 @@ export interface EvalRun {
   fraudZeroOffers: boolean
   avgReasonsPerDenial: number
   failures: EvalFailure[]
+  /** Proposed addition (design/open.md): share of decline reasons whose counterfactual test flipped. */
+  reasonsVerified?: number | null
 }
 
 export interface MarketRate {
@@ -183,8 +205,8 @@ export const PIPELINE_STEPS = [
 
 export type StepId = (typeof PIPELINE_STEPS)[number]['id']
 
-export const LENDERS: Array<{ id: Lender; label: string; policy: string }> = [
-  { id: 'cu', label: 'Credit Union', policy: 'Conservative' },
-  { id: 'fintech', label: 'Fintech', policy: 'Growth' },
-  { id: 'prime', label: 'Prime', policy: 'Prime bank' },
+export const LENDERS: Array<{ id: Lender; label: string; name: string; policy: string }> = [
+  { id: 'cu', label: 'Credit Union', name: 'Pacific Ridge Credit Union', policy: 'Conservative' },
+  { id: 'fintech', label: 'Fintech', name: 'Northstar Lending', policy: 'Growth' },
+  { id: 'prime', label: 'Prime', name: 'Meridian Bank Prime', policy: 'Prime bank' },
 ]

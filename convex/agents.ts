@@ -28,7 +28,8 @@ import {
   type UnderwriterOutput,
 } from "./types";
 import { POLICIES, LENDER_NAMES } from "./policies";
-import { stubCompliance, stubUnderwrite } from "./stub";
+import { advertisedApr, stubCompliance, stubUnderwrite } from "./stub";
+import { classifyOffer, fcraParagraph, noticeRequired } from "./classify";
 
 export type Role = "underwriter" | "compliance";
 export type ProviderName = "claude" | "creao" | "stub";
@@ -78,8 +79,9 @@ function underwriterUser(input: UnderwriterInput): string {
 
 const COMPLIANCE_SYSTEM = [
   "You write adverse-action notices for an automated lending desk. Plain English, second person, addressed to the applicant by name.",
-  "Name every lender that declined and every specific reason it gave, quoting the numbers. Group reasons by lender.",
-  "Say the decision was based on information in their consumer credit report and that they may obtain a free copy from the reporting agency within 60 days and dispute inaccuracies. Keep that legal portion to at most two sentences.",
+  "Each entry in `declines` is a lender response that requires notice: classification \"deny\" (declined) or \"counteroffer\" (approved on different terms; state the offered amount, APR and term and that they may accept or decline it).",
+  "Name every lender and every reason listed for it, quoting the numbers. Use ONLY the reasons given; each has already been verified by a counterfactual test. Do not add, merge or soften reasons. Group by lender.",
+  "Do NOT write the credit-bureau / FCRA paragraph or any legal boilerplate; the system appends the legally required text after yours.",
   "Close with one concrete sentence on what would change the outcome. No marketing. No headings. Return JSON {\"text\": ...} only.",
 ].join(" ");
 
@@ -230,7 +232,7 @@ export const loadCase = internalQuery({
       .order("desc")
       .first();
     if (!bundleDoc) throw new Error("bundle not pulled yet");
-    const { raw: _raw, _id, _creationTime, applicantId: _a, source: _s, pulledAt: _p, ...bundle } = bundleDoc;
+    const { raw: _raw, _id, _creationTime, applicantId: _a, source, pulledAt, ...bundle } = bundleDoc;
     const tier = tierForScore(bundle.credit.fico9 ?? bundle.credit.vantage4);
     const rate = await ctx.db
       .query("marketRates")
@@ -242,7 +244,7 @@ export const loadCase = internalQuery({
       .query("offers")
       .withIndex("by_applicantId", (q) => q.eq("applicantId", applicantId))
       .collect();
-    return { applicant, bundle: bundle as BundleData, marketAnchor, offers };
+    return { applicant, bundle: bundle as BundleData, marketAnchor, offers, source, pulledAt };
   },
 });
 
@@ -258,9 +260,15 @@ export const insertOffer = internalMutation({
     latencyMs: v.union(v.number(), v.null()),
     note: v.string(),
     actualProvider: v.string(),
+    advertisedApr: v.optional(v.union(v.number(), v.null())),
   },
   handler: async (ctx, a) => {
     const o = a.output as UnderwriterOutput | null;
+    const applicant = await ctx.db.get(a.applicantId);
+    const cls =
+      a.status === "done" && o && applicant
+        ? classifyOffer(o, { amountRequested: applicant.amountRequested }, a.advertisedApr ?? null)
+        : null;
     const offerId = await ctx.db.insert("offers", {
       applicantId: a.applicantId,
       lender: a.lender,
@@ -273,6 +281,7 @@ export const insertOffer = internalMutation({
       conditions: o?.conditions ?? [],
       reasons: o?.reasons ?? [],
       marketAnchor: a.marketAnchor,
+      ...(cls ? { classification: cls.classification } : {}),
       runId: a.runId,
       shareUrl: null,
       latencyMs: a.latencyMs,
@@ -284,7 +293,7 @@ export const insertOffer = internalMutation({
       actor: `underwriter:${a.lender}` as const,
       action: a.status === "pending" ? "underwrite.started" : a.status === "done" ? `underwrite.${o?.decision}` : "underwrite.failed",
       ref: String(offerId),
-      note: `${a.note} [provider=${a.actualProvider}]`,
+      note: `${a.note} [provider=${a.actualProvider}]${cls ? ` classification=${cls.classification} (${cls.why})` : ""}`,
     });
     return offerId;
   },
@@ -313,14 +322,20 @@ export const insertAgentRun = internalMutation({
 });
 
 export const insertNotice = internalMutation({
-  args: { applicantId: v.id("applicants"), text: v.string(), lendersDeclined: v.array(v.string()), note: v.string() },
+  args: {
+    applicantId: v.id("applicants"),
+    text: v.string(),
+    lendersDeclined: v.array(v.string()),
+    note: v.string(),
+    lendersCounteroffered: v.optional(v.array(v.string())),
+    required: v.optional(v.boolean()),
+    requiredBecause: v.optional(v.string()),
+    droppedReasons: v.optional(v.array(v.object({ lender: v.string(), field: v.string(), text: v.string() }))),
+    fcraSource: v.optional(v.string()),
+  },
   handler: async (ctx, a) => {
-    const id = await ctx.db.insert("notices", {
-      applicantId: a.applicantId,
-      text: a.text,
-      lendersDeclined: a.lendersDeclined,
-      createdAt: Date.now(),
-    });
+    const { note: _n, ...fields } = a;
+    const id = await ctx.db.insert("notices", { ...fields, createdAt: Date.now() });
     await ctx.db.insert("auditEvents", {
       applicantId: a.applicantId,
       at: Date.now(),
@@ -388,8 +403,18 @@ export const completeRun = internalMutation({
       if (run.offerId) {
         if (!failure && val?.success) {
           const o = val.data;
+          const applicant = await ctx.db.get(run.applicantId);
+          const bundleDoc = await ctx.db
+            .query("bundles")
+            .withIndex("by_applicantId", (q) => q.eq("applicantId", run.applicantId))
+            .order("desc")
+            .first();
+          const score = bundleDoc?.credit.fico9 ?? bundleDoc?.credit.vantage4 ?? null;
+          const adv = run.lender ? advertisedApr(run.lender, score, bundleDoc?.credit.fico9 == null) : null;
+          const cls = applicant ? classifyOffer(o, { amountRequested: applicant.amountRequested }, adv) : null;
           await ctx.db.patch(run.offerId, {
             status: "done",
+            ...(cls ? { classification: cls.classification } : {}),
             decision: o.decision,
             apr: o.apr,
             termMonths: o.termMonths,
@@ -418,10 +443,20 @@ export const completeRun = internalMutation({
           .query("offers")
           .withIndex("by_applicantId", (q) => q.eq("applicantId", run.applicantId))
           .collect();
+        const bundleDoc = await ctx.db
+          .query("bundles")
+          .withIndex("by_applicantId", (q) => q.eq("applicantId", run.applicantId))
+          .order("desc")
+          .first();
+        const fcra = bundleDoc ? fcraParagraph(bundleDoc.source, bundleDoc.pulledAt) : "";
+        const needs = offers.filter((o) => o.status === "done" && (o.classification ?? (o.decision === "decline" ? "deny" : "approve")) !== "approve");
         await ctx.db.insert("notices", {
           applicantId: run.applicantId,
-          text: val.data.text,
-          lendersDeclined: offers.filter((o) => o.decision === "decline").map((o) => o.lender),
+          text: `${val.data.text.trim()}\n\n${fcra}`,
+          lendersDeclined: needs.map((o) => o.lender),
+          lendersCounteroffered: needs.filter((o) => o.classification === "counteroffer").map((o) => o.lender),
+          required: true,
+          fcraSource: fcra,
           createdAt: Date.now(),
         });
       }
@@ -506,6 +541,38 @@ export const failPending = internalMutation({
 });
 
 // ---------------------------------------------------------------------------
+// One synchronous underwriting call (claude or stub). Used by runUnderwriter and
+// by verify.ts for counterfactual re-runs. CREAO is async and is not used here.
+// ---------------------------------------------------------------------------
+export type OnceResult = { output: UnderwriterOutput | null; latencyMs: number; note: string; actualProvider: "claude" | "stub" };
+
+export async function underwriteOnce(lender: Lender, input: UnderwriterInput): Promise<OnceResult> {
+  const provider = providerFor("underwriter");
+  if (provider === "claude") {
+    const r = await callClaudeJson<UnderwriterOutput>({
+      model: UNDERWRITER_MODEL,
+      system: underwriterSystem(lender),
+      user: underwriterUser(input),
+      format: UnderwriterFormat,
+      validate: validateUnderwriter,
+      effort: "low",
+      maxTokens: 4096,
+    });
+    return r.ok
+      ? { output: r.value, latencyMs: r.latencyMs, note: `${UNDERWRITER_MODEL} ${r.latencyMs}ms`, actualProvider: "claude" }
+      : { output: null, latencyMs: r.latencyMs, note: `claude failed: ${r.error}`, actualProvider: "claude" };
+  }
+  const started = Date.now();
+  const output = stubUnderwrite(lender, input);
+  return {
+    output,
+    latencyMs: Date.now() - started,
+    note: "deterministic stub (no ANTHROPIC_API_KEY or AGENT_PROVIDER_UNDERWRITER=stub)",
+    actualProvider: "stub",
+  };
+}
+
+// ---------------------------------------------------------------------------
 // runAgent entry points (called as workflow steps)
 // ---------------------------------------------------------------------------
 export type AgentStepResult = { status: "done" | "pending" | "failed"; decision?: "approve" | "decline" | null; note: string };
@@ -559,35 +626,8 @@ export const runUnderwriter = internalAction({
       }
     }
 
-    let output: UnderwriterOutput | null = null;
-    let latencyMs: number | null = null;
-    let note = "";
-    let actualProvider = provider;
-    if (provider === "claude") {
-      const r = await callClaudeJson<UnderwriterOutput>({
-        model: UNDERWRITER_MODEL,
-        system: underwriterSystem(lender),
-        user: underwriterUser(input),
-        format: UnderwriterFormat,
-        validate: validateUnderwriter,
-        effort: "low",
-        maxTokens: 4096,
-      });
-      latencyMs = r.latencyMs;
-      if (r.ok) {
-        output = r.value;
-        note = `${UNDERWRITER_MODEL} ${r.latencyMs}ms`;
-      } else {
-        note = `claude failed: ${r.error}`;
-      }
-    } else {
-      const started = Date.now();
-      output = stubUnderwrite(lender, input);
-      latencyMs = Date.now() - started;
-      note = "deterministic stub (no ANTHROPIC_API_KEY or AGENT_PROVIDER_UNDERWRITER=stub)";
-      actualProvider = "stub";
-    }
-
+    const once = await underwriteOnce(lender, input);
+    const output = once.output;
     await ctx.runMutation(internal.agents.insertOffer, {
       applicantId,
       lender,
@@ -596,11 +636,12 @@ export const runUnderwriter = internalAction({
       output,
       marketAnchor,
       runId: null,
-      latencyMs,
-      note,
-      actualProvider,
+      latencyMs: once.latencyMs,
+      note: once.note,
+      actualProvider: once.actualProvider,
+      advertisedApr: advertisedApr(lender, bundle.credit.fico9 ?? bundle.credit.vantage4, bundle.credit.fico9 == null),
     });
-    return { status: output ? "done" : "failed", decision: output?.decision ?? null, note };
+    return { status: output ? "done" : "failed", decision: output?.decision ?? null, note: once.note };
   },
 });
 
@@ -614,11 +655,30 @@ export const setOfferRunId = internalMutation({
 export const runCompliance = internalAction({
   args: { applicantId: v.id("applicants") },
   handler: async (ctx, { applicantId }): Promise<AgentStepResult> => {
-    const { applicant, offers } = await ctx.runQuery(internal.agents.loadCase, { applicantId });
-    const declines = offers
-      .filter((o: Doc<"offers">) => o.status === "done" && o.decision === "decline")
-      .map((o: Doc<"offers">) => ({ lender: o.lender, reasons: o.reasons }));
-    if (declines.length === 0) return { status: "done", note: "no declines; no notice needed" };
+    const { applicant, offers, source, pulledAt } = await ctx.runQuery(internal.agents.loadCase, { applicantId });
+    const done = offers.filter((o: Doc<"offers">) => o.status === "done");
+    const need = noticeRequired(done.map((o: Doc<"offers">) => o.classification ?? (o.decision === "decline" ? "deny" : "approve")));
+    if (!need.required) return { status: "done", note: `no notice required: ${need.because}` };
+
+    const dropped: Array<{ lender: string; field: string; text: string }> = [];
+    const declines: ComplianceInput["declines"] = [];
+    for (const o of done) {
+      const cls = o.classification ?? (o.decision === "decline" ? "deny" : "approve");
+      if (cls === "approve") continue;
+      // Only reasons whose counterfactual flipped the decision reach the notice.
+      // Untested reasons (verified null/undefined) are kept; verified=false is dropped.
+      const kept = o.reasons.filter((r) => r.verified !== false);
+      for (const r of o.reasons) if (r.verified === false) dropped.push({ lender: o.lender, field: r.field, text: r.text });
+      declines.push({
+        lender: o.lender,
+        classification: cls,
+        offered:
+          cls === "counteroffer" && o.amount != null && o.apr != null && o.termMonths != null
+            ? { amount: o.amount, apr: o.apr, termMonths: o.termMonths }
+            : null,
+        reasons: cls === "counteroffer" ? kept.length ? kept : o.conditions.filter((c) => /instead of/i.test(c)).map((c) => ({ text: c, field: "amountRequested" })) : kept,
+      });
+    }
 
     const input: ComplianceInput = {
       applicant: {
@@ -628,6 +688,18 @@ export const runCompliance = internalAction({
         statedIncome: applicant.statedIncome,
       },
       declines,
+    };
+    const fcra = fcraParagraph(source, pulledAt);
+    const lendersDeclined = declines.map((d) => d.lender);
+    const lendersCounteroffered = declines.filter((d) => d.classification === "counteroffer").map((d) => d.lender);
+    const common = {
+      applicantId,
+      lendersDeclined,
+      lendersCounteroffered,
+      required: true,
+      requiredBecause: need.because,
+      droppedReasons: dropped,
+      fcraSource: fcra,
     };
     const provider = providerFor("compliance");
 
@@ -652,11 +724,7 @@ export const runCompliance = internalAction({
       const r = await callClaudeJson<{ text: string }>({
         model: COMPLIANCE_MODEL,
         system: COMPLIANCE_SYSTEM,
-        user: `Write the adverse-action notice for this applicant.\n\n${JSON.stringify(
-          { ...input, lenderNames: LENDER_NAMES },
-          null,
-          2,
-        )}`,
+        user: `Write the adverse-action notice for this applicant.\n\n${JSON.stringify({ ...input, lenderNames: LENDER_NAMES }, null, 2)}`,
         format: ComplianceFormat,
         validate: validateCompliance,
         effort: "medium",
@@ -664,12 +732,11 @@ export const runCompliance = internalAction({
       });
       if (r.ok) {
         await ctx.runMutation(internal.agents.insertNotice, {
-          applicantId,
-          text: r.value.text,
-          lendersDeclined: declines.map((d: { lender: Lender }) => d.lender),
-          note: `${COMPLIANCE_MODEL} ${r.latencyMs}ms [provider=claude]`,
+          ...common,
+          text: `${r.value.text.trim()}\n\n${fcra}`,
+          note: `${COMPLIANCE_MODEL} ${r.latencyMs}ms [provider=claude] ${dropped.length} unsupported reason(s) withheld`,
         });
-        return { status: "done", note: `${COMPLIANCE_MODEL} ${r.latencyMs}ms` };
+        return { status: "done", note: `${COMPLIANCE_MODEL} ${r.latencyMs}ms; ${dropped.length} unsupported reason(s) withheld` };
       }
       await ctx.runMutation(internal.audit.log, {
         applicantId,
@@ -682,11 +749,10 @@ export const runCompliance = internalAction({
 
     const out = stubCompliance(input);
     await ctx.runMutation(internal.agents.insertNotice, {
-      applicantId,
-      text: out.text,
-      lendersDeclined: declines.map((d: { lender: Lender }) => d.lender),
-      note: "deterministic stub notice [provider=stub]",
+      ...common,
+      text: `${out.text}\n\n${fcra}`,
+      note: `deterministic stub notice [provider=stub] ${dropped.length} unsupported reason(s) withheld`,
     });
-    return { status: "done", note: "stub notice" };
+    return { status: "done", note: `stub notice; ${dropped.length} unsupported reason(s) withheld` };
   },
 });

@@ -72,6 +72,8 @@ export const finishRun = internalMutation({
     fraudZeroOffers: v.boolean(),
     avgReasonsPerDenial: v.number(),
     failures: v.array(v.object({ personaId: v.string(), expected: v.string(), got: v.string(), why: v.string() })),
+    reasonsVerifiedPct: v.number(),
+    latencyP50Ms: v.object({ cu: v.union(v.number(), v.null()), fintech: v.union(v.number(), v.null()), prime: v.union(v.number(), v.null()) }),
   },
   handler: async (ctx, { runId, ...rest }) => {
     await ctx.db.patch(runId, { ...rest, finishedAt: Date.now() });
@@ -99,10 +101,21 @@ export const observe = internalQuery({
       .query("auditEvents")
       .withIndex("by_applicantId", (q) => q.eq("applicantId", applicantId))
       .collect();
+    const checks = await ctx.db
+      .query("reasonChecks")
+      .withIndex("by_applicantId", (q) => q.eq("applicantId", applicantId))
+      .collect();
     return {
       status: a?.status ?? "missing",
-      offers: offers.map((o) => ({ status: o.status, decision: o.decision, reasons: o.reasons.map((r) => ({ field: r.field })) })),
+      offers: offers.map((o) => ({
+        status: o.status,
+        decision: o.decision,
+        reasons: o.reasons.map((r) => ({ field: r.field })),
+        lender: o.lender,
+        latencyMs: o.latencyMs,
+      })),
       hardStopRefs: audits.filter((e) => e.actor === "rules" && e.action === "rules.hard_stop" && e.ref).map((e) => e.ref as string),
+      reasonChecks: checks.map((c) => ({ flipped: c.flipped })),
     };
   },
 });
@@ -114,6 +127,8 @@ export type EvalSummary = {
   fraudZeroOffers: boolean;
   avgReasonsPerDenial: number;
   failures: Array<{ personaId: string; expected: string; got: string; why: string }>;
+  reasonsVerifiedPct: number;
+  latencyP50Ms: { cu: number | null; fintech: number | null; prime: number | null };
 };
 
 async function runEvalImpl(ctx: any, keep: boolean): Promise<EvalSummary> {
@@ -156,6 +171,8 @@ async function runEvalImpl(ctx: any, keep: boolean): Promise<EvalSummary> {
     fraudZeroOffers: agg.fraudZeroOffers,
     avgReasonsPerDenial: agg.avgReasonsPerDenial,
     failures: agg.failures,
+    reasonsVerifiedPct: agg.reasonsVerifiedPct,
+    latencyP50Ms: agg.latencyP50Ms,
   });
 
   if (!keep) {

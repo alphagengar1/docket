@@ -96,6 +96,14 @@ const P: Record<Lender, PolicyNumbers> = {
   },
 };
 
+/** The APR the policy table advertises for this score (null = no band). Used by classify.ts. */
+export function advertisedApr(lender: Lender, score: number | null, thinFile = false): number | null {
+  if (thinFile) return lender === "fintech" ? 24.9 : null;
+  if (score == null) return null;
+  const band = P[lender].bands.find((b) => score >= b.min);
+  return band ? band.apr : null;
+}
+
 export function stubUnderwrite(lender: Lender, input: UnderwriterInput): UnderwriterOutput {
   const p = P[lender];
   const { bundle, statedIncome, amountRequested } = input;
@@ -230,16 +238,19 @@ export function stubCompliance(input: ComplianceInput): { text: string } {
   const { applicant, declines } = input;
   const lines: string[] = [];
   lines.push(
-    `Dear ${applicant.name}, thank you for applying for a ${usd(applicant.amountRequested)} loan for ${applicant.purpose}. We are writing to let you know which lenders were unable to make you an offer and exactly why.`,
+    `Dear ${applicant.name}, thank you for applying for a ${usd(applicant.amountRequested)} loan for ${applicant.purpose}. This notice explains which lenders declined your request or offered different terms, and exactly why.`,
   );
   for (const d of declines) {
     const name = LENDER_NAMES[d.lender];
     const why = d.reasons.map((r) => r.text.replace(/\.$/, "")).join("; ");
-    lines.push(`${name} declined because: ${why}.`);
+    if (d.classification === "counteroffer" && d.offered) {
+      lines.push(
+        `${name} did not approve the terms you requested but offered ${usd(d.offered.amount)} at ${d.offered.apr}% APR for ${d.offered.termMonths} months instead${why ? `, because: ${why}` : ""}.`,
+      );
+    } else {
+      lines.push(`${name} declined because: ${why}.`);
+    }
   }
-  lines.push(
-    "These decisions were based on information in your consumer credit report. You have the right to a free copy of that report from the reporting agency within 60 days, and to dispute anything in it that is inaccurate or incomplete.",
-  );
   lines.push("Fixing the items named above, or applying for a smaller amount, would change the outcome at one or more of these lenders.");
   return { text: lines.join("\n\n") };
 }

@@ -1,0 +1,2 @@
+trace-spans.webp  <-  https://www.comet.com/docs/opik/_fern-img/77c0eeafeb92a3acfd67fa0a810ac824c0391a3184ac5d269d9f18dcca38bfa5.webp  (comet.com/docs/opik/tracing/log_traces)
+trace-messages.webp  <-  https://www.comet.com/docs/opik/_fern-img/c7a95461653ea7dfc9e8117d86229ce1b6861ab15df21d832ccf2336fea71e44.webp  (comet.com/docs/opik/tracing/log_traces)

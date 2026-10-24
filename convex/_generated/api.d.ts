@@ -10,6 +10,7 @@
 
 import type * as agents from "../agents.js";
 import type * as audit from "../audit.js";
+import type * as classify from "../classify.js";
 import type * as crons from "../crons.js";
 import type * as crs from "../crs.js";
 import type * as desk from "../desk.js";
@@ -22,6 +23,7 @@ import type * as policies from "../policies.js";
 import type * as rules from "../rules.js";
 import type * as stub from "../stub.js";
 import type * as types from "../types.js";
+import type * as verify from "../verify.js";
 
 import type {
   ApiFromModules,
@@ -32,6 +34,7 @@ import type {
 declare const fullApi: ApiFromModules<{
   agents: typeof agents;
   audit: typeof audit;
+  classify: typeof classify;
   crons: typeof crons;
   crs: typeof crs;
   desk: typeof desk;
@@ -44,6 +47,7 @@ declare const fullApi: ApiFromModules<{
   rules: typeof rules;
   stub: typeof stub;
   types: typeof types;
+  verify: typeof verify;
 }>;
 
 /**

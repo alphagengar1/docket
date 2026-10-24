@@ -24,7 +24,8 @@ export type BundleData = {
   flags: { deceased: boolean; frozen: boolean; bankruptcy: boolean; eviction: boolean };
 };
 
-export type Reason = { text: string; field: string };
+export type Reason = { text: string; field: string; verified?: boolean | null };
+export type Classification = "approve" | "counteroffer" | "deny";
 export type MarketAnchor = { tier: Tier; aprLow: number; aprHigh: number };
 
 // Underwriter agent output (contracts.md). Zod-validated on every provider.
@@ -68,7 +69,13 @@ export type UnderwriterInput = {
 
 export type ComplianceInput = {
   applicant: { name: string; purpose: string; amountRequested: number; statedIncome: number };
-  declines: Array<{ lender: Lender; reasons: Reason[] }>;
+  // "declines" = every lender response that needs a notice: deny or counteroffer.
+  declines: Array<{
+    lender: Lender;
+    classification?: Classification;
+    offered?: { amount: number; apr: number; termMonths: number } | null;
+    reasons: Reason[];
+  }>;
 };
 
 export function tierForScore(score: number | null): Tier {

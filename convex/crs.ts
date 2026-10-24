@@ -244,20 +244,64 @@ export const insertBundle = internalMutation({
 
 export type PullResult = { source: "crs" | "mock"; bundle: BundleData; note: string };
 
+export const latestBundleFor = internalQuery({
+  args: { applicantId: v.id("applicants") },
+  handler: async (ctx, { applicantId }) =>
+    await ctx.db
+      .query("bundles")
+      .withIndex("by_applicantId", (q) => q.eq("applicantId", applicantId))
+      .order("desc")
+      .first(),
+});
+
+/**
+ * Dispute-and-replay on mock data: remove the disputed tradeline and apply a
+ * deterministic, documented correction so the replay can differ:
+ *  - revolving utilization is rescaled by the removed card balance's share;
+ *  - scores rise 25 points if the removed line was derogatory, else 5.
+ * (With CRS_PROVIDER=crs the bundle is simply re-pulled.)
+ */
+export function removeTradeline(bundle: BundleData, index: number): { bundle: BundleData; removed: BundleData["credit"]["tradelines"][number]; note: string } {
+  const tls = bundle.credit.tradelines;
+  if (index < 0 || index >= tls.length) throw new Error(`tradelineIndex ${index} out of range (0..${tls.length - 1})`);
+  const removed = tls[index];
+  const next: BundleData = JSON.parse(JSON.stringify(bundle));
+  next.credit.tradelines.splice(index, 1);
+  const derog = /dpd|discharged|collection|charge.?off|late/i.test(removed.status);
+  const bump = derog ? 25 : 5;
+  if (next.credit.fico9 != null) next.credit.fico9 = Math.min(850, next.credit.fico9 + bump);
+  if (next.credit.vantage4 != null) next.credit.vantage4 = Math.min(850, next.credit.vantage4 + bump);
+  if (removed.type === "credit_card" && next.credit.utilization != null) {
+    const revolving = tls.filter((t) => t.type === "credit_card").reduce((a, t) => a + t.balance, 0);
+    if (revolving > 0) next.credit.utilization = Math.round(next.credit.utilization * (1 - removed.balance / revolving) * 100) / 100;
+  }
+  return { bundle: next, removed, note: `removed ${removed.type} ${removed.status} $${removed.balance} (opened ${removed.openedAt}); score +${bump}` };
+}
+
+const disputeArg = v.object({ fromApplicantId: v.id("applicants"), tradelineIndex: v.number() });
+
 /** Step 1 of runDesk. Pulls the bundle, stores it, returns it without raw. */
 export const pullBundle = internalAction({
-  args: { applicantId: v.id("applicants"), personaId: v.string() },
-  handler: async (ctx, { applicantId, personaId }): Promise<PullResult> => {
+  args: { applicantId: v.id("applicants"), personaId: v.string(), dispute: v.optional(disputeArg) },
+  handler: async (ctx, { applicantId, personaId, dispute }): Promise<PullResult> => {
     const provider = (process.env.CRS_PROVIDER ?? "mock").toLowerCase();
     let source: "crs" | "mock" = "mock";
     let note = "";
     let data: BundleData & { raw: unknown };
 
-    if (provider === "crs") {
+    if (dispute && provider !== "crs") {
+      const prev = await ctx.runQuery(internal.crs.latestBundleFor, { applicantId: dispute.fromApplicantId });
+      if (!prev) throw new Error("original bundle not found for dispute replay");
+      const { raw: _r, _id, _creationTime, applicantId: _a, source: prevSource, pulledAt: _p, ...prevBundle } = prev;
+      const fixed = removeTradeline(prevBundle as BundleData, dispute.tradelineIndex);
+      data = { ...fixed.bundle, raw: { provider: "mock", personaId, dispute, removed: fixed.removed, basedOnBundle: _id } };
+      source = prevSource === "crs" ? "mock" : "mock";
+      note = `dispute replay (mock): ${fixed.note}`;
+    } else if (provider === "crs") {
       try {
         data = await pullFromCrs(ctx, personaId);
         source = "crs";
-        note = "live CRS sandbox";
+        note = dispute ? "live CRS sandbox re-pull after dispute (bureau-side correction is out of scope)" : "live CRS sandbox";
       } catch (err: any) {
         if (process.env.CRS_STRICT === "1") throw err;
         await ctx.runMutation(internal.audit.log, {

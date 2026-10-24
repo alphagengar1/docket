@@ -10,6 +10,7 @@ import type {
   MarketRate,
   Notice,
   Offer,
+  ReasonCheck,
 } from '../types'
 
 export interface DeskState {
@@ -19,6 +20,7 @@ export interface DeskState {
   notices: Notice[]
   decisions: Decision[]
   auditEvents: AuditEvent[]
+  reasonChecks: ReasonCheck[]
   evalCases: EvalCase[]
   evalRuns: EvalRun[]
   marketRates: MarketRate[]
@@ -32,6 +34,7 @@ export type Op =
   | { kind: 'notice.insert'; row: Notice }
   | { kind: 'decision.insert'; row: Decision }
   | { kind: 'audit.insert'; row: AuditEvent }
+  | { kind: 'reasonCheck.insert'; row: ReasonCheck }
   | { kind: 'evalRun.upsert'; row: EvalRun }
 
 /** An op plus the moment (ms after t0) it should land. */
@@ -48,6 +51,7 @@ export function emptyState(seed: Partial<DeskState> = {}): DeskState {
     notices: [],
     decisions: [],
     auditEvents: [],
+    reasonChecks: [],
     evalCases: [],
     evalRuns: [],
     marketRates: [],
@@ -82,6 +86,8 @@ export function reduce(state: DeskState, op: Op): DeskState {
       return { ...state, decisions: upsert(state.decisions, op.row) }
     case 'audit.insert':
       return { ...state, auditEvents: upsert(state.auditEvents, op.row) }
+    case 'reasonCheck.insert':
+      return { ...state, reasonChecks: upsert(state.reasonChecks, op.row) }
     case 'evalRun.upsert':
       return { ...state, evalRuns: upsert(state.evalRuns, op.row) }
   }

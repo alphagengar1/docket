@@ -1,0 +1,2 @@
+trace-waterfall.png  <-  https://www.respan.ai/hero/trace-heroimage.png  (respan.ai, formerly keywordsai.co)
+kpi-logs.jpg  <-  https://www.respan.ai/og/home-logs.jpg  (respan.ai og:image; wordmark overlaid lower half)

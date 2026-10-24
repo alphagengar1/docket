@@ -4,8 +4,9 @@ export type Got = Expected | "pending" | "error";
 
 export type CaseObservation = {
   status: string;
-  offers: Array<{ status: string; decision: "approve" | "decline" | null; reasons: Array<{ field: string }> }>;
+  offers: Array<{ status: string; decision: "approve" | "decline" | null; reasons: Array<{ field: string }>; lender?: string; latencyMs?: number | null }>;
   hardStopRefs: string[]; // auditEvents actor "rules", action "rules.hard_stop" → ref
+  reasonChecks?: Array<{ flipped: boolean }>;
 };
 
 export type CaseResult = {
@@ -16,6 +17,8 @@ export type CaseResult = {
   why: string;
   declineReasonCounts: number[];
   offersCount: number;
+  checks: { total: number; flipped: number };
+  latencies: Array<{ lender: string; ms: number }>;
 };
 
 export function observedOutcome(o: CaseObservation): Got {
@@ -53,14 +56,28 @@ export function scoreCase(
     why: problems.join("; "),
     declineReasonCounts,
     offersCount: o.offers.length,
+    checks: { total: o.reasonChecks?.length ?? 0, flipped: o.reasonChecks?.filter((c) => c.flipped).length ?? 0 },
+    latencies: o.offers.filter((x) => x.lender && x.latencyMs != null).map((x) => ({ lender: x.lender!, ms: x.latencyMs! })),
   };
+}
+
+export function p50(xs: number[]): number | null {
+  if (!xs.length) return null;
+  const s = [...xs].sort((a, b) => a - b);
+  const mid = Math.floor(s.length / 2);
+  return s.length % 2 ? s[mid] : Math.round((s[mid - 1] + s[mid]) / 2);
 }
 
 export function aggregate(results: CaseResult[]) {
   const cases = results.length;
   const agree = results.filter((r) => r.got === r.expected).length;
   const denials = results.flatMap((r) => r.declineReasonCounts);
+  const total = results.reduce((a, r) => a + r.checks.total, 0);
+  const flipped = results.reduce((a, r) => a + r.checks.flipped, 0);
+  const lat = (lender: string) => p50(results.flatMap((r) => r.latencies.filter((l) => l.lender === lender).map((l) => l.ms)));
   return {
+    reasonsVerifiedPct: total ? flipped / total : 0,
+    latencyP50Ms: { cu: lat("cu"), fintech: lat("fintech"), prime: lat("prime") },
     cases,
     agreement: cases ? agree / cases : 0,
     fraudZeroOffers: results.filter((r) => r.expected === "hard_stop").every((r) => r.offersCount === 0),

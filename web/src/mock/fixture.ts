@@ -9,7 +9,7 @@ export interface Fixture {
 
 export const FIXTURE: Fixture = {
   "t0": 1792834200000,
-  "personaId": "P02",
+  "personaId": "P17",
   "ops": [
     {
       "atMs": 0,
@@ -17,14 +17,15 @@ export const FIXTURE: Fixture = {
         "kind": "applicant.upsert",
         "row": {
           "_id": "app_replay",
-          "personaId": "P02",
-          "name": "Devon Reyes",
-          "purpose": "Home improvement",
-          "amountRequested": 12000,
-          "statedIncome": 76000,
+          "personaId": "P17",
+          "name": "Beatrix Oyinlola",
+          "purpose": "solar panels",
+          "amountRequested": 22000,
+          "statedIncome": 130000,
           "consentAt": 1792834200000,
           "status": "intake",
-          "createdAt": 1792834200000
+          "createdAt": 1792834200000,
+          "replayOf": null
         }
       }
     },
@@ -52,9 +53,9 @@ export const FIXTURE: Fixture = {
           "applicantId": "app_replay",
           "at": 1792834200000,
           "actor": "intake",
-          "action": "application.submitted",
-          "ref": "persona:P02",
-          "note": "Home improvement, $12,000, stated income $76,000."
+          "action": "intake.submitted",
+          "ref": "persona:P17",
+          "note": "solar panels, $22,000, stated income $130,000."
         }
       }
     },
@@ -91,37 +92,37 @@ export const FIXTURE: Fixture = {
           "pulledAt": 1792834201700,
           "source": "mock",
           "credit": {
-            "fico9": 712,
-            "vantage4": 718,
+            "fico9": 760,
+            "vantage4": 766,
             "tradelines": [
               {
+                "type": "mortgage",
+                "balance": 398000,
+                "status": "open",
+                "openedAt": "2018-05-25"
+              },
+              {
                 "type": "credit_card",
-                "balance": 6100,
-                "status": "current",
-                "openedAt": 1617235200000
+                "balance": 2100,
+                "status": "open",
+                "openedAt": "2010-10-10"
               },
               {
                 "type": "auto",
-                "balance": 14800,
-                "status": "30d_late_2025",
-                "openedAt": 1680307200000
-              },
-              {
-                "type": "student",
-                "balance": 22000,
-                "status": "current",
-                "openedAt": 1522540800000
+                "balance": 19000,
+                "status": "open",
+                "openedAt": "2025-12-01"
               }
             ],
-            "inquiries6mo": 2,
-            "utilization": 0.34
+            "inquiries6mo": 3,
+            "utilization": 0.15
           },
           "identity": {
             "verified": true,
             "flags": []
           },
           "fraud": {
-            "score": 11,
+            "score": 6,
             "signals": []
           },
           "flags": {
@@ -131,7 +132,8 @@ export const FIXTURE: Fixture = {
             "eviction": false
           },
           "raw": {
-            "sandbox": true
+            "provider": "mock",
+            "personaId": "P17"
           }
         }
       }
@@ -145,9 +147,9 @@ export const FIXTURE: Fixture = {
           "applicantId": "app_replay",
           "at": 1792834201700,
           "actor": "crs",
-          "action": "bundle.pulled",
+          "action": "crs.pulled",
           "ref": "bundles.source=mock",
-          "note": "FICO 9 712, Vantage 4 718, 3 tradelines, fraud 11."
+          "note": "FICO 9 760, Vantage 4 766, 3 tradelines, fraud 6."
         }
       }
     },
@@ -198,9 +200,9 @@ export const FIXTURE: Fixture = {
           "applicantId": "app_replay",
           "at": 1792834202300,
           "actor": "rules",
-          "action": "guardrails.passed",
+          "action": "rules.pass",
           "ref": null,
-          "note": "No deceased, frozen, IDV or fraud-threshold hit."
+          "note": "No hard-stop rule fired."
         }
       }
     },
@@ -259,7 +261,7 @@ export const FIXTURE: Fixture = {
           "conditions": [],
           "reasons": [],
           "marketAnchor": null,
-          "runId": "run_cu_20e9",
+          "runId": "run_cu_210d",
           "shareUrl": null,
           "latencyMs": null,
           "createdAt": 1792834202300
@@ -267,7 +269,22 @@ export const FIXTURE: Fixture = {
       }
     },
     {
-      "atMs": 3760,
+      "atMs": 2300,
+      "op": {
+        "kind": "audit.insert",
+        "row": {
+          "_id": "aud_replay_09",
+          "applicantId": "app_replay",
+          "at": 1792834202300,
+          "actor": "underwriter:cu",
+          "action": "underwrite.started",
+          "ref": "offers.cu",
+          "note": "Policy: Pacific Ridge Credit Union."
+        }
+      }
+    },
+    {
+      "atMs": 3880,
       "op": {
         "kind": "offer.upsert",
         "row": {
@@ -277,50 +294,48 @@ export const FIXTURE: Fixture = {
           "provider": "claude",
           "status": "done",
           "decision": "approve",
-          "apr": 11.7,
-          "termMonths": 48,
-          "amount": 12000,
+          "apr": 7.9,
+          "termMonths": 60,
+          "amount": 22000,
           "conditions": [
-            "Membership share account ($5) opened at funding."
+            "Open a Pacific Ridge share account (membership required before funding).",
+            "Provide two most recent pay stubs or equivalent proof of the stated income."
           ],
           "reasons": [
             {
-              "text": "FICO 9 of 712 meets the 680 minimum.",
+              "text": "FICO 9 of 760 meets the policy minimum.",
               "field": "credit.fico9"
             },
             {
-              "text": "Utilization of 34% is within the 50% cap.",
+              "text": "Utilization of 15% is within the 50% cap.",
               "field": "credit.utilization"
-            },
-            {
-              "text": "Payment of $314/mo is 5% of stated monthly income.",
-              "field": "applicant.statedIncome"
             }
           ],
           "marketAnchor": {
-            "tier": "good",
-            "aprLow": 9.9,
-            "aprHigh": 15.5
+            "tier": "excellent",
+            "aprLow": 6.4,
+            "aprHigh": 9.9
           },
-          "runId": "run_cu_20e9",
+          "runId": "run_cu_210d",
           "shareUrl": null,
-          "latencyMs": 1460,
-          "createdAt": 1792834202300
+          "latencyMs": 1580,
+          "createdAt": 1792834202300,
+          "classification": "approve"
         }
       }
     },
     {
-      "atMs": 3760,
+      "atMs": 3880,
       "op": {
         "kind": "audit.insert",
         "row": {
-          "_id": "aud_replay_09",
+          "_id": "aud_replay_10",
           "applicantId": "app_replay",
-          "at": 1792834203760,
+          "at": 1792834203880,
           "actor": "underwriter:cu",
-          "action": "offer.approve",
+          "action": "underwrite.approve",
           "ref": "offers.cu",
-          "note": "11.7% APR, 48 mo, $12,000. 1460 ms."
+          "note": "approve: 7.9% APR, 60 mo, $22,000. 1580 ms."
         }
       }
     },
@@ -341,7 +356,7 @@ export const FIXTURE: Fixture = {
           "conditions": [],
           "reasons": [],
           "marketAnchor": null,
-          "runId": "run_fintech_20e9",
+          "runId": "run_fintech_210d",
           "shareUrl": null,
           "latencyMs": null,
           "createdAt": 1792834202300
@@ -349,7 +364,22 @@ export const FIXTURE: Fixture = {
       }
     },
     {
-      "atMs": 5180,
+      "atMs": 2300,
+      "op": {
+        "kind": "audit.insert",
+        "row": {
+          "_id": "aud_replay_11",
+          "applicantId": "app_replay",
+          "at": 1792834202300,
+          "actor": "underwriter:fintech",
+          "action": "underwrite.started",
+          "ref": "offers.fintech",
+          "note": "Policy: Northstar Lending."
+        }
+      }
+    },
+    {
+      "atMs": 5040,
       "op": {
         "kind": "offer.upsert",
         "row": {
@@ -359,50 +389,47 @@ export const FIXTURE: Fixture = {
           "provider": "claude",
           "status": "done",
           "decision": "approve",
-          "apr": 14.2,
-          "termMonths": 36,
-          "amount": 12000,
+          "apr": 10.9,
+          "termMonths": 48,
+          "amount": 22000,
           "conditions": [
-            "Autopay enrollment required for the quoted APR."
+            "E-sign the loan agreement; funds arrive in 1-2 business days."
           ],
           "reasons": [
             {
-              "text": "FICO 9 of 712 meets the 600 minimum.",
+              "text": "FICO 9 of 760 meets the policy minimum.",
               "field": "credit.fico9"
             },
             {
-              "text": "Utilization of 34% is within the 85% cap.",
+              "text": "Utilization of 15% is within the 80% cap.",
               "field": "credit.utilization"
-            },
-            {
-              "text": "Payment of $411/mo is 6% of stated monthly income.",
-              "field": "applicant.statedIncome"
             }
           ],
           "marketAnchor": {
-            "tier": "good",
-            "aprLow": 9.9,
-            "aprHigh": 15.5
+            "tier": "excellent",
+            "aprLow": 6.4,
+            "aprHigh": 9.9
           },
-          "runId": "run_fintech_20e9",
+          "runId": "run_fintech_210d",
           "shareUrl": null,
-          "latencyMs": 2880,
-          "createdAt": 1792834202300
+          "latencyMs": 2740,
+          "createdAt": 1792834202300,
+          "classification": "approve"
         }
       }
     },
     {
-      "atMs": 5180,
+      "atMs": 5040,
       "op": {
         "kind": "audit.insert",
         "row": {
-          "_id": "aud_replay_10",
+          "_id": "aud_replay_12",
           "applicantId": "app_replay",
-          "at": 1792834205180,
+          "at": 1792834205040,
           "actor": "underwriter:fintech",
-          "action": "offer.approve",
+          "action": "underwrite.approve",
           "ref": "offers.fintech",
-          "note": "14.2% APR, 36 mo, $12,000. 2880 ms."
+          "note": "approve: 10.9% APR, 48 mo, $22,000. 2740 ms."
         }
       }
     },
@@ -423,10 +450,25 @@ export const FIXTURE: Fixture = {
           "conditions": [],
           "reasons": [],
           "marketAnchor": null,
-          "runId": "run_prime_20e9",
+          "runId": "run_prime_210d",
           "shareUrl": null,
           "latencyMs": null,
           "createdAt": 1792834202300
+        }
+      }
+    },
+    {
+      "atMs": 2300,
+      "op": {
+        "kind": "audit.insert",
+        "row": {
+          "_id": "aud_replay_13",
+          "applicantId": "app_replay",
+          "at": 1792834202300,
+          "actor": "underwriter:prime",
+          "action": "underwrite.started",
+          "ref": "offers.prime",
+          "note": "Policy: Meridian Bank Prime."
         }
       }
     },
@@ -447,27 +489,24 @@ export const FIXTURE: Fixture = {
           "conditions": [],
           "reasons": [
             {
-              "text": "FICO 9 of 712 is below the policy minimum of 720.",
+              "text": "3 hard inquiries in six months; policy allows at most 2.",
+              "field": "credit.inquiries6mo"
+            },
+            {
+              "text": "FICO 9 of 760 sits in the excellent band.",
               "field": "credit.fico9"
-            },
-            {
-              "text": "Revolving utilization of 34% exceeds the 30% cap.",
-              "field": "credit.utilization"
-            },
-            {
-              "text": "Delinquency (30d_late_2025) on a auto tradeline within 24 months.",
-              "field": "credit.tradelines[1]"
             }
           ],
           "marketAnchor": {
-            "tier": "good",
-            "aprLow": 9.9,
-            "aprHigh": 15.5
+            "tier": "excellent",
+            "aprLow": 6.4,
+            "aprHigh": 9.9
           },
-          "runId": "run_prime_20e9",
+          "runId": "run_prime_210d",
           "shareUrl": null,
           "latencyMs": 1900,
-          "createdAt": 1792834202300
+          "createdAt": 1792834202300,
+          "classification": "deny"
         }
       }
     },
@@ -476,33 +515,97 @@ export const FIXTURE: Fixture = {
       "op": {
         "kind": "audit.insert",
         "row": {
-          "_id": "aud_replay_11",
+          "_id": "aud_replay_14",
           "applicantId": "app_replay",
           "at": 1792834204200,
           "actor": "underwriter:prime",
-          "action": "offer.decline",
+          "action": "underwrite.decline",
           "ref": "offers.prime",
-          "note": "3 reasons: credit.fico9, credit.utilization, credit.tradelines[1]. 1900 ms."
+          "note": "2 reasons: credit.inquiries6mo, credit.fico9. 1900 ms."
         }
       }
     },
     {
-      "atMs": 5180,
+      "atMs": 5640,
+      "op": {
+        "kind": "reasonCheck.insert",
+        "row": {
+          "_id": "chk_replay_15",
+          "offerId": "off_replay_prime",
+          "applicantId": "app_replay",
+          "field": "credit.inquiries6mo",
+          "original": 3,
+          "counterfactual": 0,
+          "flipped": true,
+          "latencyMs": 1440,
+          "createdAt": 1792834205640
+        }
+      }
+    },
+    {
+      "atMs": 5640,
       "op": {
         "kind": "audit.insert",
         "row": {
-          "_id": "aud_replay_12",
+          "_id": "aud_replay_16",
           "applicantId": "app_replay",
-          "at": 1792834205180,
-          "actor": "desk",
-          "action": "step.underwrite.done",
-          "ref": null,
-          "note": "2880 ms wall clock."
+          "at": 1792834205640,
+          "actor": "rules",
+          "action": "reason.verified",
+          "ref": "offers.prime/credit.inquiries6mo",
+          "note": "Set credit.inquiries6mo 3 → 0: decision flips."
         }
       }
     },
     {
-      "atMs": 5180,
+      "atMs": 5620,
+      "op": {
+        "kind": "reasonCheck.insert",
+        "row": {
+          "_id": "chk_replay_17",
+          "offerId": "off_replay_prime",
+          "applicantId": "app_replay",
+          "field": "credit.fico9",
+          "original": 760,
+          "counterfactual": 780,
+          "flipped": false,
+          "latencyMs": 1420,
+          "createdAt": 1792834205620
+        }
+      }
+    },
+    {
+      "atMs": 5620,
+      "op": {
+        "kind": "audit.insert",
+        "row": {
+          "_id": "aud_replay_18",
+          "applicantId": "app_replay",
+          "at": 1792834205620,
+          "actor": "rules",
+          "action": "reason.unsupported",
+          "ref": "offers.prime/credit.fico9",
+          "note": "Set credit.fico9 760 → 780: decision does not flip. Dropped from the notice."
+        }
+      }
+    },
+    {
+      "atMs": 5040,
+      "op": {
+        "kind": "audit.insert",
+        "row": {
+          "_id": "aud_replay_19",
+          "applicantId": "app_replay",
+          "at": 1792834205040,
+          "actor": "desk",
+          "action": "step.underwrite.done",
+          "ref": null,
+          "note": "2740 ms wall clock."
+        }
+      }
+    },
+    {
+      "atMs": 5040,
       "op": {
         "kind": "applicant.status",
         "id": "app_replay",
@@ -510,67 +613,67 @@ export const FIXTURE: Fixture = {
       }
     },
     {
-      "atMs": 5180,
+      "atMs": 5040,
       "op": {
         "kind": "audit.insert",
         "row": {
-          "_id": "aud_replay_13",
+          "_id": "aud_replay_20",
           "applicantId": "app_replay",
-          "at": 1792834205180,
+          "at": 1792834205040,
           "actor": "desk",
           "action": "step.compliance.start",
           "ref": null,
-          "note": "1 decline(s) need an adverse-action notice."
+          "note": "1 denial(s), 0 counteroffer(s). Waiting for reason checks."
         }
       }
     },
     {
-      "atMs": 6580,
+      "atMs": 7040,
       "op": {
         "kind": "notice.insert",
         "row": {
           "_id": "not_replay",
           "applicantId": "app_replay",
-          "text": "Devon Reyes, this notice explains the credit decisions made on your application. the Prime bank declined because: FICO 9 of 712 is below the policy minimum of 720; Revolving utilization of 34% exceeds the 30% cap; Delinquency (30d_late_2025) on a auto tradeline within 24 months. These decisions were based on information from a consumer reporting agency sandbox. You have the right to a free copy of your report within 60 days and to dispute anything in it that is inaccurate.",
+          "text": "Beatrix Oyinlola, this notice explains the credit decisions made on your application.\n\nMeridian Bank Prime did not approve the amount and terms you requested. Principal reasons: 3 hard inquiries in six months; policy allows at most 2.\n\nThe decision was made by the lenders named above, not by the consumer reporting agency. Information from the CRS sandbox (mock) (report dated October 24, 2026) was used; the CRS sandbox (mock) did not make this decision and cannot tell you why it was made. You have the right to a free copy of your report within 60 days and to dispute anything in it that is inaccurate.",
           "lendersDeclined": [
             "prime"
           ],
-          "createdAt": 1792834206580
+          "createdAt": 1792834207040
         }
       }
     },
     {
-      "atMs": 6580,
+      "atMs": 7040,
       "op": {
         "kind": "audit.insert",
         "row": {
-          "_id": "aud_replay_14",
+          "_id": "aud_replay_21",
           "applicantId": "app_replay",
-          "at": 1792834206580,
+          "at": 1792834207040,
           "actor": "compliance",
-          "action": "notice.written",
+          "action": "compliance.notice",
           "ref": "notices",
-          "note": "Names 3 reasons across Prime."
+          "note": "1 of 2 reasons verified by counterfactual test; FCRA source statement included."
         }
       }
     },
     {
-      "atMs": 6580,
+      "atMs": 7040,
       "op": {
         "kind": "audit.insert",
         "row": {
-          "_id": "aud_replay_15",
+          "_id": "aud_replay_22",
           "applicantId": "app_replay",
-          "at": 1792834206580,
+          "at": 1792834207040,
           "actor": "desk",
           "action": "step.compliance.done",
           "ref": null,
-          "note": "1400 ms."
+          "note": "2000 ms."
         }
       }
     },
     {
-      "atMs": 7080,
+      "atMs": 7540,
       "op": {
         "kind": "applicant.status",
         "id": "app_replay",
@@ -578,13 +681,13 @@ export const FIXTURE: Fixture = {
       }
     },
     {
-      "atMs": 7080,
+      "atMs": 7540,
       "op": {
         "kind": "audit.insert",
         "row": {
-          "_id": "aud_replay_16",
+          "_id": "aud_replay_23",
           "applicantId": "app_replay",
-          "at": 1792834207080,
+          "at": 1792834207540,
           "actor": "desk",
           "action": "step.human.start",
           "ref": null,
@@ -593,7 +696,7 @@ export const FIXTURE: Fixture = {
       }
     },
     {
-      "atMs": 11080,
+      "atMs": 11540,
       "op": {
         "kind": "decision.insert",
         "row": {
@@ -602,13 +705,13 @@ export const FIXTURE: Fixture = {
           "chosenOfferId": "off_replay_cu",
           "outcome": "approved",
           "approvedBy": "human",
-          "at": 1792834211080,
-          "note": "Approved cu offer: 11.7% APR, 48 mo, $12,000. (recorded)"
+          "at": 1792834211540,
+          "note": "approved cu offer: $22,000 at 7.9% for 60 months (recorded)"
         }
       }
     },
     {
-      "atMs": 11080,
+      "atMs": 11540,
       "op": {
         "kind": "applicant.status",
         "id": "app_replay",
@@ -616,32 +719,17 @@ export const FIXTURE: Fixture = {
       }
     },
     {
-      "atMs": 11080,
+      "atMs": 11540,
       "op": {
         "kind": "audit.insert",
         "row": {
-          "_id": "aud_replay_17",
+          "_id": "aud_replay_24",
           "applicantId": "app_replay",
-          "at": 1792834211080,
+          "at": 1792834211540,
           "actor": "human",
-          "action": "offer.approved",
+          "action": "step.human.done",
           "ref": "offers.off_replay_cu",
           "note": "Recorded replay approval."
-        }
-      }
-    },
-    {
-      "atMs": 11080,
-      "op": {
-        "kind": "audit.insert",
-        "row": {
-          "_id": "aud_replay_18",
-          "applicantId": "app_replay",
-          "at": 1792834211080,
-          "actor": "desk",
-          "action": "step.human.done",
-          "ref": null,
-          "note": "Decision recorded."
         }
       }
     }

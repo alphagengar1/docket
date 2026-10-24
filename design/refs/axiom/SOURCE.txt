@@ -1,0 +1,1 @@
+query-results.png  <-  https://axiom.co/docs/doc-assets/shots/example-logs-query.png  (axiom.co/docs)

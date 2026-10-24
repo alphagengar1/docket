@@ -14,6 +14,7 @@ import { writeAudit } from "./audit";
 import { findPersona } from "./crs.mock";
 import { evaluateHardStops } from "./rules";
 import { LENDERS } from "./types";
+import { noticeRequired } from "./classify";
 
 export const workflow = new WorkflowManager(components.workflow);
 
@@ -23,9 +24,11 @@ const PENDING_MAX_POLLS = 48; // 4 minutes for async (CREAO) agents
 // ---------------------------------------------------------------------------
 // Workflow
 // ---------------------------------------------------------------------------
+const disputeArg = v.object({ fromApplicantId: v.id("applicants"), tradelineIndex: v.number() });
+
 export const runDeskWorkflow = workflow.define({
-  args: { applicantId: v.id("applicants") },
-  handler: async (step, { applicantId }): Promise<void> => {
+  args: { applicantId: v.id("applicants"), dispute: v.optional(disputeArg) },
+  handler: async (step, { applicantId, dispute }): Promise<void> => {
     const applicant = await step.runQuery(internal.desk.getApplicant, { applicantId });
     await step.runMutation(internal.market.ensureSeeded, {});
 
@@ -38,7 +41,7 @@ export const runDeskWorkflow = workflow.define({
     });
     const pulled = await step.runAction(
       internal.crs.pullBundle,
-      { applicantId, personaId: applicant.personaId },
+      { applicantId, personaId: applicant.personaId, dispute },
       { retry: true, name: "pullBundle" },
     );
     await step.runMutation(internal.desk.mark, {
@@ -79,12 +82,32 @@ export const runDeskWorkflow = workflow.define({
       applicantId,
       status: null,
       action: "step.underwrite.done",
-      note: `${summary.approvals} approve, ${summary.declines} decline, ${summary.failed} failed`,
+      note: `${summary.approvals} approve (${summary.counteroffers} counteroffer), ${summary.declines} decline, ${summary.failed} failed`,
     });
 
-    // 4. compliance, only when at least one lender declined --------------
-    if (summary.declines > 0) {
-      await step.runMutation(internal.desk.mark, { applicantId, status: "compliance", action: "step.compliance.start", note: `${summary.declines} decline(s)` });
+    // 3b. counterfactual reason test for every decline -------------------
+    // Runs BEFORE compliance so the notice is built from verified reasons only.
+    if (summary.declineOfferIds.length > 0) {
+      await step.runMutation(internal.desk.mark, { applicantId, status: null, action: "step.verify.start", note: `${summary.declineOfferIds.length} decline(s) to test` });
+      const checks = await Promise.all(
+        summary.declineOfferIds.map((offerId) =>
+          step.runAction(internal.verify.verifyReasons, { offerId }, { retry: true, name: `verify:${offerId}` }),
+        ),
+      );
+      const checked = checks.reduce((a, c) => a + c.checked, 0);
+      const flipped = checks.reduce((a, c) => a + c.flipped, 0);
+      const unsupported = checks.reduce((a, c) => a + c.unsupported, 0);
+      await step.runMutation(internal.desk.mark, {
+        applicantId,
+        status: null,
+        action: "step.verify.done",
+        note: `${checked} reasons tested: ${flipped} flipped (verified), ${unsupported} unsupported (withheld from notice)`,
+      });
+    }
+
+    // 4. compliance: required for any deny or counteroffer -----------------
+    if (summary.noticeRequired) {
+      await step.runMutation(internal.desk.mark, { applicantId, status: "compliance", action: "step.compliance.start", note: summary.noticeBecause });
       const c = await step.runAction(internal.agents.runCompliance, { applicantId }, { retry: true, name: "compliance" });
       let cPending = c.status === "pending" ? 1 : 0;
       for (let i = 0; cPending > 0 && i < PENDING_MAX_POLLS; i++) {
@@ -96,7 +119,7 @@ export const runDeskWorkflow = workflow.define({
       }
       await step.runMutation(internal.desk.mark, { applicantId, status: null, action: "step.compliance.done", note: c.note });
     } else {
-      await step.runMutation(internal.desk.mark, { applicantId, status: null, action: "step.compliance.skipped", note: "no declines" });
+      await step.runMutation(internal.desk.mark, { applicantId, status: null, action: "step.compliance.skipped", note: summary.noticeBecause });
     }
 
     // 5. ready for the human ---------------------------------------------
@@ -126,8 +149,12 @@ export const onDeskComplete = internalMutation({
 });
 
 /** Kick off the workflow for an existing applicant (used by createApplicant and eval). */
-export async function startDesk(ctx: { scheduler: any; db: any; runMutation: any }, applicantId: Id<"applicants">) {
-  return await start(ctx as any, internal.desk.runDeskWorkflow, { applicantId }, {
+export async function startDesk(
+  ctx: { scheduler: any; db: any; runMutation: any },
+  applicantId: Id<"applicants">,
+  dispute?: { fromApplicantId: Id<"applicants">; tradelineIndex: number },
+) {
+  return await start(ctx as any, internal.desk.runDeskWorkflow, { applicantId, dispute }, {
     onComplete: internal.desk.onDeskComplete,
     context: { applicantId },
   });
@@ -187,11 +214,18 @@ export const offerSummary = internalQuery({
       .query("offers")
       .withIndex("by_applicantId", (q) => q.eq("applicantId", applicantId))
       .collect();
+    const done = offers.filter((o) => o.status === "done");
+    const cls = done.map((o) => o.classification ?? (o.decision === "decline" ? ("deny" as const) : ("approve" as const)));
+    const need = noticeRequired(cls);
     return {
-      approvals: offers.filter((o) => o.status === "done" && o.decision === "approve").length,
-      declines: offers.filter((o) => o.status === "done" && o.decision === "decline").length,
+      approvals: done.filter((o) => o.decision === "approve").length,
+      counteroffers: cls.filter((c) => c === "counteroffer").length,
+      declines: done.filter((o) => o.decision === "decline").length,
       failed: offers.filter((o) => o.status === "failed").length,
       pending: offers.filter((o) => o.status === "pending").length,
+      declineOfferIds: done.filter((o) => o.decision === "decline").map((o) => o._id),
+      noticeRequired: need.required,
+      noticeBecause: need.because,
     };
   },
 });
@@ -211,7 +245,16 @@ export const createApplicantInternal = internalMutation({
 
 async function createAndStart(
   ctx: any,
-  args: { personaId: string; purpose: string; amountRequested: number; statedIncome: number; name?: string },
+  args: {
+    personaId: string;
+    purpose: string;
+    amountRequested: number;
+    statedIncome: number;
+    name?: string;
+    replayOf?: Id<"applicants">;
+    replayNote?: string;
+    dispute?: { fromApplicantId: Id<"applicants">; tradelineIndex: number };
+  },
 ): Promise<Id<"applicants">> {
   const persona = findPersona(args.personaId);
   const name = args.name ?? persona?.name ?? args.personaId;
@@ -225,16 +268,61 @@ async function createAndStart(
     consentAt: now,
     status: "intake",
     createdAt: now,
+    ...(args.replayOf ? { replayOf: args.replayOf, replayNote: args.replayNote ?? "" } : {}),
   });
   await writeAudit(ctx, {
     applicantId,
     actor: "intake",
-    action: "intake.submitted",
-    note: `${name}: $${args.amountRequested} for ${args.purpose}, stated income $${args.statedIncome}, consent recorded`,
+    action: args.replayOf ? "intake.replay" : "intake.submitted",
+    ref: args.replayOf ? String(args.replayOf) : null,
+    note: args.replayOf
+      ? `replay of ${args.replayOf}: ${args.replayNote ?? ""}`
+      : `${name}: $${args.amountRequested} for ${args.purpose}, stated income $${args.statedIncome}, consent recorded`,
   });
-  await startDesk(ctx, applicantId);
+  await startDesk(ctx, applicantId, args.dispute);
   return applicantId;
 }
+
+/**
+ * Dispute-and-replay (design/differentiators.md #3). The applicant disputes one
+ * tradeline; a linked applicant row (replayOf) re-runs the whole desk on a
+ * corrected bundle so the board can diff before/after.
+ */
+export const disputeTradeline = mutation({
+  args: { applicantId: v.id("applicants"), tradelineIndex: v.number(), note: v.optional(v.string()) },
+  handler: async (ctx, { applicantId, tradelineIndex, note }): Promise<Id<"applicants">> => {
+    const original = await ctx.db.get(applicantId);
+    if (!original) throw new Error("applicant not found");
+    const bundle = await ctx.db
+      .query("bundles")
+      .withIndex("by_applicantId", (q) => q.eq("applicantId", applicantId))
+      .order("desc")
+      .first();
+    if (!bundle) throw new Error("no bundle to dispute yet");
+    const tl = bundle.credit.tradelines[tradelineIndex];
+    if (!tl) throw new Error(`tradelineIndex ${tradelineIndex} out of range`);
+    const desc = `${tl.type} ${tl.status} $${tl.balance} opened ${tl.openedAt}`;
+    await writeAudit(ctx, {
+      applicantId,
+      actor: "applicant",
+      action: "dispute.tradeline",
+      ref: `credit.tradelines[${tradelineIndex}]`,
+      note: `disputed ${desc}${note ? " — " + note : ""}`,
+    });
+    const replayId = await createAndStart(ctx, {
+      personaId: original.personaId,
+      purpose: original.purpose,
+      amountRequested: original.amountRequested,
+      statedIncome: original.statedIncome,
+      name: original.name,
+      replayOf: applicantId,
+      replayNote: `disputed credit.tradelines[${tradelineIndex}] (${desc})`,
+      dispute: { fromApplicantId: applicantId, tradelineIndex },
+    });
+    await writeAudit(ctx, { applicantId, actor: "desk", action: "replay.started", ref: String(replayId), note: "re-running all three lenders on the corrected bundle" });
+    return replayId;
+  },
+});
 
 // ---------------------------------------------------------------------------
 // Public API (web/src/hooks/useDesk.convex.ts expects these names)
@@ -329,6 +417,11 @@ async function buildView(ctx: QueryCtx, applicantId: Id<"applicants">) {
       .withIndex("by_applicantId", (q) => q.eq("applicantId", applicantId))
       .order("asc")
       .collect(),
+    reasonChecks: await ctx.db
+      .query("reasonChecks")
+      .withIndex("by_applicantId", (q) => q.eq("applicantId", applicantId))
+      .collect(),
+    replays: (await ctx.db.query("applicants").withIndex("by_replayOf", (q) => q.eq("replayOf", applicantId)).collect()).map((a) => a._id),
   };
 }
 
@@ -437,7 +530,7 @@ export const declineApplicant = mutation({
 export const deleteApplicantCascade = internalMutation({
   args: { applicantId: v.id("applicants") },
   handler: async (ctx, { applicantId }) => {
-    for (const table of ["bundles", "offers", "notices", "decisions", "auditEvents", "agentRuns"] as const) {
+    for (const table of ["bundles", "offers", "notices", "decisions", "auditEvents", "agentRuns", "reasonChecks"] as const) {
       const rows = await ctx.db
         .query(table)
         .withIndex("by_applicantId", (q) => q.eq("applicantId", applicantId))

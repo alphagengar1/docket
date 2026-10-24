@@ -24,7 +24,15 @@ export const tier = v.union(
   v.literal("poor"),
 );
 
-export const reason = v.object({ text: v.string(), field: v.string() });
+// `verified` is set by verify.ts: true = counterfactual flipped the decision,
+// false = did not flip (unsupported, kept visible but dropped from the notice),
+// null/absent = not tested (no passing-value mapping for the field).
+export const reason = v.object({
+  text: v.string(),
+  field: v.string(),
+  verified: v.optional(v.union(v.boolean(), v.null())),
+});
+export const classification = v.union(v.literal("approve"), v.literal("counteroffer"), v.literal("deny"));
 export const marketAnchor = v.object({ tier, aprLow: v.number(), aprHigh: v.number() });
 
 export const tradeline = v.object({
@@ -60,6 +68,7 @@ export const actor = v.union(
   v.literal("underwriter:prime"),
   v.literal("compliance"),
   v.literal("human"),
+  v.literal("applicant"), // dispute events (design/differentiators.md #3)
 );
 
 export const expectedOutcome = v.union(
@@ -78,8 +87,12 @@ export default defineSchema({
     consentAt: v.number(),
     status: applicantStatus,
     createdAt: v.number(),
+    // Dispute-and-replay: this row re-runs the desk for `replayOf` with a corrected bundle.
+    replayOf: v.optional(v.id("applicants")),
+    replayNote: v.optional(v.string()),
   })
     .index("by_personaId", ["personaId"])
+    .index("by_replayOf", ["replayOf"])
     .index("by_createdAt", ["createdAt"]),
 
   bundles: defineTable({
@@ -105,6 +118,9 @@ export default defineSchema({
     conditions: v.array(v.string()),
     reasons: v.array(reason),
     marketAnchor: v.union(marketAnchor, v.null()),
+    // Computed in code (classify.ts) from requested vs offered terms. ECOA: deny and
+    // counteroffer both require an adverse-action notice.
+    classification: v.optional(classification),
     runId: v.union(v.string(), v.null()),
     shareUrl: v.union(v.string(), v.null()),
     latencyMs: v.union(v.number(), v.null()),
@@ -116,9 +132,30 @@ export default defineSchema({
   notices: defineTable({
     applicantId: v.id("applicants"),
     text: v.string(),
-    lendersDeclined: v.array(v.string()),
+    lendersDeclined: v.array(v.string()), // deny + counteroffer lenders (both require notice)
     createdAt: v.number(),
+    lendersCounteroffered: v.optional(v.array(v.string())),
+    required: v.optional(v.boolean()),
+    requiredBecause: v.optional(v.string()),
+    droppedReasons: v.optional(v.array(v.object({ lender: v.string(), field: v.string(), text: v.string() }))),
+    fcraSource: v.optional(v.string()),
   }).index("by_applicantId", ["applicantId"]),
+
+  // Counterfactual reason tests (design/differentiators.md #1, pre-approved).
+  reasonChecks: defineTable({
+    offerId: v.id("offers"),
+    applicantId: v.id("applicants"),
+    lender,
+    field: v.string(),
+    original: v.any(),
+    counterfactual: v.any(),
+    flipped: v.boolean(),
+    counterfactualDecision: v.union(v.literal("approve"), v.literal("decline"), v.literal("failed")),
+    latencyMs: v.number(),
+    createdAt: v.number(),
+  })
+    .index("by_offerId", ["offerId"])
+    .index("by_applicantId", ["applicantId"]),
 
   decisions: defineTable({
     applicantId: v.id("applicants"),
@@ -160,6 +197,8 @@ export default defineSchema({
         why: v.string(),
       }),
     ),
+    reasonsVerifiedPct: v.optional(v.number()),
+    latencyP50Ms: v.optional(v.object({ cu: v.union(v.number(), v.null()), fintech: v.union(v.number(), v.null()), prime: v.union(v.number(), v.null()) })),
   }).index("by_startedAt", ["startedAt"]),
 
   marketRates: defineTable({
