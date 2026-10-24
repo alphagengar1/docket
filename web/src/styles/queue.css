@@ -1,0 +1,249 @@
+/* Queue rows: progressive disclosure (components/Queue.tsx).
+   Instrument Tag first; dark/light fall back to the shared tokens in tokens.css.
+   Rules: sentence 15px, nothing under 12px, every state carries a word, AA contrast.
+   Orange is for hard stops only; lender declines use the decline brown, approvals the blue. */
+
+/* rows are divs now (a button cannot hold the disclosure's buttons) */
+.queue-row.plain,
+.queue-row.decide {
+  cursor: pointer;
+}
+.queue-row.plain:focus-visible,
+.queue-row.decide:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: -2px;
+}
+
+/* ---- the sentence + inline detail ------------------------------------- */
+
+.queue-row .q-disclose {
+  display: block;
+  margin: 2px 0 0;
+  min-width: 0;
+}
+.queue-row .q-disclose .disclose {
+  margin-left: -2px;
+}
+.queue-row .q-disclose .disclose--row {
+  border-bottom: 0;
+}
+.queue-row .q-disclose .disclose__row {
+  min-height: 32px;
+  padding: 6px 4px 6px 8px;
+  font-size: 15px;
+}
+/* the glance sentence may take two lines in the 272px pane; it never cuts mid-thought */
+.queue-row .q-disclose .disclose.is-closed .disclose__summary {
+  white-space: normal;
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  line-clamp: 2;
+  overflow: hidden;
+}
+.queue-row .q-disclose .disclose__detail {
+  padding: 4px 4px 10px 8px;
+}
+.queue-row .q-disclose .disclose__meta {
+  font-size: 12px;
+}
+
+.q-sentence b {
+  font-weight: 700;
+}
+.q-sentence .mono {
+  font-variant-numeric: tabular-nums;
+}
+/* the sentence replaces the old best-APR line; keep its name for anyone styling the row */
+.queue-row .q-sentence.q-best {
+  font-size: 15px;
+}
+
+/* ---- More / Less beside Approve and Decline ---------------------------- */
+
+.queue-row .queue-actions .q-more-wrap {
+  display: contents;
+}
+.queue-row .queue-actions .q-more {
+  flex: 0 0 auto;
+  height: 36px;
+  padding: 0 12px;
+  font-family: var(--mono);
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  background: transparent;
+  color: var(--text);
+  border: 2px solid var(--text);
+  border-radius: var(--radius, 0);
+}
+.queue-row .queue-actions .q-more:hover {
+  background: var(--hover);
+}
+.queue-row .queue-actions .q-more[aria-expanded='true'] {
+  background: var(--text);
+  color: var(--surface);
+}
+
+/* ---- detail blocks ------------------------------------------------------ */
+
+.qd {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  font-size: 15px;
+  line-height: 1.45;
+}
+.qd-block {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  min-width: 0;
+}
+.qd-block h4 {
+  margin: 0;
+  padding-bottom: 4px;
+  border-bottom: 1px solid var(--hair-2);
+  font-family: var(--mono);
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+
+/* one entry per lender: name, verdict word, then the offer terms or every reason with its verification word */
+.qd-lenders {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.qd-lenders li {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding-left: 10px;
+  border-left: 2px solid var(--hair-2);
+  font-size: 15px;
+  line-height: 1.4;
+  overflow-wrap: anywhere;
+}
+.qd-lenders li[data-verdict='offer'] {
+  border-left-color: var(--approve);
+}
+.qd-lenders li[data-verdict='declined'],
+.qd-lenders li[data-verdict='failed'] {
+  border-left-color: var(--decline);
+}
+.qd-lenders li[data-verdict='quoting'] {
+  border-left-color: var(--accent);
+}
+.qd-lender-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 8px;
+}
+.qd-lender {
+  font-weight: 700;
+  min-width: 0;
+}
+.qd-word {
+  flex: none;
+  font-family: var(--mono);
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  white-space: nowrap;
+  color: var(--muted);
+}
+.qd-word.offer {
+  color: var(--approve);
+}
+.qd-word.declined,
+.qd-word.failed {
+  color: var(--decline);
+}
+.qd-word.quoting {
+  color: var(--accent);
+}
+
+.qd-reasons {
+  list-style: none;
+  margin: 2px 0 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+.qd-reasons li {
+  font-size: 15px;
+}
+.qd-verdict {
+  font-family: var(--mono);
+  font-size: 12px;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  white-space: nowrap;
+  color: var(--muted);
+}
+.qd-verdict.verified {
+  color: var(--approve);
+  font-weight: 700;
+}
+.qd-verdict.unsupported {
+  color: var(--decline);
+  font-weight: 700;
+}
+
+/* deciding rule, notice, quotes */
+.qd-rule {
+  margin: 0;
+  padding: 8px 10px;
+  border: 1px solid var(--text);
+  font-size: 15px;
+  line-height: 1.4;
+}
+.qd-rule .ax-chip {
+  margin-right: 6px;
+}
+.qd-rule-meta {
+  display: block;
+  margin-top: 4px;
+  font-size: 13px;
+  color: var(--muted);
+}
+.qd-note {
+  margin: 0;
+  font-size: 15px;
+  line-height: 1.5;
+}
+.qd-notice {
+  margin: 0;
+  padding: 8px 10px;
+  border-left: 2px solid var(--text);
+  background: var(--panel);
+  font-size: 15px;
+  line-height: 1.5;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+.qd-quote {
+  quotes: '\201C' '\201D';
+}
+.qd-quote::before {
+  content: open-quote;
+}
+.qd-quote::after {
+  content: close-quote;
+}
+
+/* the detail's own nested disclosure (notice text) sits flush with the block */
+.qd .disclose {
+  margin-left: 0;
+}

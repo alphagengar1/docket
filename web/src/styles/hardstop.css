@@ -1,0 +1,84 @@
+/* HardStopCard (components/HardStopCard.tsx): progressive-disclosure hard stop.
+   One plain-English sentence at a glance; the rule, actor, verbatim note, counts and
+   time only when opened. Instrument Tag first; falls back to shared tokens.
+   Rules: body 15px, nothing under 12px, every state carries a word, AA contrast
+   (signal orange is a rule and a marker, never body text). */
+
+/* The Disclose card supplies the surface and 2px ink rules; the legacy .hardstop
+   shell goes quiet so there is not a card inside a card. Keeps grid-column 1 / -1. */
+.hardstop.hardstop--disclose {
+  background: transparent;
+  border: 0;
+  border-radius: 0;
+  padding: 0;
+  gap: 0;
+}
+
+/* The glance is a full sentence, so it wraps instead of ellipsizing when closed. */
+.hardstop--disclose .disclose.is-closed .disclose__summary {
+  white-space: normal;
+  overflow: visible;
+  text-overflow: clip;
+}
+
+.hardstop--disclose .disclose__summary {
+  font-size: 15px;
+  line-height: 1.4;
+  font-weight: var(--wt-regular, 400);
+}
+
+/* "Hard stop:" leads in display caps, ink, with a small orange marker that is never the only signal. */
+.hardstop__word {
+  font-family: var(--disp, var(--sans));
+  font-stretch: 125%;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: -0.01em;
+  color: var(--text);
+  white-space: nowrap;
+}
+.hardstop__word::before {
+  content: '';
+  display: inline-block;
+  width: 10px;
+  height: 10px;
+  margin-right: 6px;
+  vertical-align: 0;
+  background: var(--hard);
+}
+
+/* Detail: a little more air between rows than the stock KV. */
+.hardstop--disclose .hardstop__kv {
+  row-gap: 10px;
+}
+
+/* The rule's note, verbatim: 2px ink rule, body sans, no italics (Instrument Sans has none worth using). */
+.hardstop__note {
+  margin: 0;
+  padding: 2px 0 2px var(--sp-3, 12px);
+  border-left: var(--edge, 2px) solid var(--text);
+  font-size: 15px;
+  line-height: 1.45;
+  color: var(--text);
+}
+.hardstop__note-word {
+  display: inline-block;
+  margin-right: 6px;
+  font-family: var(--mono);
+  font-size: 12px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--muted);
+  vertical-align: 1px;
+}
+
+/* Narrow shells: the KV grid stacks label over value so values never squeeze under 15px. */
+@media (max-width: 560px) {
+  .hardstop--disclose .hardstop__kv {
+    grid-template-columns: minmax(0, 1fr);
+    row-gap: 4px;
+  }
+  .hardstop--disclose .hardstop__kv .kv__label {
+    padding-top: 6px;
+  }
+}

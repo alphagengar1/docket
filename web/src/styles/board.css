@@ -1,0 +1,139 @@
+/* Board progressive disclosure (board/Board.tsx). Instrument Tag, read from 2 m: nothing under 22px.
+   The Disclose primitive is sized for the 15px console, so inside .bd we remap its shared tokens to
+   the .itag palette (the board stays aluminium whatever theme the console is on) and lift every
+   size to board scale. Every state carries a word; signal orange is a rule or a marker, never text. */
+
+.bd .disclose,
+.bd .disclose-group {
+  --text: var(--ink);
+  --muted: var(--mute);
+  --hair: var(--hairline);
+  --hair-2: var(--hairline);
+  --accent: var(--go);
+  --hard: var(--signal);
+  --card: var(--panel);
+  --bg: var(--alu);
+  --hover: rgba(20, 21, 20, 0.05);
+  --sans: var(--f-body);
+  --mono: var(--f-mono);
+  --disp: var(--f-disp);
+  --radius: 0;
+  --edge: 2px;
+  --disclose-fs-summary: 24px;
+  --disclose-fs-meta: 22px;
+}
+
+/* ---- summary row at board scale ------------------------------------------ */
+.bd .disclose__row {
+  grid-template-columns: 24px auto minmax(0, 1fr) auto;
+  column-gap: 12px;
+  min-height: 52px;
+  padding: 10px 16px 10px 12px;
+  line-height: 1.25;
+}
+.bd .disclose--card .disclose__row { padding: 14px 20px 14px 14px; }
+.bd .disclose__chevron { width: 24px; height: 30px; }
+.bd .disclose__chevron svg { width: 20px; height: 20px; }
+.bd .disclose__summary { font-weight: 600; letter-spacing: 0; }
+/* The glance is a full sentence a loan officer reads in half a second: wrap, never ellipsize. */
+.bd .disclose.is-closed .disclose__summary { white-space: normal; overflow: visible; text-overflow: clip; }
+.bd .disclose__meta { font-size: 22px; padding-top: 3px; letter-spacing: 0.04em; }
+.bd .disclose__row:focus-visible { outline: 3px solid var(--go); outline-offset: -3px; }
+
+/* ---- detail block ---------------------------------------------------------- */
+.bd .disclose__detail {
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+  padding: 6px 16px 18px 48px;
+  font-size: 24px;
+  line-height: 1.35;
+}
+.bd .disclose--card .disclose__detail { padding: 6px 20px 22px 50px; }
+.bd .kv { column-gap: 28px; row-gap: 12px; }
+.bd .kv__label { font-size: 22px; letter-spacing: 0.06em; padding-top: 3px; }
+.bd .kv__value { font-size: 24px; line-height: 1.3; }
+.bd .mono-id { font-size: inherit; font-weight: 600; }
+
+/* ---- group header (Lenders) ------------------------------------------------ */
+.bd .disclose-group__head { padding-bottom: 10px; margin-bottom: 14px; align-items: center; flex-wrap: wrap; gap: 10px 20px; }
+.bd .disclose-group__title { font-size: 22px; letter-spacing: 0.02em; }
+.bd .disclose-group__count { font-size: 22px; }
+.bd .disclose-group__toggle { font-size: 22px; padding: 6px 16px; border-width: 2px; }
+.bd .disclose-group__toggle:focus-visible { outline: 3px solid var(--go); }
+.bd .disclose-group__body { flex: 1; }
+.bd .bd-lenders { flex: 1; min-width: 0; }
+
+/* ---- bureau glance row under the six cells --------------------------------- */
+.bd .bd-bureau-more { flex-basis: 100%; width: 100%; margin-top: 6px; border-top: 1px solid var(--hairline); }
+.bd .bd-bureau-more .disclose__row { padding-left: 10px; }
+.bd .bd-bureau-more .kv__value { font-size: 24px; }
+
+/* ---- lender column: name + APR at a glance, one verdict line, panel on open -- */
+.bd .col .bd-lender-more { margin-top: auto; margin-left: -12px; --disclose-fs-summary: 28px; }
+.bd .col .bd-lender-more .disclose__row { padding-left: 10px; padding-right: 0; line-height: 1.2; }
+.bd .col .bd-lender-more .disclose__detail { padding-right: 0; padding-left: 46px; }
+.bd .col .bd-lender-more.disclose--row { border-bottom: 0; }
+.bd .col.none .bd-lender-more .disclose__summary { font-size: 30px; }
+.bd .col .kv { grid-template-columns: 1fr; row-gap: 4px; }
+.bd .col .kv__row { display: contents; }
+.bd .col .kv__label { padding-top: 10px; }
+.bd .col .kv__row:first-child .kv__label { padding-top: 0; }
+
+/* ---- reasons with verification verdicts -------------------------------------- */
+.bd .bd-reasons,
+.bd .bd-list,
+.bd .bd-verdicts { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 10px; }
+.bd .bd-reasons li { display: flex; flex-direction: column; gap: 4px; border-top: 1px solid var(--hairline); padding-top: 8px; }
+.bd .bd-reasons li:first-child { border-top: 0; padding-top: 0; }
+.bd .bd-reasons .rt { font-weight: 600; }
+.bd .bd-vf { display: inline-flex; align-items: center; gap: 10px; font-family: var(--f-mono); font-size: 22px; letter-spacing: 0.02em; color: var(--mute); }
+.bd .bd-vf.verified { color: var(--go); font-weight: 600; }
+.bd .bd-vf.unsupported { color: var(--ink); font-weight: 600; }
+.bd .bd-vf.unsupported i { width: 14px; height: 14px; background: var(--signal); display: inline-block; flex: none; }
+.bd .bd-verdicts li { display: flex; flex-direction: column; gap: 8px; border-top: 1px solid var(--hairline); padding-top: 10px; }
+.bd .bd-verdicts li:first-child { border-top: 0; padding-top: 0; }
+.bd .bd-verdicts .vd b { font-weight: 700; }
+.bd .bd-verdicts .bd-reasons { padding-left: 24px; }
+
+/* ---- sections inside a detail panel ------------------------------------------ */
+.bd .bd-sec { display: flex; flex-direction: column; gap: 12px; }
+.bd .bd-sec > .lbl { color: var(--ink); border-bottom: 2px solid var(--ink); padding-bottom: 6px; }
+.bd .bd-sec .bd-tiles { margin-top: 2px; }
+.bd .bd-sec .bd-log { border-top: 0; }
+
+/* ---- notice text, shown verbatim --------------------------------------------- */
+.bd .bd-notice-meta { font-family: var(--f-mono); font-size: 22px; color: var(--mute); letter-spacing: 0.02em; }
+.bd .bd-notice {
+  margin: 0;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+  font-family: var(--f-body);
+  font-size: 22px;
+  line-height: 1.45;
+  background: var(--panel);
+  border: 1px solid var(--hairline);
+  padding: 18px 22px;
+  max-height: 44vh;
+  overflow-y: auto;
+}
+
+/* ---- the detail card under Hard stop and beside Waiting / Declined --------- */
+.bd .bd-footwrap { display: flex; flex-direction: column; gap: 0; }
+.bd .bd-footwrap .bd-detail { border-top: 0; }
+.bd .bd-detail.disclose--card { border-right: 1px solid var(--hairline); border-left-width: 6px; }
+.bd .bd-detail .disclose__summary { font-size: 26px; }
+
+/* ---- eval: glance line and failing rows -------------------------------------- */
+.bd .bd-glance { margin: 0; font-size: 28px; line-height: 1.25; font-weight: 600; max-width: 1500px; }
+.bd .bd-evalfail { border-top: 1px solid var(--hairline); border-left-width: 6px; }
+.bd .bd-evalfail .disclose__row { background: var(--signal); color: var(--ink); min-height: 44px; padding: 6px 12px 6px 10px; --disclose-fs-summary: 24px; }
+.bd .bd-evalfail .disclose__row:hover { background: #e8511b; }
+.bd .bd-evalfail .disclose__chevron { color: var(--ink); }
+.bd .bd-evalfail .disclose__meta { color: var(--ink); font-weight: 700; }
+.bd .bd-evalfail .id { color: var(--ink); }
+.bd .bd-evalfail .disclose__detail { padding-left: 46px; }
+
+@media (prefers-reduced-motion: reduce) {
+  .bd .disclose__panel { transition: none; }
+}

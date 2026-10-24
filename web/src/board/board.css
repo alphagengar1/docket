@@ -36,7 +36,7 @@
 .bd-bureau .cell { display: flex; flex-direction: column; gap: 6px; border-top: 1px solid var(--hairline); padding-top: 10px; animation: bd-in 0.5s both; }
 .bd-bureau .cell.empty .val { color: var(--hairline); }
 .bd-bureau .val { font-size: 72px; line-height: 1; font-weight: 600; }
-.bd-bureau.compact { padding: 12px 24px; gap: 8px; flex-direction: row; align-items: center; }
+.bd-bureau.compact { padding: 12px 24px; gap: 8px; flex-direction: row; flex-wrap: wrap; align-items: center; } /* wraps so the glance row sits under the cells */
 .bd-bureau.compact .bh { flex: none; flex-direction: column; align-items: flex-start; gap: 6px; min-width: 150px; }
 .bd-bureau.compact .cells { grid-template-columns: repeat(6, 1fr); gap: 16px; flex: 1; min-width: 0; }
 .bd-bureau.compact .cell { border-top: 0; padding-top: 0; gap: 2px; }

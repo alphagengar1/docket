@@ -8,7 +8,8 @@ import { eventsFor, hardStopEvent, offersFor, originalOf, stepTimings } from './
 import { IN_FLIGHT, STATUS_TONE, STATUS_WORD } from './lib/status'
 import { rankDecisions } from './lib/rank'
 import { TopBar } from './components/TopBar'
-import { DecisionSummary } from './components/DecisionSummary'
+import { DecisionSummary, lenderMeta, lenderTone } from './components/DecisionSummary'
+import { Disclose, DiscloseGroup, Mono } from './components/Disclose'
 import { ApplicantFacts } from './components/ApplicantFacts'
 import { Queue } from './components/Queue'
 import { IntakePane } from './components/IntakePane'
@@ -181,7 +182,6 @@ export default function App() {
     for (const e of desk.auditEvents) if (e.action === 'rules.hard_stop' || e.action === 'hard_stop') m[e.applicantId] = e.note || stopLabel(e.ref ?? '')
     return m
   }, [desk.auditEvents])
-  const [lendersOpen, setLendersOpen] = useState(true)
   const hs = applicant?.status === 'hard_stop' ? hardStopEvent(events) : undefined
 
   // Ranked decision queue: after a quick approve/decline, move to the next applicant waiting on a human.
@@ -295,6 +295,11 @@ export default function App() {
               onDecline={(aid) => void quickDecline(aid)}
               disabled={desk.replaying}
               stopReasons={stopReasons}
+              bundles={desk.bundles}
+              notices={desk.notices}
+              decisions={desk.decisions}
+              auditEvents={desk.auditEvents}
+              reasonChecks={desk.reasonChecks}
             />
           </div>
         </div>
@@ -353,70 +358,107 @@ export default function App() {
                     canDecide={applicant.status === 'awaiting_human' && !desk.replaying}
                     onApprove={(oid) => void quickApprove(applicant._id, oid)}
                     onDecline={() => void quickDecline(applicant._id)}
+                    checks={desk.reasonChecks}
+                    bundle={bundle}
+                    notice={notice}
+                    events={events}
                   />
                 )}
+                {!applicant && !intakeOpen && (
+                  <div className="columns" aria-label="Lenders on this desk">
+                    {LENDERS.map((l, i) => (
+                      <div key={`h-${l.id}`} className="col-head">
+                        <span className="letter">{'ABCDE'[i]}</span>
+                        <span className="nm">{l.label}</span>
+                      </div>
+                    ))}
+                    {LENDERS.map((l) => (
+                      <OfferCard
+                        key={l.id}
+                        lender={l.id}
+                        offer={undefined}
+                        checks={[]}
+                        bestApr={null}
+                        underwriteStartedAt={null}
+                        now={now}
+                        selected={false}
+                        chosen={false}
+                        dim={false}
+                        canSelect={false}
+                        onSelect={() => {}}
+                        onTrace={() => {}}
+                        compact={focus}
+                      />
+                    ))}
+                  </div>
+                )}
                 {applicant && applicant.status !== 'hard_stop' && (() => {
-                  const sm = summarize(applicant, offers, hs)
+                  // One disclosure row per lender: the glance sentence from summarize(), the card underneath.
+                  // The group's Expand all / Collapse all opens every row and the count reads "N of 5 open".
+                  const sm = summarize(applicant, offers, hs, desk.reasonChecks)
                   return (
-                    <button type="button" className="ax-sec-head" aria-expanded={lendersOpen} onClick={() => setLendersOpen((v) => !v)}>
-                      <span className="ax-chev" aria-hidden="true">{lendersOpen ? '\u25BE' : '\u25B8'}</span>
-                      <span className="ax-sec-title">Lender decisions</span>
-                      <span className="ax-sec-count">
-                        {sm.declined} declined · {sm.offered} {sm.offered === 1 ? 'offer' : 'offers'} · {sm.counter} {sm.counter === 1 ? 'counteroffer' : 'counteroffers'}
-                      </span>
-                    </button>
+                    <section className="lg" aria-label="Lender decisions">
+                      <p className="lg-glance">{sm.lenderGlance}</p>
+                      <DiscloseGroup title="Lender decisions">
+                        {original && (
+                          <div className="diff-label section-label">
+                            Before dispute · {original.name} (left card) · after re-pull on the right, changed values highlighted
+                          </div>
+                        )}
+                        {LENDERS.map((l, i) => {
+                          const o = offers.find((x) => x.lender === l.id)
+                          const line = sm.lenders.find((x) => x.lender === l.id)!
+                          const chosen = !!decision?.chosenOfferId && o?._id === decision.chosenOfferId
+                          const latency = o?.status === 'done' && o.latencyMs != null ? `${(o.latencyMs / 1000).toFixed(1)}s · ` : ''
+                          return (
+                            <Disclose
+                              key={`${applicant._id}-${l.id}`}
+                              id={`lg-${l.id}`}
+                              tone={lenderTone(line)}
+                              defaultOpen={!!original}
+                              summary={
+                                <>
+                                  <span className="lg-letter" aria-hidden="true">{'ABCDEFGH'[i] ?? i + 1}</span>
+                                  {line.sentence}
+                                </>
+                              }
+                              meta={<Mono>{latency}{o ? lenderMeta(line) : l.policy.toLowerCase()}</Mono>}
+                              detail={
+                                <div className={`lg-cell ${original ? 'diff' : ''}`}>
+                                  {original && <BeforeCard lender={l.id} offer={beforeOffers.find((x) => x.lender === l.id)} after={o} checks={desk.reasonChecks} />}
+                                  <OfferCard
+                                    lender={l.id}
+                                    offer={o}
+                                    checks={desk.reasonChecks}
+                                    bestApr={bestApr}
+                                    before={original ? beforeOffers.find((x) => x.lender === l.id) : undefined}
+                                    underwriteStartedAt={underwriteStart}
+                                    now={now}
+                                    selected={!!o && o._id === selectedOfferId}
+                                    chosen={chosen}
+                                    dim={!!decision && !chosen}
+                                    canSelect={applicant.status === 'awaiting_human'}
+                                    onSelect={() => {
+                                      if (!o) return
+                                      setSelectedOfferId((cur) => (cur === o._id ? null : o._id))
+                                      setTab('offer')
+                                    }}
+                                    onTrace={() => inspect('trace')}
+                                    compact={focus}
+                                  />
+                                </div>
+                              }
+                            />
+                          )
+                        })}
+                      </DiscloseGroup>
+                    </section>
                   )
                 })()}
-                {(lendersOpen || applicant?.status === 'hard_stop') && (
-                <div className={`columns ${original ? 'diff' : ''} ${!focus && !original ? 'stack' : ''}`}>
-                  {original && (
-                    <div className="diff-label section-label">
-                      Before dispute · {original.name} (top card) · after re-pull below, changed values highlighted
-                    </div>
-                  )}
-                  {/* One cell per lender (header, optional before-card, card) so any number of lenders wraps into rows. */}
-                  {LENDERS.map((l, i) => {
-                    const o = offers.find((x) => x.lender === l.id)
-                    const chosen = !!decision?.chosenOfferId && o?._id === decision.chosenOfferId
-                    return (
-                      <div key={l.id} className="lender-col">
-                        <div className="col-head">
-                          <span className="letter">{'ABCDEFGH'[i] ?? i + 1}</span>
-                          <span className="nm">{l.label}</span>
-                          <span className="chips">
-                            {o?.status === 'done' && <span className="chip">{(o.latencyMs! / 1000).toFixed(1)}s</span>}
-                            {o?.status === 'done' && <span className="chip">{o.reasons.length} reasons</span>}
-                            {!o && <span className="chip">{l.policy.toLowerCase()}</span>}
-                          </span>
-                        </div>
-                        {original && <BeforeCard lender={l.id} offer={beforeOffers.find((x) => x.lender === l.id)} />}
-                        {applicant?.status !== 'hard_stop' && (
-                          <OfferCard
-                            lender={l.id}
-                            offer={o}
-                            checks={desk.reasonChecks}
-                            bestApr={bestApr}
-                            before={original ? beforeOffers.find((x) => x.lender === l.id) : undefined}
-                            underwriteStartedAt={underwriteStart}
-                            now={now}
-                            selected={!!o && o._id === selectedOfferId}
-                            chosen={chosen}
-                            dim={!!decision && !chosen}
-                            canSelect={!!applicant && applicant.status === 'awaiting_human'}
-                            onSelect={() => {
-                              if (!o) return
-                              setSelectedOfferId((cur) => (cur === o._id ? null : o._id))
-                              setTab('offer')
-                            }}
-                            onTrace={() => inspect('trace')}
-                            compact={focus}
-                          />
-                        )}
-                      </div>
-                    )
-                  })}
-                  {applicant?.status === 'hard_stop' && <HardStopCard event={hs} />}
-                </div>
+                {applicant?.status === 'hard_stop' && (
+                  <div className="columns">
+                    <HardStopCard event={hs} events={events} applicant={applicant} />
+                  </div>
                 )}
                 </div>
             </div>
@@ -485,6 +527,7 @@ export default function App() {
           events={events}
           notice={notice}
           decision={decision}
+          bundle={bundle}
           now={now}
           underwriteStartedAt={underwriteStart}
           position={{ index: Math.max(0, walkIndex), total: walkOrder.length }}

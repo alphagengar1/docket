@@ -1,4 +1,5 @@
 import type { ReactNode } from 'react'
+import '../styles/floor.css'
 
 export type PanelId = 'queue' | 'inspector' | 'log' | 'assistant'
 

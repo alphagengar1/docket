@@ -16,7 +16,7 @@
 .bw-head p.s16 { font-size: 16px; }
 .bw-head p b { color: var(--ink); font-weight: 600; }
 .bw-in { gap: 24px; }
-.bw-in:has(.bw-offer), .bw-in:has(.bw-why), .bw-in:has(.bw-progress) { gap: 16px; }
+.bw-in:has(.bw-offer), .bw-in:has(.bw-why), .bw-in:has(.bw-notice), .bw-in:has(.bw-progress) { gap: 16px; }
 .bw-in:has(.bw-steps) { gap: 14px; }
 
 .bw .stamp { align-self: flex-start; font-size: 12px; padding: 5px 8px; }
@@ -61,30 +61,22 @@
 .bw-offer .top { align-items: center; }
 .bw-offer .mid { align-items: flex-end; }
 .bw-offer .nm { font-size: 15px; }
-.bw-offer .tg { font-size: 11px; padding: 3px 6px; border: 1px solid var(--mute); color: var(--mute); }
+.bw-offer .tg { font-size: 12px; padding: 3px 6px; border: 1px solid var(--mute); color: var(--mute); }
 .bw-offer .tg.on { padding: 4px 7px; border-color: var(--go); background: var(--go); color: #fff; }
 .bw-offer .kv { display: flex; flex-direction: column; gap: 2px; }
 .bw-offer .kv.r { align-items: flex-end; }
 .bw-offer .apr { font-size: 34px; font-weight: 600; line-height: 1; }
 .bw-offer .pay { font-size: 20px; font-weight: 600; }
-.bw-offer .foot { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; border-top: 1px solid var(--hairline); padding-top: 10px; }
-.bw-offer .v { font-family: var(--f-mono); font-variant-numeric: tabular-nums; font-size: 16px; font-weight: 600; }
-.bw-none .row { display: flex; justify-content: space-between; align-items: center; gap: 12px; border: 1px dashed var(--mute); padding: 12px 16px; margin-top: 8px; color: var(--mute); }
-.bw-none .row:first-child { margin-top: 0; }
-.bw-none .disp { font-size: 14px; }
-.bw-none .row span:last-child { font-size: 13px; text-align: right; }
-.bw-note { margin: 0; font-size: 13px; line-height: 1.4; color: var(--mute); }
+/* "No offer" lenders and the offer detail rows live in styles/borrower.css (Disclose primitive). */
 
 .bw-why { background: var(--panel); border: 1px solid var(--hairline); padding: 14px 16px; display: flex; flex-direction: column; gap: 6px; }
 .bw-why p { margin: 0; }
 .bw-why .p1 { font-size: 17px; line-height: 1.35; font-weight: 600; }
-.bw-why .p2 { font-size: 14px; line-height: 1.35; color: var(--mute); }
+.bw-why .p2 { font-size: 15px; line-height: 1.35; color: var(--mute); }
 .bw-steps { display: flex; flex-direction: column; gap: 12px; }
 .bw-steps .step { display: flex; gap: 12px; align-items: flex-start; }
 .bw-steps .n { font-weight: 600; font-size: 13px; width: 24px; height: 24px; flex: none; display: flex; align-items: center; justify-content: center; border: 2px solid var(--ink); }
 .bw-steps p { margin: 0; font-size: 15px; line-height: 1.35; }
-.bw-rights { all: unset; box-sizing: border-box; display: flex; justify-content: space-between; align-items: center; border-top: 1px solid var(--hairline); border-bottom: 1px solid var(--hairline); min-height: 44px; font-size: 14px; cursor: pointer; width: 100%; }
-.bw-rights .mono { font-size: 13px; }
 .bw-small { font-size: 12px; line-height: 1.4; color: var(--mute); margin: 0; }
 
 .bw-rev { background: var(--ink); color: var(--panel); padding: 14px 16px; display: flex; flex-direction: column; gap: 10px; }

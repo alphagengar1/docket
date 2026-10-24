@@ -1,0 +1,306 @@
+/* Disclose: progressive-disclosure primitive (components/Disclose.tsx).
+   Instrument Tag first; dark/light fall back to the shared tokens in tokens.css.
+   Rules: summary 15px, nothing under 12px, every tone also carries a word, AA contrast. */
+
+.disclose {
+  --disclose-rule: var(--text);
+  --disclose-fs-summary: 15px;
+  --disclose-fs-meta: 12px;
+  --disclose-t: 160ms;
+  --disclose-font: var(--sans);
+  --disclose-font-mono: var(--mono);
+  position: relative;
+  border-left: 3px solid var(--disclose-rule);
+  background: transparent;
+  color: var(--text);
+  font-family: var(--disclose-font);
+}
+
+/* tone -> left rule color. ink / blue / orange / black / grey */
+.disclose[data-tone='info'] { --disclose-rule: var(--text); }
+.disclose[data-tone='good'] { --disclose-rule: var(--accent); }
+.disclose[data-tone='bad'] { --disclose-rule: var(--hard); }
+.disclose[data-tone='human'] { --disclose-rule: #000000; }
+.disclose[data-tone='muted'] { --disclose-rule: var(--hair-2); }
+
+/* on the dark shell "black" would vanish; keep the human rule as the strongest ink available */
+:root[data-theme='dark'] .disclose[data-tone='human'] { --disclose-rule: #ffffff; }
+:root[data-theme='dark'] .disclose[data-tone='muted'] { --disclose-rule: var(--muted-2); }
+
+/* ---- densities -------------------------------------------------------- */
+
+.disclose--row {
+  border-bottom: 1px solid var(--hair);
+}
+.disclose--row + .disclose--row {
+  margin-top: 0;
+}
+.disclose--row:last-child {
+  border-bottom: 0;
+}
+
+.disclose--card {
+  background: var(--card);
+  border-top: var(--edge, 2px) solid var(--text);
+  border-bottom: var(--edge, 2px) solid var(--text);
+  border-right: 1px solid var(--hair);
+  border-radius: var(--radius, 0);
+}
+.disclose--card + .disclose--card {
+  margin-top: var(--sp-3, 12px);
+}
+
+/* ---- summary row -------------------------------------------------------- */
+
+.disclose__row {
+  all: unset;
+  box-sizing: border-box;
+  display: grid;
+  grid-template-columns: 14px auto minmax(0, 1fr) auto;
+  align-items: start;
+  column-gap: var(--sp-2, 8px);
+  width: 100%;
+  min-height: 40px;
+  padding: 10px var(--sp-3, 12px) 10px var(--sp-2, 8px);
+  cursor: pointer;
+  color: var(--text);
+  font-family: var(--disclose-font);
+  font-size: var(--disclose-fs-summary);
+  line-height: 1.35;
+  text-align: left;
+  -webkit-tap-highlight-color: transparent;
+}
+.disclose--card .disclose__row {
+  padding: 12px var(--sp-4, 16px) 12px var(--sp-3, 12px);
+}
+.disclose__row:hover {
+  background: var(--hover);
+}
+.disclose__row:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: -2px;
+}
+
+.disclose__chevron {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 14px;
+  height: calc(var(--disclose-fs-summary) * 1.35);
+  color: var(--muted);
+  transition: transform var(--disclose-t) ease;
+  transform: rotate(0deg);
+}
+.disclose.is-open .disclose__chevron {
+  transform: rotate(90deg);
+  color: var(--text);
+}
+
+.disclose__summary {
+  min-width: 0;
+  font-weight: var(--wt-medium, 500);
+  letter-spacing: var(--tracking-tight, -0.01em);
+  overflow-wrap: anywhere;
+}
+.disclose.is-closed .disclose__summary {
+  /* a glance sentence wraps rather than being cut mid-thought at narrow widths */
+  white-space: normal;
+}
+
+.disclose__meta {
+  flex: none;
+  align-self: start;
+  margin-left: var(--sp-2, 8px);
+  padding-top: 2px;
+  font-family: var(--disclose-font-mono);
+  font-size: var(--disclose-fs-meta);
+  letter-spacing: 0.04em;
+  color: var(--muted);
+  white-space: nowrap;
+  font-variant-numeric: tabular-nums;
+}
+
+/* visible tone word, so the rule color is never the only signal; ink text, the tone is the border */
+.disclose__tone {
+  align-self: start;
+  margin-top: 1px;
+  padding: 1px 6px 0;
+  border: 1px solid var(--disclose-rule);
+  font-family: var(--disclose-font-mono);
+  font-size: 12px;
+  line-height: 1.4;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--text);
+  white-space: nowrap;
+}
+.disclose[data-tone='bad'] .disclose__tone {
+  border-width: 2px;
+  padding: 0 5px;
+}
+.disclose[data-tone='muted'] .disclose__tone {
+  color: var(--muted);
+}
+
+/* ---- detail panel ------------------------------------------------------- */
+/* Grid-row animation: 0fr -> 1fr with no measured heights and zero footprint when closed. */
+
+.disclose__panel {
+  display: grid;
+  grid-template-rows: 0fr;
+  transition:
+    grid-template-rows var(--disclose-t) ease,
+    visibility 0s linear var(--disclose-t);
+  visibility: hidden;
+}
+.disclose.is-open .disclose__panel {
+  grid-template-rows: 1fr;
+  visibility: visible;
+  transition:
+    grid-template-rows var(--disclose-t) ease,
+    visibility 0s;
+}
+.disclose__panel-inner {
+  min-height: 0;
+  overflow: hidden;
+}
+.disclose__detail {
+  padding: 2px var(--sp-3, 12px) var(--sp-3, 12px) calc(14px + var(--sp-2, 8px) * 2);
+  font-size: 15px;
+  line-height: 1.5;
+  color: var(--text);
+}
+.disclose--card .disclose__detail {
+  padding: 2px var(--sp-4, 16px) var(--sp-4, 16px) calc(14px + var(--sp-2, 8px) + var(--sp-3, 12px));
+}
+.disclose__detail > :first-child {
+  margin-top: 0;
+}
+.disclose__detail > :last-child {
+  margin-bottom: 0;
+}
+.disclose__detail p {
+  margin: 0 0 var(--sp-2, 8px);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .disclose__chevron,
+  .disclose__panel {
+    transition: none;
+  }
+}
+
+/* ---- group -------------------------------------------------------------- */
+
+.disclose-group {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+.disclose-group__head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--sp-3, 12px);
+  padding: 0 0 var(--sp-2, 8px);
+  border-bottom: var(--edge, 2px) solid var(--text);
+  margin-bottom: var(--sp-2, 8px);
+}
+.disclose-group__title {
+  margin: 0;
+  font-family: var(--disp, var(--sans));
+  font-stretch: 125%;
+  font-weight: 800;
+  font-size: 15px;
+  line-height: 1.2;
+  letter-spacing: -0.01em;
+  text-transform: uppercase;
+  color: var(--text);
+}
+.disclose-group__controls {
+  display: inline-flex;
+  align-items: baseline;
+  gap: var(--sp-3, 12px);
+  margin-left: auto;
+}
+.disclose-group__count {
+  font-family: var(--mono);
+  font-size: 12px;
+  letter-spacing: 0.04em;
+  color: var(--muted);
+  font-variant-numeric: tabular-nums;
+}
+.disclose-group__toggle {
+  all: unset;
+  box-sizing: border-box;
+  display: inline-block;
+  padding: 4px 10px;
+  border: 1px solid var(--text);
+  border-radius: var(--radius, 0);
+  background: transparent;
+  color: var(--text);
+  font-family: var(--mono);
+  font-size: 12px;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  line-height: 1.3;
+  cursor: pointer;
+  white-space: nowrap;
+}
+.disclose-group__toggle:hover:not(:disabled) {
+  background: var(--text);
+  color: var(--bg);
+}
+.disclose-group__toggle:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+.disclose-group__toggle:disabled {
+  opacity: 0.5;
+  cursor: default;
+}
+.disclose-group__body {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+/* ---- KV + Mono helpers -------------------------------------------------- */
+
+.kv {
+  display: grid;
+  grid-template-columns: max-content minmax(0, 1fr);
+  column-gap: var(--sp-4, 16px);
+  row-gap: 6px;
+  margin: 0;
+}
+.kv__row {
+  display: contents;
+}
+.kv__label {
+  margin: 0;
+  padding-top: 2px;
+  font-family: var(--mono);
+  font-size: 12px;
+  line-height: 1.4;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--muted);
+  white-space: nowrap;
+}
+.kv__value {
+  margin: 0;
+  min-width: 0;
+  font-family: var(--sans);
+  font-size: 15px;
+  line-height: 1.4;
+  color: var(--text);
+  overflow-wrap: anywhere;
+}
+
+.mono-id {
+  font-family: var(--mono);
+  font-size: inherit;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: 0.01em;
+}

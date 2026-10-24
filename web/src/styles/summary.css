@@ -1,0 +1,254 @@
+/* Decision summary + lender section disclosures (components/DecisionSummary.tsx, App.tsx).
+   Instrument Tag first: square corners, 2px ink rules, Instrument Sans 15px body, JetBrains Mono 12px labels.
+   Rules: body 15px, nothing under 12px, every state carries a word, AA contrast. */
+
+/* ---- summary card: headline | actions, then the glance + "More" row full width ---- */
+
+.ax-sum .sum-main {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  grid-template-areas:
+    'head actions'
+    'more more';
+  align-items: center;
+  gap: 12px 24px;
+}
+.ax-sum .sum-main > .ax-headline {
+  grid-area: head;
+  flex: initial;
+}
+.ax-sum .sum-main > .ax-sum-actions {
+  grid-area: actions;
+  justify-self: end;
+}
+.ax-sum .sum-main > .sum-more-row {
+  grid-area: more;
+  min-width: 0;
+}
+@media (max-width: 720px) {
+  .ax-sum .sum-main {
+    grid-template-columns: minmax(0, 1fr);
+    grid-template-areas:
+      'head'
+      'actions'
+      'more';
+  }
+  .ax-sum .sum-main > .ax-sum-actions {
+    justify-self: start;
+  }
+}
+
+.sum-glance {
+  margin: 0 0 8px;
+  font-size: 15px;
+  line-height: 1.45;
+  color: var(--text);
+}
+
+.sum-more-row .disclose {
+  border-top: 1px solid var(--hair-2);
+  border-bottom: 1px solid var(--hair-2);
+}
+
+/* ---- the detail that opens under "More" ---- */
+
+.sum-more {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+.sum-cols {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  gap: 16px 28px;
+}
+.sum-sec {
+  min-width: 0;
+}
+.sum-subhead {
+  margin: 0 0 6px;
+  font-family: var(--mono);
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+.sum-note {
+  margin: 0 0 8px;
+  font-size: 15px;
+  line-height: 1.45;
+  color: var(--text);
+}
+.sum-note .ax-chip {
+  vertical-align: 0;
+}
+
+/* nested lender rows inside the More panel */
+.sum-lenders .disclose-group__head {
+  border-bottom-width: 1px;
+}
+.sum-lenders .disclose__row {
+  padding-left: 8px;
+}
+
+/* reasons: label · text · verdict word */
+.sum-reasons,
+.sum-cites {
+  margin: 0;
+  padding: 0 0 0 1.4em;
+  font-size: 15px;
+  line-height: 1.45;
+}
+.sum-reasons li,
+.sum-cites li {
+  margin: 0 0 6px;
+}
+.sum-reason-label,
+.sum-cite-name {
+  display: inline-block;
+  margin-right: 8px;
+  font-family: var(--mono);
+  font-size: 12px;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--muted);
+  vertical-align: 1px;
+}
+.sum-cite-name {
+  font-family: var(--sans);
+  font-size: 15px;
+  font-weight: 600;
+  letter-spacing: 0;
+  text-transform: none;
+  color: var(--text);
+}
+.sum-cite-name::after {
+  content: ' wrote:';
+  font-weight: 400;
+  color: var(--muted);
+}
+.sum-reason-text {
+  color: var(--text);
+}
+
+/* verdict word: always text, the border only reinforces */
+.sum-verdict {
+  display: inline-block;
+  margin-left: 8px;
+  padding: 0 6px;
+  border: 1px solid var(--text);
+  font-family: var(--mono);
+  font-size: 12px;
+  line-height: 18px;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--text);
+  white-space: nowrap;
+  vertical-align: 1px;
+}
+.sum-verdict--verified {
+  border-color: var(--accent);
+  color: var(--accent);
+}
+.sum-verdict--did-not-flip {
+  border-color: var(--decline);
+  color: var(--decline);
+}
+.sum-verdict--testing,
+.sum-verdict--not-tested {
+  border-color: var(--hair-2);
+  color: var(--muted);
+}
+
+.sum-notice {
+  margin: 0;
+  padding: 10px 14px;
+  border-left: 3px solid var(--text);
+  background: var(--bg);
+  font-size: 15px;
+  line-height: 1.5;
+  white-space: pre-wrap;
+  color: var(--text);
+}
+.sum-blocked {
+  margin: 6px 0 0;
+  padding: 0 0 0 1.2em;
+  font-size: 15px;
+}
+
+/* ---- deciding rule / stop reason block: label column + one disclosure ---- */
+
+.sum-block {
+  display: grid;
+  grid-template-columns: 150px minmax(0, 1fr);
+  gap: 16px;
+  padding: 10px 16px 10px 16px;
+  background: var(--bg);
+  border: 1px solid var(--hair-2);
+}
+.sum-block > .ax-label {
+  padding-top: 12px;
+}
+.sum-block.hard {
+  border: 2px solid var(--hard);
+  background: var(--hard-pill);
+}
+.sum-block.hard > .ax-label {
+  color: var(--text);
+}
+.sum-block .disclose--row {
+  border-bottom: 0;
+}
+@media (max-width: 720px) {
+  .sum-block {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 4px;
+  }
+  .sum-block > .ax-label {
+    padding-top: 0;
+  }
+}
+
+/* ---- "Lender decisions" section on the work surface (App.tsx) ---- */
+
+.lg {
+  margin: 12px 20px 20px;
+  padding: 14px 18px 8px;
+  background: var(--surface);
+  border: 2px solid var(--text);
+}
+.lg-glance {
+  margin: 0 0 12px;
+  font-size: 15px;
+  line-height: 1.45;
+  color: var(--text);
+}
+.lg-letter {
+  display: inline-grid;
+  place-items: center;
+  width: 20px;
+  height: 20px;
+  margin-right: 8px;
+  background: var(--text);
+  color: var(--surface);
+  font-family: var(--mono);
+  font-size: 12px;
+  font-weight: 600;
+  line-height: 1;
+  vertical-align: 2px;
+}
+.lg-cell {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding-top: 4px;
+}
+.lg-cell.diff {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+  align-items: start;
+}
+.lg .diff-label {
+  margin: 0 0 8px;
+}

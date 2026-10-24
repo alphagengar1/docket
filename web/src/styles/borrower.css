@@ -1,0 +1,175 @@
+/* Phone route (#/borrower): progressive-disclosure layer on top of borrower/borrower.css.
+   The Disclose primitive (components/Disclose.tsx) reads the console tokens (--text, --hair, …);
+   inside the phone we map them onto the Instrument Tag phone palette so the phone stays aluminium /
+   cream / ink whatever theme the console is in. Rules: body 15px, nothing under 12px, every state
+   carries a word (Selected / More / Why / Done / Running / Skipped), AA contrast. */
+
+.bw .disclose,
+.bw .kv {
+  --text: var(--ink);
+  --muted: var(--mute);
+  --hair: var(--hairline);
+  --hair-2: var(--hairline);
+  --accent: var(--go);
+  --hard: var(--signal);
+  --card: var(--panel);
+  --bg: var(--alu);
+  --hover: rgba(20, 21, 20, 0.05);
+  --sans: var(--f-body);
+  --mono: var(--f-mono);
+  --disp: var(--f-disp);
+  --radius: 0;
+  --edge: 2px;
+}
+
+/* On a phone the glance sentence may need two lines; never truncate it to an ellipsis. */
+.bw .disclose.is-closed .disclose__summary {
+  white-space: normal;
+  overflow: visible;
+  text-overflow: clip;
+}
+.bw .disclose__summary {
+  font-weight: 500;
+}
+.bw .disclose__row {
+  min-height: 44px; /* touch target */
+}
+.bw .disclose__meta {
+  text-transform: uppercase;
+}
+
+/* ---- offers: big-type row on top, the detail folds under it --------------- */
+.bw-offer-wrap {
+  display: flex;
+  flex-direction: column;
+  background: var(--panel);
+  border: 1px solid var(--hairline);
+}
+.bw-offer-wrap.sel {
+  border: 3px solid var(--go);
+}
+.bw-offer-wrap .bw-offer,
+.bw-offer-wrap .bw-offer.sel {
+  border: 0;
+  padding: 14px 16px 10px;
+}
+.bw-offer-wrap .disclose {
+  border-top: 1px solid var(--hairline);
+  border-bottom: 0;
+}
+.bw-offer-wrap .disclose--row:last-child {
+  border-bottom: 0;
+}
+.bw-offer-wrap .kv__value {
+  font-size: 15px;
+}
+
+/* ---- lenders that did not match ------------------------------------------ */
+.bw-none {
+  border: 1px dashed var(--mute);
+  padding: 2px 4px;
+}
+.bw-none .disclose[data-tone='muted'] .disclose__summary {
+  color: var(--mute);
+}
+.bw-none .disclose__detail p {
+  color: var(--ink);
+}
+
+/* ---- adverse-action notice ------------------------------------------------ */
+.bw-head p.lead {
+  color: var(--ink);
+  font-weight: 600;
+}
+.bw-notice {
+  display: flex;
+  flex-direction: column;
+  border-top: 2px solid var(--ink);
+  border-bottom: 2px solid var(--ink);
+}
+.bw-notice .disclose__detail .bw-why {
+  background: transparent;
+  border: 0;
+  padding: 0;
+}
+.bw-notice .disclose__detail .bw-steps {
+  padding-top: 4px;
+}
+.bw-notice .disclose__detail .bw-small {
+  font-size: 12px;
+}
+
+/* ---- progress ----------------------------------------------------------- */
+.bw-progress .disclose {
+  border-bottom: 1px solid var(--hairline);
+}
+.bw-progress .disclose .kv__label {
+  white-space: normal;
+}
+
+/* ---- reviewer strip (ink background): light text on ink ------------------ */
+.bw-rev .disclose,
+.bw-rev .kv {
+  --text: var(--panel);
+  --muted: #c9cbc4; /* 9.6:1 on ink */
+  --hair: #3a3b38;
+  --hair-2: #8e918a;
+  --accent: #8fa8ee; /* focus ring readable on ink */
+  --card: transparent;
+  --bg: var(--ink);
+  --hover: rgba(255, 255, 255, 0.06);
+}
+.bw-rev .disclose[data-tone='info'] {
+  --disclose-rule: var(--panel);
+}
+.bw-rev .disclose {
+  border-bottom: 1px solid #3a3b38;
+}
+.bw-rev .disclose__row,
+.bw-rev .disclose__detail,
+.bw-rev .kv__value {
+  color: var(--panel);
+}
+.bw-rev .disclose__meta,
+.bw-rev .kv__label {
+  color: #c9cbc4;
+}
+.bw-rev-detail {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.bw-rev-detail > .lbl {
+  margin-top: 6px;
+}
+.bw-rev-detail > .lbl:first-child {
+  margin-top: 0;
+}
+.bw-rev-detail p {
+  margin: 0;
+  font-size: 15px;
+  line-height: 1.45;
+}
+.bw-notice-text {
+  margin: 0;
+  padding: 10px 12px;
+  background: #1f201e;
+  border-left: 2px solid var(--panel);
+  font-family: var(--f-body);
+  font-size: 15px;
+  line-height: 1.45;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+  max-height: 320px;
+  overflow-y: auto;
+}
+.bw-audit {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  font-size: 15px;
+  line-height: 1.45;
+}

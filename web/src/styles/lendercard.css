@@ -1,0 +1,222 @@
+/* Lender card, offer card, before card and reason list disclosures (components/LenderCard.tsx,
+   OfferCard.tsx, ReasonList.tsx). Instrument Tag first; dark/light fall back to tokens.css.
+   Rules: body 15px, nothing under 12px, every state carries a word, square corners, 2px ink rules. */
+
+/* ---- full lender card: the glance row sits between head and foot ---------------- */
+
+.lc-dis {
+  min-width: 0;
+}
+.ax-lc .lc-disclose.disclose--row {
+  border-bottom: 0;
+}
+.ax-lc .lc-disclose .disclose__row {
+  padding: 12px 20px 12px 12px;
+}
+.ax-lc .lc-disclose .disclose__detail {
+  padding: 0 0 4px 0;
+}
+.ax-lc .lc-disclose .ax-lc-body {
+  padding-top: 6px;
+}
+.lc-changed-word {
+  font-family: var(--mono);
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--accent);
+  margin-left: 6px;
+  vertical-align: middle;
+}
+.ax-lc-head {
+  border-bottom: var(--edge, 2px) solid var(--text);
+}
+.ax-lc-foot {
+  border-top: 1px solid var(--hair);
+}
+
+/* ---- counteroffer: requested vs offered ----------------------------------------- */
+
+.lc-counter {
+  margin-bottom: 14px;
+}
+.lc-cmp {
+  width: 100%;
+  margin: 8px 0 0;
+  border-collapse: collapse;
+  font-size: 15px;
+  line-height: 1.4;
+}
+.lc-cmp th,
+.lc-cmp td {
+  padding: 6px 10px 6px 0;
+  text-align: left;
+  border-bottom: 1px solid var(--hair);
+  vertical-align: baseline;
+}
+.lc-cmp thead th {
+  font-family: var(--mono);
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--muted);
+  border-bottom: var(--edge, 2px) solid var(--text);
+}
+.lc-cmp tbody th {
+  font-weight: 500;
+  color: var(--muted);
+  width: 30%;
+}
+.lc-cmp td {
+  font-family: var(--mono);
+  font-variant-numeric: tabular-nums;
+  color: var(--text);
+}
+.lc-cmp td.changed {
+  background: var(--selection);
+  box-shadow: none;
+}
+.lc-cmp-note {
+  font-family: var(--sans);
+  color: var(--muted);
+}
+.lc-note {
+  margin: 10px 0 0;
+  font-size: 15px;
+  line-height: 1.45;
+  color: var(--text);
+}
+.lc-cmp .sr {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
+
+/* ---- compact offer card + before card ------------------------------------------- */
+
+.oc-dis {
+  min-width: 0;
+  margin: 0 calc(-1 * var(--sp-2, 8px));
+}
+.card .oc-disclose.disclose--row {
+  border-bottom: 0;
+  border-top: 1px solid var(--hair);
+}
+.card .oc-disclose .disclose__row {
+  padding: 10px var(--sp-2, 8px) 10px 6px;
+  min-height: 38px;
+}
+.card .oc-disclose .disclose__detail {
+  padding-left: calc(14px + var(--sp-2, 8px) + 6px);
+  padding-right: var(--sp-2, 8px);
+}
+.oc-detail .rows dt,
+.oc-detail .rows dd {
+  font-size: 15px;
+}
+.oc-detail .rows dt {
+  font-size: 13px;
+}
+.oc-detail .block .label {
+  font-size: 12px;
+}
+.oc-detail .conds {
+  font-size: 15px;
+  line-height: 1.45;
+}
+.oc-provider {
+  display: inline-flex;
+  padding: 8px 0 2px;
+}
+.oc-skel-rows {
+  margin-top: 10px;
+}
+.oc-before-none {
+  margin: 6px 0 0;
+  font-size: 15px;
+  line-height: 1.45;
+  color: var(--muted);
+}
+.card.before .oc-disclose .disclose__row {
+  font-weight: 500;
+}
+.card.compact .hero-sub {
+  padding-bottom: var(--sp-2, 8px);
+}
+
+/* ---- reason list: 15px text, visible verdict words, inline verdict disclosure ------ */
+
+.reasons.rsn li {
+  font-size: 15px;
+  gap: 4px;
+}
+.reasons.rsn .rsn-text {
+  font-size: 15px;
+  line-height: 1.45;
+  color: var(--text);
+}
+.reasons.rsn .rsn-text.muted {
+  color: var(--muted);
+}
+.reasons.rsn .field,
+.reasons.rsn .check-mark {
+  font-size: 12px;
+  letter-spacing: 0.04em;
+}
+.reasons.rsn .check-mark {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-weight: 600;
+  text-transform: uppercase;
+}
+.reasons.rsn .check-mark.tone-muted {
+  color: var(--muted);
+}
+.reasons.rsn .check-mark .skel {
+  border-radius: 0;
+}
+/* the Inspector's numbered list draws its counter in column 1; keep the verdict row in column 2 */
+.reasons.numbered li > .rsn-verdict {
+  grid-column: 2;
+}
+
+.rsn-verdict.disclose--row {
+  margin-top: 2px;
+  border-bottom: 0;
+}
+.rsn-verdict .disclose__row {
+  min-height: 34px;
+  padding: 7px 8px 7px 6px;
+  font-weight: 500;
+}
+.rsn-verdict .disclose__detail {
+  padding: 2px 8px 10px calc(14px + 6px + 8px);
+}
+.rsn-verdict .kv {
+  row-gap: 4px;
+}
+
+.rsn-group .disclose-group__head {
+  border-bottom: 1px solid var(--hair);
+  padding-bottom: 4px;
+  margin-bottom: 6px;
+}
+.ax-reasons .rsn-group {
+  margin-top: 10px;
+}
+.ax-reasons .rsn-group ul {
+  margin-top: 0;
+}
+.ax-reasons li .rsn-verdict {
+  margin-top: 6px;
+}
+
+/* dark shell: the Disclose rule colors come from tokens; nothing else to override */

@@ -1,0 +1,321 @@
+/* Decision sheet disclosures (components/DecisionSheet.tsx, components/ApplicantFacts.tsx).
+   Instrument Tag first; falls back to the shared tokens. Rules: body 15px, nothing under 12px,
+   every state carries a word, AA contrast (signal orange is a border or a fill, never small text). */
+
+.sheet-body {
+  display: contents;
+}
+
+/* ---- glance rows under the name: applicant facts, bureau facts ---------- */
+.sheet-facts {
+  margin: 8px 24px 0;
+  border-top: 1px solid var(--hair-2);
+  border-bottom: 1px solid var(--hair-2);
+}
+
+/* ---- "Look before you act" card, right under the summary's Approve / Decline */
+.sheet-more {
+  margin: 12px 24px 0;
+}
+
+/* ---- record group: notice + trace, above the sticky footer -------------- */
+.sheet-record {
+  margin: 4px 24px 20px;
+}
+
+.facts-note {
+  margin: 0;
+  font-size: 15px;
+  line-height: 1.5;
+  color: var(--muted);
+}
+
+/* ---- shared table (tradelines, step timings, reason checks) ------------- */
+.sheet-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 15px;
+  line-height: 1.4;
+}
+.sheet-table caption {
+  text-align: left;
+  padding: 0 0 6px;
+  font-family: var(--mono);
+  font-size: 12px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+.sheet-table th {
+  text-align: left;
+  padding: 4px 12px 4px 0;
+  border-bottom: 2px solid var(--text);
+  font-family: var(--mono);
+  font-size: 12px;
+  font-weight: 500;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--muted);
+  white-space: nowrap;
+}
+.sheet-table td {
+  padding: 5px 12px 5px 0;
+  border-bottom: 1px solid var(--hair);
+  vertical-align: top;
+  color: var(--text);
+}
+.sheet-table th:last-child,
+.sheet-table td:last-child {
+  padding-right: 0;
+}
+.sheet-table .num {
+  text-align: right;
+  font-family: var(--mono);
+  font-variant-numeric: tabular-nums;
+}
+.sheet-table .word {
+  font-weight: 600;
+}
+.sheet-table .flag-bad {
+  color: var(--text);
+  background: var(--hard-pill);
+  box-shadow: inset 3px 0 0 var(--hard);
+  padding-left: 8px;
+}
+.sheet-table .flag-good {
+  color: var(--accent);
+}
+
+/* ---- bureau facts ------------------------------------------------------- */
+.bureau {
+  display: grid;
+  gap: 14px;
+}
+
+/* ---- section heads inside a detail block ------------------------------- */
+.more-h {
+  margin: 18px 0 10px;
+  padding-bottom: 4px;
+  border-bottom: 2px solid var(--text);
+  font-family: var(--disp, var(--sans));
+  font-stretch: 125%;
+  font-weight: 800;
+  font-size: 15px;
+  line-height: 1.2;
+  letter-spacing: -0.01em;
+  text-transform: uppercase;
+  color: var(--text);
+}
+.more-h:first-child {
+  margin-top: 0;
+}
+
+/* ---- lender verdicts ---------------------------------------------------- */
+.verdicts {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 10px;
+}
+.verdict {
+  padding-top: 10px;
+  border-top: 1px solid var(--hair);
+}
+.verdict:first-child {
+  padding-top: 0;
+  border-top: 0;
+}
+.verdict-head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 6px 12px;
+}
+.verdict-lender {
+  font-size: 15px;
+  font-weight: 600;
+}
+.verdict-word {
+  display: inline-block;
+  padding: 2px 6px;
+  border: 1px solid var(--text);
+  line-height: 1.3;
+  font-family: var(--mono);
+  font-size: 12px;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--text);
+  white-space: nowrap;
+}
+.verdict-word.w-offer,
+.verdict-word.w-counteroffer {
+  color: var(--accent);
+  border-color: var(--accent);
+}
+.verdict-word.w-declined {
+  color: var(--decline);
+  border-color: var(--decline);
+}
+.verdict-word.w-failed {
+  color: var(--text);
+  border-color: var(--hard);
+  background: var(--hard-pill);
+}
+.verdict-word.w-quoting,
+.verdict-word.w-waiting {
+  color: var(--muted);
+  border-color: var(--hair-2);
+}
+.verdict-terms,
+.verdict-meta {
+  font-family: var(--mono);
+  font-size: 12px;
+  letter-spacing: 0.04em;
+  font-variant-numeric: tabular-nums;
+  color: var(--muted);
+  white-space: nowrap;
+}
+.verdict-meta {
+  margin-left: auto;
+}
+.verdict-cond,
+.verdict-none {
+  margin: 6px 0 0;
+  font-size: 15px;
+  line-height: 1.45;
+}
+.verdict-none {
+  color: var(--muted);
+}
+.verdict-reasons {
+  margin: 6px 0 0;
+  padding-left: 22px;
+  display: grid;
+  gap: 6px;
+  font-size: 15px;
+  line-height: 1.45;
+}
+.verdict-field {
+  display: inline-block;
+  margin-right: 8px;
+  padding: 0 6px;
+  border: 1px solid var(--text);
+  line-height: 20px;
+  vertical-align: 1px;
+  font-family: var(--mono);
+  font-size: 12px;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--text);
+}
+.verdict-check {
+  display: block;
+  font-size: 13px;
+  line-height: 1.4;
+  color: var(--muted);
+}
+.verdict-check.check-verified {
+  color: var(--accent);
+}
+.verdict-check.check-unsupported {
+  color: var(--decline);
+}
+
+/* ---- adverse-action notice --------------------------------------------- */
+.notice-text {
+  margin: 12px 0 0;
+  padding: 12px 16px;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+  background: var(--panel);
+  border: 1px solid var(--hair-2);
+  border-left: 3px solid var(--text);
+  font-family: var(--sans);
+  font-size: 15px;
+  line-height: 1.55;
+  color: var(--text);
+}
+.dropped {
+  margin: 8px 0 0;
+  padding-left: 22px;
+  display: grid;
+  gap: 4px;
+  font-size: 15px;
+  line-height: 1.45;
+}
+
+/* ---- pipeline trace ----------------------------------------------------- */
+.trace-group-h {
+  margin: 16px 0 6px;
+  font-family: var(--mono);
+  font-size: 12px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+.trace-rows {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+.trace-row {
+  display: grid;
+  grid-template-columns: 104px 170px minmax(0, 1fr);
+  column-gap: 12px;
+  row-gap: 2px;
+  padding: 6px 0;
+  border-bottom: 1px solid var(--hair);
+  font-size: 15px;
+  line-height: 1.4;
+}
+.trace-row:last-child {
+  border-bottom: 0;
+}
+.trace-row .t {
+  padding-top: 3px;
+  font-family: var(--mono);
+  font-size: 12px;
+  letter-spacing: 0.04em;
+  font-variant-numeric: tabular-nums;
+  color: var(--muted);
+}
+.trace-row .who {
+  font-weight: 600;
+  overflow-wrap: anywhere;
+}
+.trace-row .what {
+  min-width: 0;
+}
+.trace-row .act {
+  margin-left: 8px;
+  font-family: var(--mono);
+  font-size: 12px;
+  letter-spacing: 0.04em;
+  color: var(--muted);
+}
+.trace-row .note {
+  grid-column: 3;
+  color: var(--text);
+  overflow-wrap: anywhere;
+}
+.trace-row.is-stop .who {
+  color: var(--text);
+  box-shadow: inset 3px 0 0 var(--hard);
+  padding-left: 8px;
+}
+
+@media (max-width: 720px) {
+  .sheet-facts,
+  .sheet-more,
+  .sheet-record {
+    margin-left: 16px;
+    margin-right: 16px;
+  }
+  .trace-row {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .trace-row .note {
+    grid-column: 1;
+  }
+}

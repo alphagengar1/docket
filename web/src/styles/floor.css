@@ -1,0 +1,48 @@
+/* Visibility floor for the console chrome (components/Rail.tsx imports this).
+   Overrides the pre-existing rail / assistant / menu rules in index.css that fall under the brief:
+   nothing under 12px, muted text at AA contrast (--muted, never --muted-2, on aluminium). */
+
+:root {
+  /* 12px uppercase mono "INSPECT" needs more than the old 44px column. */
+  --rail-w: 60px;
+}
+
+.rail .rail-lbl {
+  font-size: 12px;
+  letter-spacing: 0.04em;
+}
+.rail-bottom .rail-lbl {
+  font-size: 12px;
+}
+.rail .rail-count {
+  font-size: 12px;
+  color: var(--muted);
+}
+.rail .rail-badge {
+  min-width: 16px;
+  height: 16px;
+  font: 600 12px/16px var(--mono);
+}
+
+/* Assistant pane: timestamps, scope, second-opinion note and column heads. */
+.ast-meta,
+.ast-note,
+.ast-col-head {
+  font-size: 12px;
+  color: var(--muted);
+}
+.ast-scope {
+  font-size: 12px;
+}
+.ast-second {
+  font-size: 12px;
+}
+:root[data-theme='tag'] .ast-chips button {
+  font-size: 12px;
+}
+:root[data-theme='tag'] .menu button {
+  font-size: 12px;
+}
+:root[data-theme='tag'] .pane-foot {
+  font-size: 12px;
+}

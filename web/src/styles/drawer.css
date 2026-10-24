@@ -1,0 +1,227 @@
+/* Drawer (components/Drawer.tsx): progressive disclosure for the audit log and the eval tab.
+   Instrument Tag first; tokens come from tokens.css. Rules: body 15px, nothing under 12px,
+   every state carries a word, AA contrast, square corners, 2px ink rules come from disclose.css. */
+
+.dr-audit,
+.dr-eval {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-4, 16px);
+  padding: var(--sp-3, 12px) var(--sp-3, 12px) var(--sp-4, 16px);
+  min-width: 0;
+}
+
+.dr-empty {
+  padding: var(--sp-3, 12px);
+  font-family: var(--sans);
+  font-size: 15px;
+  color: var(--muted);
+}
+
+/* a row belonging to the selected applicant keeps the old table's highlight */
+.disclose.dr-hi > .disclose__row {
+  background: var(--selected);
+}
+.disclose.dr-hi > .disclose__row:hover {
+  background: var(--selected);
+  filter: brightness(0.97);
+}
+
+/* the applicant's name leads the sentence when the scope is every applicant */
+.dr-who {
+  font-weight: var(--wt-semibold, 600);
+}
+.dr-who::after {
+  content: ' ';
+  font-weight: var(--wt-regular, 400);
+}
+
+/* ---- raw rows inside a step --------------------------------------------- */
+
+.dr-rows {
+  width: 100%;
+  border-collapse: collapse;
+  font-family: var(--sans);
+  font-size: 15px;
+  line-height: 1.4;
+  color: var(--text);
+}
+.dr-rows th {
+  text-align: left;
+  padding: 0 10px 6px 0;
+  border-bottom: 1px solid var(--text);
+  font-family: var(--mono);
+  font-size: 12px;
+  font-weight: var(--wt-regular, 400);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--muted);
+  white-space: nowrap;
+}
+.dr-rows td {
+  vertical-align: top;
+  padding: 6px 10px 6px 0;
+  border-bottom: 1px solid var(--hair);
+}
+.dr-rows tr:last-child td {
+  border-bottom: 0;
+}
+.dr-rows td.dr-time,
+.dr-rows td.dr-ms {
+  font-family: var(--mono);
+  font-size: 12px;
+  letter-spacing: 0.02em;
+  font-variant-numeric: tabular-nums;
+  color: var(--muted);
+  white-space: nowrap;
+  padding-top: 8px;
+}
+.dr-rows td.dr-ms {
+  text-align: right;
+  padding-right: 0;
+}
+.dr-rows td.dr-actor {
+  white-space: nowrap;
+  color: var(--text);
+}
+.dr-rows td.dr-actor::before {
+  content: '';
+  display: inline-block;
+  width: 8px;
+  height: 8px;
+  margin-right: 6px;
+  background: var(--actor, var(--hair-2));
+  vertical-align: -1px;
+}
+.dr-rows td.dr-action {
+  white-space: nowrap;
+  font-weight: var(--wt-medium, 500);
+}
+.dr-rows td.dr-note {
+  min-width: 0;
+  overflow-wrap: anywhere;
+  color: var(--text);
+}
+.dr-rows .dr-ref {
+  display: inline-block;
+  margin-left: 6px;
+  padding: 0 6px;
+  border: 1px solid var(--hair-2);
+  font-family: var(--mono);
+  font-size: 12px;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--muted);
+  vertical-align: 1px;
+}
+
+/* ---- eval ---------------------------------------------------------------- */
+
+.dr-eval-head {
+  display: flex;
+  align-items: baseline;
+  gap: var(--sp-3, 12px);
+  flex-wrap: wrap;
+  padding-bottom: var(--sp-2, 8px);
+}
+.dr-eval-head .dr-big {
+  font-family: var(--disp, var(--sans));
+  font-stretch: 125%;
+  font-weight: 800;
+  font-size: 28px;
+  line-height: 1;
+  letter-spacing: -0.01em;
+  font-variant-numeric: tabular-nums;
+}
+.dr-eval-head .dr-k {
+  font-family: var(--mono);
+  font-size: 12px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+
+/* pass/fail word: the word carries the state; the color only reinforces it */
+.dr-verdict {
+  display: inline-block;
+  margin-left: 8px;
+  padding: 0 6px;
+  border: 1px solid currentColor;
+  font-family: var(--mono);
+  font-size: 12px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  line-height: 1.5;
+  vertical-align: 1px;
+  color: var(--text);
+}
+.dr-verdict.pass {
+  color: var(--accent);
+}
+.dr-verdict.fail {
+  color: var(--text);
+  background: var(--hard-pill);
+  border-color: var(--hard);
+}
+.dr-verdict.pending {
+  color: var(--muted);
+}
+
+.dr-stat-v {
+  font-family: var(--mono);
+  font-variant-numeric: tabular-nums;
+}
+.dr-stat-th {
+  margin-left: 8px;
+  color: var(--muted);
+}
+
+.dr-failures {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.dr-failures li {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 2px;
+  padding: 8px 0;
+  border-bottom: 1px solid var(--hair);
+}
+.dr-failures li:last-child {
+  border-bottom: 0;
+}
+.dr-failures .dr-fail-line {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px 10px;
+  align-items: baseline;
+  font-size: 15px;
+}
+.dr-failures .dr-fail-why {
+  font-size: 15px;
+  color: var(--muted);
+  overflow-wrap: anywhere;
+}
+.dr-fail-word {
+  font-family: var(--mono);
+  font-size: 12px;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  padding: 0 6px;
+  border: 1px solid var(--hair-2);
+  color: var(--muted);
+}
+.dr-fail-word.got {
+  border-color: var(--hard);
+  background: var(--hard-pill);
+  color: var(--text);
+}
+
+/* skeleton while a run is in flight: the word "running" sits beside it */
+.dr-skel {
+  display: inline-block;
+  height: 16px;
+  background: var(--skeleton);
+  vertical-align: middle;
+}
