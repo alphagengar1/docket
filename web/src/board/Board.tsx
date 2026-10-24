@@ -8,6 +8,17 @@ import { clock, monthlyPayment, usd } from '../lib/format'
 import { eventsFor, offersFor, stepTimings } from '../lib/select'
 import './board.css'
 
+const FIELD_LABELS: Record<string, string> = {
+  fico9: 'score', vantage4: 'score (V4)', utilization: 'utilization', inquiries6mo: 'inquiries',
+  'fraud.score': 'fraud', 'identity.verified': 'identity', 'flags.deceased': 'deceased indicator',
+  'flags.frozen': 'frozen file', 'flags.bankruptcy': 'bankruptcy', 'flags.eviction': 'eviction', policy: 'policy', timeout: 'timeout',
+}
+export function fieldLabel(field: string): string {
+  const key = field.replace(/^credit\./, '')
+  return FIELD_LABELS[key] ?? key
+}
+
+
 type Stage = 'done' | 'now' | 'next' | 'cancelled'
 
 const SHORT: Record<string, string> = { cu: 'Pacific Ridge', fintech: 'Northstar', prime: 'Meridian Prime' }
@@ -209,14 +220,14 @@ function LenderCol({ lenderId, o, picked, lowest, lowPay }: { lenderId: string; 
           <span className="lbl">Reason</span>
           <span className="reason">{failed ? 'Lender did not answer in time' : (r?.text.replace(/^the applicant['’]s /i, '') ?? 'Declined')}</span>
         </div>
-        <span className="lbl rule">Rule {failed ? 'timeout' : (r?.field ?? 'policy').replace(/^credit\./, '')} · reason logged</span>
+        <span className="lbl rule">Rule {failed ? 'timeout' : fieldLabel(r?.field ?? 'policy')} · reason logged</span>
       </div>
     )
   }
   const pay = payOf(o)
   const cost = costOf(o)
   const tail = lowest ? 'lowest cost' : lowPay ? 'lower payment' : ''
-  const rule = (o.reasons[0]?.field ?? 'policy').replace(/^credit\./, '')
+  const rule = fieldLabel(o.reasons[0]?.field ?? 'policy')
   return (
     <div className={`col ${picked ? 'picked' : ''}`}>
       <div className="ch">
