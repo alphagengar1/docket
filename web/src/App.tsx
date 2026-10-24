@@ -2,21 +2,18 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useDesk } from './hooks/useDesk'
 import { LENDERS, type IntakeInput } from './types'
 import { useNow } from './hooks/useNow'
-import { summarize } from './lib/summary'
 import { stopLabel } from '../../convex/labels'
 import { eventsFor, hardStopEvent, offersFor, originalOf, stepTimings } from './lib/select'
 import { IN_FLIGHT, STATUS_TONE, STATUS_WORD } from './lib/status'
 import { rankDecisions } from './lib/rank'
 import { TopBar } from './components/TopBar'
-import { DecisionSummary } from './components/DecisionSummary'
-import { ApplicantFacts } from './components/ApplicantFacts'
+import { Verdict } from './components/Verdict'
 import { Queue } from './components/Queue'
 import { IntakePane } from './components/IntakePane'
 import { PersonaDeck } from './components/PersonaDeck'
 import { Waterfall } from './components/Waterfall'
 import { PipelineStrip } from './components/PipelineStrip'
 import { BeforeCard, OfferCard } from './components/OfferCard'
-import { HardStopCard } from './components/HardStopCard'
 import { Inspector, type InspectorTab } from './components/Inspector'
 import { Drawer } from './components/Drawer'
 import { ApplicantView } from './components/ApplicantView'
@@ -174,15 +171,17 @@ export default function App() {
   const open = (id: string) => {
     select(id)
     setSheetOpen(true)
+    // On narrow screens the queue floats over the desk; get it out of the way once a row is picked.
+    if (window.matchMedia('(max-width: 860px)').matches) setPanel('queue', false)
   }
 
   const stopReasons = useMemo(() => {
     const m: Record<string, string> = {}
-    for (const e of desk.auditEvents) if (e.action === 'rules.hard_stop' || e.action === 'hard_stop') m[e.applicantId] = e.note || stopLabel(e.ref ?? '')
+    for (const e of desk.auditEvents) if (e.action === 'rules.hard_stop' || e.action === 'hard_stop') m[e.applicantId] = e.note || m[e.applicantId] || stopLabel(e.ref ?? '')
     return m
   }, [desk.auditEvents])
-  const [lendersOpen, setLendersOpen] = useState(true)
   const hs = applicant?.status === 'hard_stop' ? hardStopEvent(events) : undefined
+  const stopNote = applicant ? stopReasons[applicant._id] : undefined
 
   // Ranked decision queue: after a quick approve/decline, move to the next applicant waiting on a human.
   const ranked = useMemo(() => rankDecisions(desk.applicants, desk.offers), [desk.applicants, desk.offers])
@@ -313,6 +312,10 @@ export default function App() {
                       <span className={`status tone-${STATUS_TONE[applicant.status]} ${IN_FLIGHT.includes(applicant.status) ? 'live' : ''}`}>
                         {STATUS_WORD[applicant.status]}
                       </span>
+                      <span className="muted">
+                        {applicant.purpose} · <span className="mono">${applicant.amountRequested.toLocaleString('en-US')}</span> · income{' '}
+                        <span className="mono">${applicant.statedIncome.toLocaleString('en-US')}</span>
+                      </span>
                       {original && (
                         <span className="muted">
                           · replay after dispute ·{' '}
@@ -329,7 +332,6 @@ export default function App() {
                     </>
                   )}
                 </div>
-                {applicant && !intakeOpen && <ApplicantFacts a={applicant} />}
                 {focus && (
                   <PipelineStrip
                     applicant={applicant}
@@ -346,28 +348,19 @@ export default function App() {
                 )}
                 <div className="board-scroll">
                 {applicant && (
-                  <DecisionSummary
+                  <Verdict
                     applicant={applicant}
                     offers={offers}
+                    decision={decision}
                     hardStop={hs}
                     canDecide={applicant.status === 'awaiting_human' && !desk.replaying}
+                    pick={selectedOffer ?? ranked.find((r) => r.applicant._id === applicant._id)?.best ?? null}
                     onApprove={(oid) => void quickApprove(applicant._id, oid)}
                     onDecline={() => void quickDecline(applicant._id)}
+                    stopNote={stopNote}
                   />
                 )}
-                {applicant && applicant.status !== 'hard_stop' && (() => {
-                  const sm = summarize(applicant, offers, hs)
-                  return (
-                    <button type="button" className="ax-sec-head" aria-expanded={lendersOpen} onClick={() => setLendersOpen((v) => !v)}>
-                      <span className="ax-chev" aria-hidden="true">{lendersOpen ? '\u25BE' : '\u25B8'}</span>
-                      <span className="ax-sec-title">Lender decisions</span>
-                      <span className="ax-sec-count">
-                        {sm.declined} declined · {sm.offered} {sm.offered === 1 ? 'offer' : 'offers'} · {sm.counter} {sm.counter === 1 ? 'counteroffer' : 'counteroffers'}
-                      </span>
-                    </button>
-                  )
-                })()}
-                {(lendersOpen || applicant?.status === 'hard_stop') && (
+                {applicant?.status !== 'hard_stop' && (
                 <div className={`columns ${original ? 'diff' : ''} ${!focus && !original ? 'stack' : ''}`}>
                   {original && (
                     <div className="diff-label section-label">
@@ -377,6 +370,8 @@ export default function App() {
                   {/* One cell per lender (header, optional before-card, card) so any number of lenders wraps into rows. */}
                   {LENDERS.map((l, i) => {
                     const o = offers.find((x) => x.lender === l.id)
+                    // A lender added after this run never got the file: no card, not a forever-spinning one.
+                    if (!o && applicant && !IN_FLIGHT.includes(applicant.status)) return null
                     const chosen = !!decision?.chosenOfferId && o?._id === decision.chosenOfferId
                     return (
                       <div key={l.id} className="lender-col">
@@ -415,7 +410,6 @@ export default function App() {
                       </div>
                     )
                   })}
-                  {applicant?.status === 'hard_stop' && <HardStopCard event={hs} />}
                 </div>
                 )}
                 </div>
@@ -491,6 +485,7 @@ export default function App() {
           onPrev={() => walk(-1)}
           onNext={() => walk(1)}
           onClose={() => setSheetOpen(false)}
+          stopNote={stopNote}
           onApprove={(offerId) => void quickApprove(applicant._id, offerId)}
           onDecline={() => void quickDecline(applicant._id)}
           onInspect={(t) => {

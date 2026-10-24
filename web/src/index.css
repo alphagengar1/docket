@@ -2462,3 +2462,99 @@ table.grid.tl tr:last-child td {
 .queue-row.plain { white-space: normal; }
 .queue-row .q-stop { display: block; white-space: normal; overflow-wrap: anywhere; }
 .queue-row .q-meta { white-space: normal; }
+
+/* Verdict: approved or not, readable in half a second. One solid stamp per state. */
+.vd { display: flex; align-items: center; gap: 20px; padding: 14px 18px; margin: 12px 20px 14px; border: 2px solid var(--text); background: var(--surface); }
+.vd-stamp { font-family: var(--disp); font-stretch: 125%; font-weight: 800; text-transform: uppercase; letter-spacing: -0.01em; font-size: 30px; line-height: 1; padding: 10px 16px; white-space: nowrap; }
+.vd-line { font-size: 17px; flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.vd-actions { display: flex; gap: 10px; margin-left: auto; }
+.vd-btn { font: inherit; font-weight: 600; font-size: 15px; height: auto; line-height: 1.2; padding: 10px 18px; border: 2px solid var(--text); background: transparent; color: var(--text); cursor: pointer; }
+.vd-btn.primary { background: var(--approve); border-color: var(--approve); color: #fff; }
+.vd-btn:disabled { opacity: 0.4; cursor: default; }
+.vd-approved { border-color: var(--approve); }
+.vd-approved .vd-stamp { background: var(--approve); color: #fff; }
+.vd-declined .vd-stamp { background: var(--text); color: var(--bg); }
+.vd-hard { border-color: var(--hard); }
+.vd-hard .vd-stamp { background: var(--hard); color: #141514; }
+.vd-needs .vd-stamp { border: 2px solid var(--text); box-shadow: inset 6px 0 0 var(--hard); padding-left: 22px; }
+.vd-working { border-style: dashed; border-color: var(--muted); }
+.vd-working .vd-stamp { border: 2px dashed var(--muted); color: var(--muted); }
+.vd-sheet { margin: 18px 24px; padding: 18px 20px; }
+.vd-sheet .vd-stamp { font-size: 44px; padding: 12px 20px; }
+.vd-sheet .vd-line { font-size: 19px; white-space: normal; }
+
+/* Slim decision sheet: verdict, offer picker, one line of why. No lender cards (they are on the desk). */
+.sheet.sheet-slim { width: min(760px, calc(100vw - 48px)); max-height: none; }
+.sheet-slim .sheet-head { display: flex; align-items: baseline; gap: 14px; }
+.sheet-slim .sheet-id { margin-left: auto; display: flex; gap: 14px; }
+.pick { display: flex; flex-direction: column; border-top: 1px solid var(--hair-2); }
+.pick-row { display: grid; grid-template-columns: 1fr auto 170px; align-items: center; gap: 16px; padding: 12px 14px; border: 0; border-bottom: 1px solid var(--hair-2); background: transparent; color: var(--text); font: inherit; text-align: left; cursor: pointer; }
+.pick-row.on { outline: 2px solid var(--approve); outline-offset: -2px; }
+.pick-name { font-weight: 600; }
+.pick-apr { font-size: 22px; font-weight: 600; }
+.pick-terms { text-align: right; }
+.sheet-why { margin: 16px 0 4px; font-size: 15px; line-height: 1.4; }
+.sheet-why .mono { text-transform: uppercase; letter-spacing: 0.06em; font-size: 12px; margin-right: 8px; }
+
+/* Approved state reads instantly on the desk: the chosen card goes solid, the rest fade out. */
+.card.chosen { outline: 3px solid var(--approve); outline-offset: -3px; }
+.card.dim { opacity: 0.35; }
+
+/* Queue: two lines per row, status as a solid stamp so approved / declined / stopped reads at a glance. */
+.queue-row .q-line2 { display: flex; align-items: center; gap: 10px; }
+.queue-row .q-line2 .q-best { flex: 1; min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.queue-row.decide .queue-actions { display: flex; gap: 6px; margin: 0; }
+.queue-row.decide .queue-actions button { padding: 4px 10px; font-size: 13px; }
+.q-stamp { font-family: var(--disp); font-stretch: 125%; font-weight: 800; text-transform: uppercase; font-size: 13px; line-height: 1; padding: 5px 8px; border: 2px solid var(--text); }
+.q-stamp.st-approved { background: var(--approve); border-color: var(--approve); color: #fff; }
+.q-stamp.st-declined { background: var(--text); color: var(--bg); }
+.q-stamp.st-hard_stop { background: var(--hard); border-color: var(--hard); color: #141514; }
+.q-stamp.st-intake, .q-stamp.st-pulling, .q-stamp.st-guardrails, .q-stamp.st-underwriting, .q-stamp.st-compliance { border-style: dashed; border-color: var(--muted); color: var(--muted); }
+.queue-row .q-meta { margin-left: auto; }
+.sheet-why { margin: 0 24px 20px; }
+.sheet-slim .pick { margin: 0 24px 16px; }
+
+/* Sheet verdict: stamp and buttons on one row, the terms line under them. */
+.vd-sheet { flex-wrap: wrap; }
+.vd-sheet .vd-line { order: 3; flex: 1 0 100%; }
+/* Queue decide rows: no greyed Approve when there is nothing to approve; small buttons. */
+.queue-row.decide.no-offer .queue-actions .approve-pill { display: none; }
+.queue-row.decide .queue-actions button { height: 26px; padding: 0 8px; font-size: 12px; }
+
+/* Verdict wraps instead of spilling: the terms line keeps a readable width, buttons drop below when tight. */
+.vd { flex-wrap: wrap; row-gap: 12px; }
+.vd-line { min-width: 220px; }
+.slot-h { min-width: 0; }
+
+/* Narrow screens (tablet portrait and phones): side panels float over the desk instead of squeezing it,
+   and the verdict, header and sheet stack. */
+@media (max-width: 860px) {
+  .main { grid-template-columns: var(--rail-w) 0px minmax(0, 1fr) 0px 0px; position: relative; }
+  .main .slot.open { position: absolute; top: 0; bottom: 0; z-index: 20; width: min(var(--queue-w), calc(100% - var(--rail-w))); background: var(--surface); box-shadow: 0 0 0 1px var(--text); }
+  .main .slot-q.open { left: var(--rail-w); }
+  .main .slot-i.open { right: 0; width: min(var(--inspector-w), calc(100% - var(--rail-w))); }
+  .main .slot-a.open { right: 0; width: min(var(--assistant-w), calc(100% - var(--rail-w))); }
+  .board-head { flex-wrap: wrap; height: auto; padding-block: 8px; row-gap: 2px; }
+  .vd { margin-inline: 12px; }
+  .vd-line { flex-basis: 100%; order: 3; white-space: normal; }
+  .vd-actions { margin-left: 0; }
+}
+@media (max-width: 560px) {
+  .topbar { overflow-x: auto; overflow-y: hidden; gap: 8px; }
+  .topbar > * { flex: none; }
+  .vd-stamp { font-size: 22px; padding: 8px 12px; }
+  .vd-sheet .vd-stamp { font-size: 28px; }
+  .vd-actions { width: 100%; }
+  .vd-actions .vd-btn { flex: 1; }
+  .sheet.sheet-slim { width: calc(100vw - 16px); }
+  .sheet-slim .sheet-head { flex-wrap: wrap; }
+  .vd-sheet, .sheet-slim .pick, .sheet-why { margin-inline: 12px; }
+  .pick-row { grid-template-columns: 1fr auto; }
+  .pick-terms { grid-column: 1 / -1; text-align: left; }
+}
+
+/* Card footer wraps its links under the chips instead of running past the card edge. */
+.card-foot { flex-wrap: wrap; row-gap: 4px; }
+.card-foot > .chips:last-child { margin-left: auto; }
+/* The decision sheet sits above floating side panels on narrow screens. */
+.sheet-scrim { z-index: 30; }

@@ -38,23 +38,15 @@ function Row({ a, selected, onSelect, stopReason }: { a: Applicant; selected: bo
       className={`queue-row plain ${hard ? 'hardrow' : ''} ${IN_FLIGHT.includes(a.status) ? 'live' : ''}`}
       style={{ ['--row-tone' as string]: TONE_VAR[STATUS_TONE[a.status]] }}
       onClick={onSelect}
+      title={hard ? stopReason : undefined}
     >
       <span className="q-line1">
         <span className="q-name">{a.name}</span>
         <span className="q-amt mono">{usd(a.amountRequested)}</span>
       </span>
       <span className="q-line2">
-        <span className="q-purpose">{a.purpose}</span>
-        <span className={`ax-pill ${hard ? 'hard' : 'outline'}`}>{STATUS_WORD[a.status]}</span>
-      </span>
-      {hard && stopReason && (
-        <span className="q-stop">
-          <span className="mono">{a.personaId}</span> {stopReason}
-        </span>
-      )}
-      <span className="q-meta mono">
-        {hard ? 'Stopped before lenders · no offers' : `${a.personaId} · ${a._id.slice(0, 7)}`}
-        {a.replayOf ? ' · replay' : ''}
+        <span className={`q-stamp st-${a.status}`}>{STATUS_WORD[a.status]}</span>
+        <span className="q-meta mono">{a.personaId}{a.replayOf ? ' · replay' : ''}</span>
       </span>
     </button>
   )
@@ -87,37 +79,25 @@ function DecideRow({ r, rank, selected, onSelect, onApproveBest, onDecline, disa
         <span className="q-amt mono">{usd(a.amountRequested)}</span>
       </span>
       <span className="q-line2">
-        <span className="q-purpose">{a.purpose}</span>
-        <span className="ax-pill outline">Review</span>
-      </span>
-      <span className="q-line3">
-        <span className="q-approve">
-          {r.approvals}/{total} approve
+        <span className="q-best">
+          {b ? (
+            <>
+              <b className="mono">{b.apr!.toFixed(2)}%</b> {SHORT[b.lender]}
+              {counter ? ` · counter ${usd(b.amount ?? 0)}` : ''}
+            </>
+          ) : (
+            <b>No offer</b>
+          )}
+          <span className="muted mono"> · {r.approvals}/{total}</span>
         </span>
-        <span className="q-seg" role="img" aria-label={`${r.approvals} of ${total} lenders approve`}>
-          {Array.from({ length: total }, (_, i) => (
-            <i key={i} className={i < r.approvals ? 'on' : ''} />
-          ))}
-        </span>
-      </span>
-      <span className="q-best">
-        {b ? (
-          <>
-            <b className="mono">{b.apr!.toFixed(2)}%</b> {SHORT[b.lender]}
-            {counter ? ` · counter ${usd(b.amount ?? 0)}` : ''}
-          </>
-        ) : (
-          <b>No offer</b>
-        )}
-        {a.replayOf ? <span className="muted"> · replay</span> : null}
-      </span>
       <span className="queue-actions" onClick={(e) => e.stopPropagation()}>
         <button type="button" className="approve-pill" disabled={disabled || !b} onClick={onApproveBest} title={b ? `Approve ${SHORT[b.lender]} at ${b.apr!.toFixed(2)}%` : 'No offer to approve'}>
-          Approve best
+          Approve
         </button>
         <button type="button" className="decline-pill" disabled={disabled} onClick={onDecline}>
           Decline
         </button>
+      </span>
       </span>
     </div>
   )

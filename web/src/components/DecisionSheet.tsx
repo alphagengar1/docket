@@ -1,14 +1,13 @@
-// Decision sheet: one applicant in focus over a blurred desk. Key points first, then the three
-// lender cards, then the actions. Left/right arrows walk the queue; Esc closes.
+// Decision sheet: the decide step only. The desk behind it already shows every lender card, so the
+// sheet carries just the verdict, the offers you can pick between and the one rule behind the
+// declines. Left/right arrows walk the queue; Esc closes.
 import { useEffect } from 'react'
 import type { Applicant, AuditEvent, Decision, Notice, Offer, ReasonCheck } from '../types'
 import { LENDERS } from '../types'
-import { secs } from '../lib/format'
-import { IN_FLIGHT, STATUS_TONE, STATUS_WORD } from '../lib/status'
+import { usd } from '../lib/format'
 import { hardStopEvent } from '../lib/select'
-import { DecisionSummary } from './DecisionSummary'
-import { ApplicantFacts } from './ApplicantFacts'
-import { OfferCard } from './OfferCard'
+import { summarize } from '../lib/summary'
+import { Verdict } from './Verdict'
 
 interface Props {
   applicant: Applicant
@@ -28,25 +27,16 @@ interface Props {
   onApprove: (offerId: string) => void
   onDecline: () => void
   onInspect: (tab: 'offer' | 'trace' | 'notice') => void
-}
-
-function bestOf(offers: Offer[]): Offer | null {
-  return (
-    offers
-      .filter((o) => o.status === 'done' && o.decision === 'approve' && o.apr != null)
-      .sort((a, b) => a.apr! - b.apr!)[0] ?? null
-  )
+  stopNote?: string
 }
 
 export function DecisionSheet(p: Props) {
-  const { applicant: a, offers, checks } = p
-  const best = bestOf(offers)
-  const chosen = p.decision?.chosenOfferId ? offers.find((o) => o._id === p.decision!.chosenOfferId) : undefined
-  const hard = a.status === 'hard_stop'
-  const hs = hard ? hardStopEvent(p.events) : undefined
-  const running = IN_FLIGHT.includes(a.status)
+  const { applicant: a, offers } = p
+  const hs = a.status === 'hard_stop' ? hardStopEvent(p.events) : undefined
+  const s = summarize(a, offers, hs)
   const canDecide = a.status === 'awaiting_human'
-  const sel = offers.find((o) => o._id === p.selectedOfferId && o.decision === 'approve') ?? best
+  const yes = offers.filter((o) => o.status === 'done' && o.decision === 'approve' && o.apr != null).sort((x, y) => x.apr! - y.apr!)
+  const pick = yes.find((o) => o._id === p.selectedOfferId) ?? s.best
 
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
@@ -62,83 +52,60 @@ export function DecisionSheet(p: Props) {
 
   return (
     <div className="scrim sheet-scrim" onClick={p.onClose}>
-      <div className="sheet" role="dialog" aria-modal="true" aria-label={`Decision: ${a.name}`} onClick={(e) => e.stopPropagation()}>
+      <div className="sheet sheet-slim" role="dialog" aria-modal="true" aria-label={`Decision: ${a.name}`} onClick={(e) => e.stopPropagation()}>
         <div className="sheet-nav">
-          <button type="button" className="ghost" onClick={p.onPrev} aria-label="Previous applicant" title="← previous">
-            ←
-          </button>
-          <span className="mono muted">
-            {p.position.index + 1} / {p.position.total}
+          <button type="button" className="ghost" onClick={p.onPrev} aria-label="Previous applicant" title="← previous">←</button>
+          <span className="mono muted">{p.position.index + 1} / {p.position.total}</span>
+          <button type="button" className="ghost" onClick={p.onNext} aria-label="Next applicant" title="→ next">→</button>
+          <span className="sheet-id">
+            <button type="button" className="link" onClick={() => p.onInspect('trace')}>Trace</button>
+            {p.notice && <button type="button" className="link" onClick={() => p.onInspect('notice')}>Notice</button>}
           </span>
-          <button type="button" className="ghost" onClick={p.onNext} aria-label="Next applicant" title="→ next">
-            →
-          </button>
-          <span className="sheet-id mono muted">
-            {a.personaId} · {a._id.slice(0, 7)}
-          </span>
-          <button type="button" className="ghost" onClick={p.onClose} aria-label="Close">
-            Esc
-          </button>
+          <button type="button" className="ghost" onClick={p.onClose} aria-label="Close">Esc</button>
         </div>
 
         <header className="sheet-head">
           <h2 className="disp">{a.name}</h2>
-          <span className={`status tone-${STATUS_TONE[a.status]} ${running ? 'live' : ''}`}>{STATUS_WORD[a.status]}</span>
+          <span className="muted">{a.purpose} · <span className="mono">{usd(a.amountRequested)}</span></span>
         </header>
-        <ApplicantFacts a={a} />
 
-        <div className="sheet-sum">
-          <DecisionSummary applicant={a} offers={offers} hardStop={hs} canDecide={canDecide} onApprove={p.onApprove} onDecline={p.onDecline} />
-        </div>
+        <Verdict
+          applicant={a}
+          offers={offers}
+          decision={p.decision}
+          hardStop={hs}
+          canDecide={canDecide}
+          pick={pick}
+          onApprove={p.onApprove}
+          onDecline={p.onDecline}
+          size="sheet"
+          stopNote={p.stopNote}
+        />
 
-        <div className="sheet-cards">
-          {hard ? null : (
-            LENDERS.map((l) => {
-              const o = offers.find((x) => x.lender === l.id)
-              return (
-                <OfferCard
-                  key={l.id}
-                  lender={l.id}
-                  offer={o}
-                  checks={checks}
-                  bestApr={best?.apr ?? null}
-                  underwriteStartedAt={p.underwriteStartedAt}
-                  now={p.now}
-                  selected={!!o && !!sel && o._id === sel._id && canDecide}
-                  chosen={!!chosen && o?._id === chosen._id}
-                  dim={!!chosen && o?._id !== chosen._id}
-                  canSelect={canDecide}
-                  onSelect={() => o && p.onSelectOffer(o._id)}
-                  onTrace={() => p.onInspect('trace')}
-                />
-              )
-            })
-          )}
-        </div>
+        {canDecide && yes.length > 1 && (
+          <div className="pick" role="radiogroup" aria-label="Offer to approve">
+            {yes.map((o) => (
+              <button
+                key={o._id}
+                type="button"
+                role="radio"
+                aria-checked={pick?._id === o._id}
+                className={`pick-row ${pick?._id === o._id ? 'on' : ''}`}
+                onClick={() => p.onSelectOffer(o._id)}
+              >
+                <span className="pick-name">{LENDERS.find((l) => l.id === o.lender)?.name}</span>
+                <span className="pick-apr mono">{o.apr!.toFixed(2)}%</span>
+                <span className="pick-terms mono muted">{o.monthlyPayment != null ? `${usd(o.monthlyPayment)}/mo · ` : ''}{o.termMonths} mo</span>
+              </button>
+            ))}
+          </div>
+        )}
 
-        <footer className="sheet-foot">
-          <span className="muted mono">
-            {p.notice ? 'notice drafted' : 'no notice'} · {secs(p.now - a.createdAt, 0)} on the desk
-          </span>
-          <span className="sheet-actions">
-            <button type="button" className="ghost" onClick={() => p.onInspect('trace')}>
-              Trace
-            </button>
-            <button type="button" className="ghost" onClick={() => p.onInspect('notice')}>
-              Notice
-            </button>
-            {canDecide && (
-              <>
-                <button type="button" className="decline-pill" onClick={p.onDecline}>
-                  Decline
-                </button>
-                <button type="button" className="approve-pill" disabled={!sel} onClick={() => sel && p.onApprove(sel._id)}>
-                  {sel ? `Approve ${LENDERS.find((l) => l.id === sel.lender)?.label} at ${sel.apr!.toFixed(2)}%` : 'No offer to approve'}
-                </button>
-              </>
-            )}
-          </span>
-        </footer>
+        {s.rule && a.status !== 'hard_stop' && (
+          <p className="sheet-why">
+            <span className="mono muted">Why {s.rule.cited === 1 ? 'one lender' : `${s.rule.cited} lenders`} said no</span> {s.rule.text}
+          </p>
+        )}
       </div>
     </div>
   )
