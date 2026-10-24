@@ -873,6 +873,7 @@ export const config = query({
       commit: process.env.GIT_SHA ?? null,
       crsProvider: process.env.CRS_PROVIDER ?? "mock",
       lenderNames: LENDER_NAMES,
+      secondOpinionEnabled: Boolean(process.env.OPENAI_API_KEY),
       latestEval: latest && latest.finishedAt ? { cases: latest.cases, agreement: latest.agreement, passed: Math.round(latest.agreement * latest.cases), startedAt: latest.startedAt } : null,
     };
   },

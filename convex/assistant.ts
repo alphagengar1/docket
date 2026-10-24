@@ -197,6 +197,62 @@ export const ask = action({
   },
 });
 
+// Default second-opinion model. Picked 2026-10-24 by listing GET /v1/models with the deployment key:
+// newest general chat family on the account is gpt-5.5 (also present: gpt-5.6-luna/sol/terra, which are
+// unlabeled variants, and *-pro/*-codex, which are not general chat). Override with OPENAI_MODEL.
+const OPENAI_DEFAULT_MODEL = "gpt-5.5";
+const OPENAI_TIMEOUT_MS = 30_000;
+
+async function openaiAnswer(ctxText: string, scope: "applicant" | "desk", question: string, history: Turn[]): Promise<Answer> {
+  const started = Date.now();
+  const model = process.env.OPENAI_MODEL || OPENAI_DEFAULT_MODEL;
+  const key = process.env.OPENAI_API_KEY;
+  if (!key) {
+    return { text: "Stub answer: OPENAI_API_KEY is not set on this deployment, so there is no second opinion from GPT. A human approves every offer.", model: "stub", latencyMs: Date.now() - started, scope, stub: true };
+  }
+  const messages = [
+    { role: "system", content: `${ASSISTANT_SYSTEM}\n\n=== CONTEXT (read-only) ===\n${ctxText}` },
+    ...history.slice(-10).map((h) => ({ role: h.role, content: scrubText(h.content).slice(0, 4000) })),
+    { role: "user", content: question },
+  ];
+  const ctl = new AbortController();
+  const timer = setTimeout(() => ctl.abort(), OPENAI_TIMEOUT_MS);
+  try {
+    const res = await fetch("https://api.openai.com/v1/chat/completions", {
+      method: "POST",
+      headers: { "content-type": "application/json", authorization: `Bearer ${key}` },
+      body: JSON.stringify({ model, messages, max_completion_tokens: 4000, reasoning_effort: "low" }),
+      signal: ctl.signal,
+    });
+    const body = (await res.json().catch(() => ({}))) as { choices?: Array<{ message?: { content?: string | null }; finish_reason?: string }>; error?: { message?: string } };
+    if (!res.ok) {
+      return { text: `The second opinion could not reach OpenAI (HTTP ${res.status}: ${body.error?.message ?? "unknown"}).`, model, latencyMs: Date.now() - started, scope, stub: false };
+    }
+    const c = body.choices?.[0];
+    const text = c?.message?.content?.trim();
+    return { text: text || `(the model returned no text; finish_reason=${c?.finish_reason ?? "unknown"})`, model, latencyMs: Date.now() - started, scope, stub: false };
+  } catch (err) {
+    const e = err as { name?: string; message?: string };
+    const why = e.name === "AbortError" ? `timed out after ${OPENAI_TIMEOUT_MS / 1000}s` : `${e.name ?? "Error"}: ${e.message ?? "unknown"}`;
+    return { text: `The second opinion could not reach OpenAI (${why}).`, model, latencyMs: Date.now() - started, scope, stub: false };
+  } finally {
+    clearTimeout(timer);
+  }
+}
+
+/** Optional second opinion from an OpenAI model: same system prompt and scrubbed context as `ask`. Informational only. */
+export const askSecondOpinion = action({
+  args: {
+    applicantId: v.optional(v.union(v.id("applicants"), v.null())),
+    question: v.string(),
+    history: v.array(v.object({ role: v.union(v.literal("user"), v.literal("assistant")), content: v.string() })),
+  },
+  handler: async (ctx, { applicantId, question, history }): Promise<Answer> => {
+    const c: { text: string; scope: "applicant" | "desk" } = await ctx.runQuery(internal.assistant.context, { applicantId: (applicantId ?? null) as Id<"applicants"> | null });
+    return await openaiAnswer(c.text, c.scope, scrubText(question).slice(0, 2000), history);
+  },
+});
+
 export const summarize = action({
   args: { applicantId: v.id("applicants") },
   handler: async (ctx, { applicantId }): Promise<Answer> => {
