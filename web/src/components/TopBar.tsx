@@ -45,6 +45,14 @@ export function TopBar({ connection, inFlight, replaying, view, onView, onDeck, 
           Reset
         </button>
       )}
+      <button
+        type="button"
+        className="ghost"
+        onClick={() => window.open(`${window.location.pathname}${window.location.search}#/board`, 'docket-board', 'width=1440,height=900')}
+        title="Open the judges' second screen in a new window"
+      >
+        Open board
+      </button>
       <button type="button" onClick={onDeck}>
         Persona deck
       </button>

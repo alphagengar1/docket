@@ -27,7 +27,7 @@ import type {
   Offer,
   ReasonCheck,
 } from '../types'
-import type { Desk, DeskPersona } from './useDesk'
+import type { Desk, DeskConfig, DeskPersona } from './useDesk'
 import * as mock from '../mock/desk'
 import { replayFlagFromUrl } from './useDesk.mock'
 
@@ -89,7 +89,7 @@ export function useConvexDesk(): Desk {
   const disputeM = useMutation(api.desk.disputeTradeline)
   const evalA = useAction(api.eval.runEvalNow)
   const resetM = useMutation(api.desk.resetBoard)
-  const configQ = useQuery(api.desk.config, skip ?? {}) as { sandbox?: boolean } | undefined
+  const configQ = useQuery(api.desk.config, skip ?? {}) as ({ sandbox?: boolean } & DeskConfig) | undefined
 
   const createApplicant = useCallback(
     async (input: IntakeInput) => {
@@ -169,6 +169,7 @@ export function useConvexDesk(): Desk {
       runEval,
       resetBoard: replaying ? undefined : resetBoard,
       sandbox: configQ?.sandbox ?? true,
+      config: configQ,
       startReplay: () => setReplaying(true),
       stopReplay: () => setReplaying(false),
     }),

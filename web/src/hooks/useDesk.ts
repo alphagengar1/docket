@@ -15,6 +15,14 @@ export interface DeskPersona extends PersonaCard {
   defaults: { purpose: string; amountRequested: number; statedIncome: number }
 }
 
+/** Backend `desk:config` (undefined for mock). */
+export interface DeskConfig {
+  productName?: string
+  commit?: string | null
+  lenderTimeoutSeconds?: number
+  crsProvider?: string
+}
+
 export interface Desk extends DeskState {
   connection: Connection
   personas: DeskPersona[]
@@ -29,6 +37,7 @@ export interface Desk extends DeskState {
   resetBoard?: () => Promise<void>
   /** Backend config chrome: SANDBOX tag. Undefined for mock. */
   sandbox?: boolean
+  config?: DeskConfig
   startReplay: () => void
   stopReplay: () => void
 }

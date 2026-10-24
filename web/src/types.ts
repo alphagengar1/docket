@@ -23,6 +23,10 @@ export interface Applicant {
   createdAt: number
   /** Proposed addition (design/open.md): set on the re-run created by a tradeline dispute. */
   replayOf?: string | null
+  /** Set by the backend (desk.ts): 4-digit card code, the offer the borrower picked, override attempts. */
+  cardCode?: string | null
+  chosenOfferId?: string | null
+  overrideAttempts?: number
 }
 
 export interface Tradeline {
@@ -84,6 +88,9 @@ export interface Offer {
   createdAt: number
   /** Proposed addition (design/open.md): code-derived from requested vs offered terms. */
   classification?: OfferClassification
+  /** Optional backend additions (design/open.md). The board computes them when absent. */
+  monthlyPayment?: number | null
+  costToBorrow?: number | null
 }
 
 export type OfferClassification = 'approve' | 'counteroffer' | 'deny'

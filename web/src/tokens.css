@@ -164,3 +164,47 @@
     --wf-label-w: 112px;
   }
 }
+
+/* ============================================================================
+   Instrument Tag (design/theme.md): board (#/board) and phone (#/borrower).
+   Scoped to .itag so the dark console is untouched.
+   ============================================================================ */
+.itag {
+  --alu: #e3e4df;
+  --panel: #f5f5f1;
+  --ink: #141514;
+  --mute: #565952;
+  --hairline: #b9bbb3;
+  --signal: #ff5a1f;
+  --go: #1c46c9;
+  --f-disp: 'Archivo', 'Helvetica Neue', Arial, sans-serif;
+  --f-body: 'Instrument Sans', 'Helvetica Neue', Arial, sans-serif;
+  --f-mono: 'JetBrains Mono', ui-monospace, monospace;
+  background: var(--alu);
+  color: var(--ink);
+  font-family: var(--f-body);
+}
+.itag *,
+.itag *::before,
+.itag *::after {
+  box-sizing: border-box;
+}
+.itag .disp {
+  font-family: var(--f-disp);
+  font-stretch: 125%;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: -0.01em;
+  margin: 0;
+}
+.itag .mono {
+  font-family: var(--f-mono);
+  font-variant-numeric: tabular-nums;
+}
+.itag .lbl {
+  font-family: var(--f-mono);
+  font-size: 12px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--mute);
+}
