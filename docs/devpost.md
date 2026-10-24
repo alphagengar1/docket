@@ -3,67 +3,75 @@
 ## Project name
 Docket
 
-## Tagline (under 100 characters)
-One loan officer runs a lending desk; every reason in the denial letter was tested.
+## Tagline (under 60 characters)
+A one-person credit union with tested denial reasons
 
 ## Inspiration
-When a lender says no, the letter usually tells you almost nothing. Regulation B says the notice must give the principal reasons, and "internal standards" is not a reason. We wanted to see whether a small credit union could give a borrower an answer they can act on, with one loan officer and a team of agents doing the legwork.
+When a lender says no, the letter usually tells you almost nothing. Regulation B says the notice must give the principal reasons, and "internal standards" is not a reason. We wanted to see whether one loan officer and a team of agents could give a borrower an answer they can act on, for the loan officers at small credit unions who currently have to send a "no" with no usable reason.
 
 ## What it does
-Docket is a one-person credit union. An applicant consents, states a purpose and income, and Docket pulls CRS sandbox data: three bureaus (TransUnion, Equifax, Experian) through soft-pull prequalification products, identity verification and a fraud screen. Three underwriter agents with written policies (a conservative credit union, a growth fintech, a prime bank) return offers or declines. Offers appear live on a phone and on a board. A compliance agent drafts the adverse-action notice. A human loan officer approves every offer and every notice.
+An applicant gives consent, a loan purpose and stated income. Docket pulls CRS Credit API sandbox data: TransUnion prequal with VantageScore, Equifax and Experian prequal, identity verification, FraudFinder, and PitchPoint liens, judgments and evictions. Deterministic hard stops (deceased, unscorable, failed identity, high fraud) run first. If a file passes, five underwriter agents, each with a written policy in `policies/`, return an offer or a decline: Pacific Ridge Credit Union, Northstar Lending, Meridian Bank Prime, Cascade Regional Bank and Harbor Second Chance Finance. A compliance agent drafts the ECOA/FCRA adverse-action notice with the CRS source paragraph. A human approves every offer and every notice.
 
-Deceased, unscorable, identity-failed and high-fraud files hit a hard stop written in code. No lender sees the file, there are zero offers, and an Override attempt is refused and logged.
+Three additions:
+- Counterfactual reason verification: change one factor and re-run the lender, then a leave-one-out pass for reasons that are only sufficient together. Reasons that do not change the decision are withheld from the notice.
+- Approve, counteroffer or deny is classified in code.
+- Dispute and replay: dispute a tradeline and see which offers and notices change.
 
-Three things we added:
-- Reason verification. For each decline reason we change only that factor to a passing value and re-run the lender. If the decision does not change, the reason is withheld from the notice. We found the lender agents padded declines with filler reasons such as "score meets minimum".
-- Approve, counteroffer or deny, classified in code, with the FCRA statement that the consumer reporting agency did not make the decision.
-- Dispute and replay: dispute a tradeline and see how the offers and the notice change.
+Screens: an operator console with a decision summary, ranked decision queue, decision sheet, editor-style side rails and a desk assistant that summarizes the audit trail; a judge board at `#/board`; a borrower phone at `#/borrower`.
 
-What is simulated: the lenders are ours, no money moves, and every applicant is a CRS test persona.
+Simulated: the lenders are ours, no money moves, and every applicant is one of 20 CRS test personas.
 
 ## How we built it
-Convex is the whole backend. A durable Workflow component runs the desk: pull, guardrails, three underwriters in parallel, reason verification, compliance, human approval. httpActions receive webhooks, the scheduler runs a nightly eval, and live queries update the phone and the board. Underwriters run `claude-haiku-5-5` and compliance runs `claude-sonnet-5-5`, with structured JSON output validated by Zod. The web app is Vite and React with routes `#/borrower` for the phone and `#/board` for the second screen. Agent input is an allowlist projection, so name, address, ZIP and SSN never reach a model.
+Convex is the backend: a durable Workflow runs the desk (pull, guardrails, five underwriters in parallel, verification, compliance, human), live queries drive all three screens, httpActions take webhooks, and a cron runs the nightly eval. CREAO hosts six agents (five underwriters and compliance). Claude is the other provider: claude-haiku-5-5 for underwriters, claude-sonnet-5-5 for compliance, with Zod-validated output. Agent input is an allowlist projection, so name, address, ZIP and SSN never reach a model. The web app is Vite and React in the Instrument Tag theme.
 
 ## Challenges
-- Sandbox quirks: the "fico9" product returns VantageScore 4.0, so we label scores as VantageScore throughout.
-- A freeze at one bureau should not stop a file that another bureau can score. We changed the rule and the policies.
-- Jointly sufficient reasons do not flip a decision one at a time, so verification needed a second leave-one-out pass.
-- Keeping the applicant's name out of the compliance agent while still producing a personal letter.
+- The sandbox "fico9" product returns VantageScore 4.0, so we label scores VantageScore.
+- A freeze at one bureau should not stop a file another bureau can score, so the rule became a flag.
+- Jointly sufficient reasons do not flip a decision one at a time, which needed the leave-one-out pass.
+- Hosted CREAO runs take 23 to 33 s per lender, so we added a 20 s timeout setting and a replay of each persona.
+- Keeping the applicant's name away from the compliance agent while still producing a personal letter.
 
 ## Accomplishments
-- 20 of 20 CRS personas agree with the answer key on the latest cloud eval; reasons verified 81%; p50 underwriter latency about 3 s.
+- 20 of 20 personas agree with the answer key on the last cloud eval, which also scores each lender against its expected outcome. [check: re-run with five lenders for final figures]
+- Agents padded some declines with filler reasons such as "score meets minimum". Verification caught and withheld them.
 - Hard stops, classification and the PII boundary are code with tests.
-- A judge can hold the phone, draw a persona card and run the whole flow themselves.
+- A judge can draw a persona card, type its code on the phone and run the flow.
 
 ## What we learned
-Agents do the reading and the drafting, but the rules that must never fail belong in code. Testing the reasons found a problem we would not have seen by reading outputs. Twenty personas show consistency with our key, not fairness.
+Agents read the file and draft the letter; the rules that must never fail belong in code. Testing the reasons found a problem we would not have seen by reading outputs. Twenty personas show consistency with our own key, not fairness.
 
 ## What's next
 - Paired tests: two personas identical except one proxy field must get the same decision.
-- Connect real lender policy files or a lender marketplace API in place of our three agents (this needs the right state licenses).
+- Real lender policy files in place of our five agents.
 - Show the applicant the notice and a dispute path in their own view.
 
 ## Built with
-convex, convex-workflow, typescript, react, vite, zod, anthropic-claude, claude-haiku-5-5, claude-sonnet-5-5, crs-credit-api, transunion, equifax, experian, node
+convex, convex-workflow, typescript, react, vite, zod, anthropic-claude, claude-haiku-5-5, claude-sonnet-5-5, creao, crs-credit-api, transunion, equifax, experian, vercel, node
 
-## Tracks to select on Devpost
-- [ ] CRS: Best Overall CRS Hack
-- [ ] CRS: Best Financial AI Agent
-- [ ] CRS: Best Identity / Fraud Innovation
-- [ ] Convex
-- [ ] Hyphenate: The Hyphenated Enterprise
+## Links
+- Live: https://docket-sepia-ten.vercel.app
+- Repo: https://github.com/alphagengar1/docket (private until submission)
+
+## Submission checklist
+Deadline: Sun Oct 25, 09:00 PDT. Edits lock at 10:30.
+
+Tracks to opt into:
+- [ ] CRS Credit API (overall, plus any financial-agent and identity/fraud sub-tracks Devpost lists)
+- [ ] Convex: Best Use
+- [ ] Hyphenate: Autonomous Systems for Finance
 - [ ] Microsoft: Built for the Real World
 - [ ] Anthropic
-- [ ] Capital One Nessie: only if used (the repo has a Nessie fallback in the schema but the build does not use it; leave unchecked)
-- [ ] CREAO: only if entered (CREAO is not judged unless selected)
+- [ ] CREAO (pick one sub-track: One-Person Company or AI-First Disruptor; not judged unless selected)
+- [ ] Cal Hacks overall
 - [ ] Most Creative
 - [ ] Most Technically Advanced
-- [ ] Best People-First Social Impact
+- [ ] People-First (Social Impact)
+- Not entering: Nessie (unused), Mana, Fetch.ai, Visa, Apify, Coinbase x402.
 
-## Submission requirements
-- [ ] Project image
-- [ ] GitHub repo link, and the repo made public (github.com/alphagengar1/docket is private until submission)
-- [ ] 3-minute video demo
-- [ ] Deadline: Sun Oct 25, 09:00 PDT. Edits lock at 10:30.
-- [ ] Check-in at the venue (required to submit)
-- [x] Deploy URL pasted in README and Devpost: https://docket-sepia-ten.vercel.app
+Items:
+- [x] Deploy URL in README
+- [ ] Flip repo public
+- [ ] Upload 3-minute demo video
+- [ ] Create six public CREAO run links and paste into README
+- [ ] Project image: design/devpost/thumbnail.png (1280x720); cover.png is 1920x1080
+- [ ] Check in at the venue

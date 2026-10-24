@@ -1,7 +1,6 @@
 # Docket
 
-Docket is a one-person credit union. One human loan officer runs a lending desk through an org chart of agents. An applicant gives consent and states a loan purpose and income. The backend pulls CRS sandbox data (three bureaus, identity verification, fraud screen). Five underwriter agents, each with a written policy, return an offer or a decline. A compliance agent drafts the adverse-action notice. The loan officer approves. Before any notice goes out, Docket tests each decline reason by changing that one factor and re-running the lender, and it withholds any reason that does not change the decision.
-
+Docket is a one-person credit union. One human loan officer runs a lending desk through an org chart of agents. An applicant gives consent and states a loan purpose and income. The backend pulls CRS sandbox data (three bureaus, identity, FraudFinder, liens and judgments). Five underwriter agents, each with a written policy, return an offer or a decline, and a compliance agent drafts the adverse-action notice. Before any notice goes out, Docket tests each decline reason by changing that one factor and re-running the lender, and it withholds any reason that does not change the decision. The loan officer approves every offer. Screens: an operator console (Instrument Tag theme) with an Alloy-style Decision Summary, a ranked decision queue, a decision sheet, editor-style rail panels and a desk assistant that summarizes the audit trail; a judge board at `#/board`; a borrower phone at `#/borrower`. Live: https://docket-sepia-ten.vercel.app
 ## What is real vs simulated
 
 Real:
@@ -26,7 +25,7 @@ One durable workflow, `runDesk` in `convex/desk.ts` (Convex Workflow component),
 2. Pull: `crs.ts` calls TransUnion, Equifax and Experian prequal, identity verification, FraudFinder and public records.
 3. Guardrails: `rules.ts` stops deceased files, unscorable files, failed identity and fraud score 80 or more. No lender sees a stopped file.
 4. Underwrite x5 in parallel (conservative credit union, growth fintech, prime bank, regional relationship bank, second-chance subprime lender), each with a 20 s timeout. Then reason verification runs, then the compliance agent writes the notice from verified reasons only.
-5. Human: status becomes `awaiting_human`. The loan officer approves an offer or sends the notice.
+5. Human: status becomes `awaiting_human`. In the console the loan officer sees the Decision Summary and the ranked queue, opens the decision sheet, and approves an offer or sends the notice. The desk assistant (`convex/assistant.ts`) summarizes the audit trail on request.
 
 Every step appends an `auditEvents` row.
 
@@ -40,7 +39,7 @@ Every step appends an `auditEvents` row.
 
 The test set is the 20-persona answer key in `personas/map.json`, written by the data science teammate: approve means at least one lender approves, decline means every lender declines, hard stop means `rules.ts` stops it. `eval:runEval` runs all 20 through the real desk and scores them. It runs nightly (`convex/crons.ts`) and from the board.
 
-Latest run on the cloud deployment: 20/20 agreement with the key, reasons verified 81%, p50 underwriter latency about 3 s. This shows consistency with our own key. It does not prove fairness. Twenty personas cannot.
+Latest recorded runs: 20/20 agreement with the key and 60/60 per-lender agreement on the three-lender build. [check: re-run on the five-lender build for reasons-verified and latency; CREAO runs take 23 to 33 s per lender.] This shows consistency with our own key. It does not prove fairness. Twenty personas cannot.
 
 ## Responsible design
 
