@@ -8,14 +8,14 @@ import { TopBar } from './components/TopBar'
 import { Queue } from './components/Queue'
 import { IntakePane } from './components/IntakePane'
 import { PersonaDeck } from './components/PersonaDeck'
-import { PipelineRail } from './components/PipelineRail'
+import { Waterfall } from './components/Waterfall'
 import { BeforeCard, OfferCard } from './components/OfferCard'
 import { HardStopCard } from './components/HardStopCard'
 import { Inspector, type InspectorTab } from './components/Inspector'
 import { Drawer } from './components/Drawer'
 import { ApplicantView } from './components/ApplicantView'
 
-type Theme = 'auto' | 'light' | 'dark'
+type Theme = 'dark' | 'light'
 
 export default function App() {
   const desk = useDesk()
@@ -26,11 +26,10 @@ export default function App() {
   const [deckOpen, setDeckOpen] = useState(false)
   const [applicantView, setApplicantView] = useState(false)
   const [tab, setTab] = useState<InspectorTab>('offer')
-  const [theme, setTheme] = useState<Theme>('auto')
+  const [theme, setTheme] = useState<Theme>('dark')
 
   useEffect(() => {
-    if (theme === 'auto') delete document.documentElement.dataset.theme
-    else document.documentElement.dataset.theme = theme
+    document.documentElement.dataset.theme = theme
   }, [theme])
 
   // Follow the newest applicant when nothing is selected (replay mode relies on this).
@@ -59,6 +58,7 @@ export default function App() {
   const now = useNow(running)
 
   const selectedOffer = offers.find((o) => o._id === selectedOfferId && o.decision === 'approve')
+  const bestApr = offers.reduce<number | null>((m, o) => (o.status === 'done' && o.apr != null && (m == null || o.apr < m) ? o.apr : m), null)
   const underwriteStart = steps.find((s) => s.id === 'underwrite')?.startedAt ?? null
 
   const onSubmit = useCallback(
@@ -96,8 +96,9 @@ export default function App() {
         connection={desk.connection}
         inFlight={inFlight}
         replaying={desk.replaying}
+        view={applicantView ? 'applicant' : 'desk'}
+        onView={(v) => setApplicantView(v === 'applicant')}
         onDeck={() => setDeckOpen(true)}
-        onApplicantView={() => setApplicantView(true)}
         onReplay={() => {
           setSelectedId(null)
           setSelectedOfferId(null)
@@ -109,7 +110,7 @@ export default function App() {
           desk.stopReplay()
         }}
         theme={theme}
-        onTheme={() => setTheme((t) => (t === 'auto' ? 'light' : t === 'light' ? 'dark' : 'auto'))}
+        onTheme={() => setTheme((t) => (t === 'dark' ? 'light' : 'dark'))}
       />
       <div className="main">
         <Queue applicants={desk.applicants} selectedId={intakeOpen ? null : selectedId} onSelect={select} onNew={() => openIntake(null)} disabled={desk.replaying} />
@@ -121,8 +122,6 @@ export default function App() {
             </div>
           ) : (
             <div className="board">
-              <PipelineRail applicant={applicant} steps={steps} offers={offers} now={now} />
-              <div className="board-main">
                 <div className="board-head">
                   {applicant ? (
                     <>
@@ -149,7 +148,23 @@ export default function App() {
                     </>
                   )}
                 </div>
+                <Waterfall applicant={applicant} steps={steps} offers={offers} checks={desk.reasonChecks.filter((c) => c.applicantId === selectedId)} now={now} />
+                <div className="board-scroll">
                 <div className={`columns ${original ? 'diff' : ''}`}>
+                  {LENDERS.map((l, i) => {
+                    const o = offers.find((x) => x.lender === l.id)
+                    return (
+                      <div key={`h-${l.id}`} className="col-head">
+                        <span className="letter">{'ABC'[i]}</span>
+                        <span className="nm">{l.label}</span>
+                        <span className="chips">
+                          {o?.status === 'done' && <span className="chip">{(o.latencyMs! / 1000).toFixed(1)}s</span>}
+                          {o?.status === 'done' && <span className="chip">{o.reasons.length} reasons</span>}
+                          {!o && <span className="chip">{l.policy.toLowerCase()}</span>}
+                        </span>
+                      </div>
+                    )
+                  })}
                   {original && (
                     <>
                       <div className="diff-label section-label">Before dispute · {original.name}</div>
@@ -171,6 +186,7 @@ export default function App() {
                           lender={l.id}
                           offer={o}
                           checks={desk.reasonChecks}
+                          bestApr={bestApr}
                           before={original ? beforeOffers.find((x) => x.lender === l.id) : undefined}
                           underwriteStartedAt={underwriteStart}
                           now={now}
@@ -189,7 +205,7 @@ export default function App() {
                     })
                   )}
                 </div>
-              </div>
+                </div>
             </div>
           )}
           <Drawer

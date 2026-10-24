@@ -1,5 +1,5 @@
-// What the applicant would see (design/differentiators.md, FairQuote steal): status in plain words, the notice,
-// and nothing about fraud scores, policies or other lenders' internals.
+// What the applicant would see (design/differentiators.md, FairQuote steal), set as an Evidence-style
+// document: sans headline, serif body. Nothing about fraud scores, policies or other lenders' internals.
 import type { Applicant, Decision, Notice, Offer } from '../types'
 import { LENDERS } from '../types'
 import { monthlyPayment, usd } from '../lib/format'
@@ -38,14 +38,15 @@ export function ApplicantView({ applicant, offers, notice, decision, onBack }: P
   return (
     <div className="applicant-view">
       <div className="applicant-page">
-        <div className="card-head">
-          <span className="brand">{PRODUCT_NAME}</span>
-          <button type="button" className="ghost" onClick={onBack}>
+        <div className="top">
+          <span style={{ fontWeight: 600 }}>{PRODUCT_NAME}</span>
+          <button type="button" onClick={onBack}>
             Back to desk
           </button>
         </div>
         <span className="section-label">Applicant view · {applicant?.name ?? '—'}</span>
         <h1>{headline}</h1>
+        {applicant && <span className="dateline">Application {applicant._id} · {new Date(applicant.createdAt).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })}</span>}
         {body && <p>{body}</p>}
         {applicant && applicant.status !== 'hard_stop' && approvals.length > 0 && !chosen && (
           <ul className="applicant-offers">

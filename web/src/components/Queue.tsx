@@ -10,12 +10,22 @@ interface Props {
   disabled?: boolean
 }
 
+const TONE_VAR: Record<string, string> = {
+  muted: 'var(--hair-2)',
+  accent: 'var(--accent)',
+  text: 'var(--text)',
+  approve: 'var(--approve)',
+  decline: 'var(--decline)',
+  hard: 'var(--hard)',
+}
+
+/** Laminar traces table: 41px rows, 3px status bar flush-left, mono ids. */
 export function Queue({ applicants, selectedId, onSelect, onNew, disabled }: Props) {
   const rows = applicants.slice().sort((a, b) => b.createdAt - a.createdAt)
   return (
     <aside className="pane" aria-label="Applicant queue">
       <div className="pane-head">
-        <span className="section-label">Queue · {rows.length}</span>
+        <span className="section-label">Queue</span>
         <button type="button" onClick={onNew} disabled={disabled}>
           New applicant
         </button>
@@ -28,19 +38,26 @@ export function Queue({ applicants, selectedId, onSelect, onNew, disabled }: Pro
             type="button"
             role="option"
             aria-selected={a._id === selectedId}
-            className="queue-row"
+            className={`queue-row ${IN_FLIGHT.includes(a.status) ? 'live' : ''}`}
+            style={{ ['--row-tone' as string]: TONE_VAR[STATUS_TONE[a.status]] }}
             onClick={() => onSelect(a._id)}
           >
-            <span className="name">{a.name}</span>
-            <span className={`status tone-${STATUS_TONE[a.status]} ${IN_FLIGHT.includes(a.status) ? 'live' : ''}`}>
-              {STATUS_WORD[a.status]}
+            <span className="name">
+              {a.name}
+              <span className="purpose">{a.purpose}</span>
             </span>
+            <span className="amt">{usd(a.amountRequested)}</span>
             <span className="sub">
-              {a.replayOf && <span className="tone-accent">replay · </span>}
-              {a.purpose} · <span className="mono">{usd(a.amountRequested)}</span> · <span className="mono">{a.personaId}</span>
+              {a.personaId} · {a._id.slice(0, 7)}
+              {a.replayOf ? ' · replay' : ''}
             </span>
+            <span className="word">{STATUS_WORD[a.status]}</span>
           </button>
         ))}
+      </div>
+      <div className="pane-foot">
+        <span>{rows.length === 0 ? 'no applicants' : `${rows.length} applicant${rows.length === 1 ? '' : 's'}`}</span>
+        <span>end of queue</span>
       </div>
     </aside>
   )

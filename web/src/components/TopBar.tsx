@@ -5,34 +5,36 @@ interface Props {
   connection: Connection
   inFlight: number
   replaying: boolean
+  view: 'desk' | 'applicant'
+  onView: (v: 'desk' | 'applicant') => void
   onDeck: () => void
-  onApplicantView: () => void
   onReplay: () => void
   onStopReplay: () => void
-  theme: 'auto' | 'light' | 'dark'
+  theme: 'dark' | 'light'
   onTheme: () => void
 }
 
-export function TopBar({ connection, inFlight, replaying, onDeck, onApplicantView, onReplay, onStopReplay, theme, onTheme }: Props) {
-  const word = inFlight > 0 ? `Running ${inFlight}` : 'Idle'
+/** Laminar top bar: title, segmented control, outlined 28px controls, metric chips. */
+export function TopBar({ connection, inFlight, replaying, view, onView, onDeck, onReplay, onStopReplay, theme, onTheme }: Props) {
   return (
     <header className="topbar">
       <span className="brand">{PRODUCT_NAME}</span>
-      <span className="label">Lending desk</span>
+      <span className="label">lending desk</span>
       <span className="sep" />
-      <span className="pill">
-        <span className={`status ${inFlight > 0 ? 'live tone-accent' : 'tone-muted'}`}>{word}</span>
-        <span className="sep" />
-        <span className="mono label" style={{ textTransform: 'uppercase', letterSpacing: '0.06em' }}>
-          {connection}
-        </span>
-      </span>
+      <div className="seg" role="group" aria-label="View">
+        <button type="button" aria-pressed={view === 'desk'} onClick={() => onView('desk')}>
+          Desk
+        </button>
+        <button type="button" aria-pressed={view === 'applicant'} onClick={() => onView('applicant')}>
+          Applicant
+        </button>
+      </div>
+      <span className="sep" />
+      <span className={`pill ${inFlight > 0 ? 'live' : ''}`}>{inFlight > 0 ? `Running ${inFlight}` : 'Idle'}</span>
+      <span className="chip">{connection}</span>
       <span className="spacer" />
       <button type="button" onClick={onDeck}>
         Persona deck
-      </button>
-      <button type="button" className="ghost" onClick={onApplicantView} title="What the applicant sees">
-        Applicant view
       </button>
       {replaying ? (
         <button type="button" onClick={onStopReplay}>
@@ -43,8 +45,8 @@ export function TopBar({ connection, inFlight, replaying, onDeck, onApplicantVie
           Replay
         </button>
       )}
-      <button type="button" className="ghost" onClick={onTheme} aria-label={`Theme: ${theme}`} title={`Theme: ${theme}`}>
-        {theme === 'auto' ? 'Auto' : theme === 'light' ? 'Light' : 'Dark'}
+      <button type="button" className="ghost" onClick={onTheme} aria-label={`Theme: ${theme}`} title="Toggle theme">
+        {theme === 'dark' ? 'Dark' : 'Light'}
       </button>
     </header>
   )

@@ -2,6 +2,7 @@ import { useState } from 'react'
 import type { Applicant, AuditEvent, EvalRun } from '../types'
 import { clockMs, pct } from '../lib/format'
 import { newestFirst } from '../lib/select'
+import { ACTOR_COLOR } from './Inspector'
 
 export type DrawerTab = 'audit' | 'eval'
 
@@ -14,6 +15,7 @@ interface Props {
   onRunEval: () => Promise<void>
 }
 
+/** Respan log table for the audit log; Laminar eval list for eval metrics. */
 export function Drawer({ events, applicants, selectedId, evalRuns, evalCases, onRunEval }: Props) {
   const [tab, setTab] = useState<DrawerTab>('audit')
   const [open, setOpen] = useState(true)
@@ -38,20 +40,23 @@ export function Drawer({ events, applicants, selectedId, evalRuns, evalCases, on
       <div className="drawer-bar">
         <div role="tablist" style={{ display: 'flex', gap: 2 }}>
           <button type="button" role="tab" className="tab" aria-selected={tab === 'audit'} onClick={() => { setTab('audit'); setOpen(true) }}>
-            Audit log <span className="mono muted">{events.length}</span>
+            Audit log <span className="chip">{events.length}</span>
           </button>
           <button type="button" role="tab" className="tab" aria-selected={tab === 'eval'} onClick={() => { setTab('eval'); setOpen(true) }}>
-            Eval {last && <span className={`mono ${last.finishedAt == null ? 'muted' : last.agreement >= 0.9 ? 'tone-approve' : 'tone-decline'}`}>{last.finishedAt == null ? '…' : pct(last.agreement)}</span>}
+            Eval{' '}
+            {last && (
+              <span className={`chip ${last.finishedAt == null ? '' : last.agreement >= 0.9 ? 'tone-approve' : 'tone-decline'}`}>{last.finishedAt == null ? '…' : pct(last.agreement)}</span>
+            )}
           </button>
         </div>
-        <span className="spacer" style={{ flex: 1 }} />
+        <span style={{ flex: 1 }} />
         {tab === 'audit' && open && (
           <button type="button" className="ghost tab" onClick={() => setScope((s) => (s === 'all' ? 'this' : 'all'))} disabled={!selectedId}>
             {scope === 'all' ? 'All applicants' : 'This applicant'}
           </button>
         )}
         {tab === 'eval' && open && (
-          <button type="button" className="tab" onClick={run} disabled={running} style={{ border: '1px solid var(--hair)' }}>
+          <button type="button" className="tab" onClick={run} disabled={running} style={{ border: '1px solid var(--hair-2)' }}>
             {running ? 'Running…' : 'Run eval'}
           </button>
         )}
@@ -65,30 +70,34 @@ export function Drawer({ events, applicants, selectedId, evalRuns, evalCases, on
             <table className="grid">
               <thead>
                 <tr>
-                  <th style={{ width: 110 }}>Time</th>
-                  <th style={{ width: 140 }}>Applicant</th>
-                  <th style={{ width: 130 }}>Actor</th>
+                  <th style={{ width: 118 }}>Time</th>
+                  <th style={{ width: 150 }}>Applicant</th>
+                  <th style={{ width: 140 }}>Actor</th>
                   <th style={{ width: 170 }}>Action</th>
-                  <th style={{ width: 180 }}>Ref</th>
+                  <th style={{ width: 190 }}>Ref</th>
                   <th>Note</th>
                 </tr>
               </thead>
               <tbody>
                 {rows.map((e, i) => (
                   <tr key={e._id} className={`${e.applicantId === selectedId ? 'hi' : ''} ${i === 0 ? 'enter' : ''}`}>
-                    <td className="mono muted">{clockMs(e.at)}</td>
-                    <td>{names.get(e.applicantId) ?? e.applicantId}</td>
-                    <td className="mono">{e.actor}</td>
-                    <td className="mono">{e.action}</td>
-                    <td className="mono muted">{e.ref ?? ''}</td>
-                    <td title={e.note}>{e.note}</td>
+                    <td>{clockMs(e.at)}</td>
+                    <td className="t" style={{ fontFamily: 'var(--sans)' }}>
+                      {names.get(e.applicantId) ?? e.applicantId}
+                    </td>
+                    <td className="actor t" style={{ ['--actor' as string]: ACTOR_COLOR[e.actor] }}>
+                      {e.actor}
+                    </td>
+                    <td className="t">{e.action}</td>
+                    <td>{e.ref ?? ''}</td>
+                    <td title={e.note} style={{ fontFamily: 'var(--sans)' }}>
+                      {e.note}
+                    </td>
                   </tr>
                 ))}
                 {rows.length === 0 && (
                   <tr>
-                    <td colSpan={6} className="muted">
-                      No events yet.
-                    </td>
+                    <td colSpan={6}>No events yet.</td>
                   </tr>
                 )}
               </tbody>
@@ -104,52 +113,43 @@ export function Drawer({ events, applicants, selectedId, evalRuns, evalCases, on
 function EvalPanel({ last, cases, running }: { last: EvalRun | undefined; cases: number; running: boolean }) {
   const pending = !last || last.finishedAt == null || running
   const sk = (w: number) => <span className="skel" style={{ width: w, height: 20 }} />
+  const score = (ok: boolean) => ({ ['--score' as string]: ok ? 'var(--approve)' : 'var(--hard)' })
   return (
     <div className="eval">
-      <div className="stat">
-        <div className="v mono">{pending ? sk(40) : last.cases}</div>
-        <div className="k">Cases{!last && ` (${cases} loaded)`}</div>
+      <div className="agg">
+        <span className="v mono">{pending ? sk(80) : pct(last.agreement)}</span>
+        <span className="k">agreement · {last ? last.cases : cases} cases</span>
       </div>
-      <div className="stat">
-        <div className={`v mono ${!pending && last.agreement < 0.9 ? 'tone-decline' : ''}`}>{pending ? sk(56) : pct(last.agreement)}</div>
-        <div className="k">Agreement</div>
+      <div className="stat" style={pending ? undefined : score(last.fraudZeroOffers)}>
+        <div className="v">{pending ? sk(40) : last.fraudZeroOffers ? 'Yes' : 'No'}</div>
+        <div className="k">Fraud personas got zero offers</div>
       </div>
-      <div className="stat">
-        <div className={`v ${pending ? '' : last.fraudZeroOffers ? 'tone-approve' : 'tone-hard'}`}>
-          {pending ? sk(40) : <span className="check">{last.fraudZeroOffers ? 'Yes' : 'No'}</span>}
-        </div>
-        <div className="k">Fraud → zero offers</div>
-      </div>
-      <div className="stat">
+      <div className="stat" style={pending ? undefined : score(last.avgReasonsPerDenial >= 2)}>
         <div className="v mono">{pending ? sk(40) : last.avgReasonsPerDenial.toFixed(2)}</div>
-        <div className="k">Reasons / denial</div>
+        <div className="k">Reasons per denial (≥ 2)</div>
       </div>
-      <div className="stat">
-        <div className={`v mono ${!pending && last.reasonsVerified != null && last.reasonsVerified < 0.8 ? 'tone-decline' : ''}`}>
-          {pending ? sk(56) : last.reasonsVerified == null ? '—' : pct(last.reasonsVerified)}
-        </div>
-        <div className="k">Reasons verified</div>
+      <div className="stat" style={pending ? undefined : score((last.reasonsVerified ?? 0) >= 0.8)}>
+        <div className="v mono">{pending ? sk(56) : last.reasonsVerified == null ? '—' : pct(last.reasonsVerified)}</div>
+        <div className="k">Reasons verified by counterfactual</div>
       </div>
-      <div className="stat" style={{ padding: 0, border: 'none' }}>
-        <div className="k" style={{ padding: '0 0 4px' }}>
-          Failures {last && !pending ? `· ${last.failures.length}` : ''}
-          {last && (
-            <span className="mono"> · started {new Date(last.startedAt).toLocaleTimeString('en-US', { hour12: false })}</span>
-          )}
-        </div>
+      <div className="stat" style={pending ? undefined : score(last.failures.length === 0)}>
+        <div className="v mono">{pending ? sk(40) : last.failures.length}</div>
+        <div className="k">Failures{last ? ` · started ${new Date(last.startedAt).toLocaleTimeString('en-US', { hour12: false })}` : ''}</div>
+      </div>
+      <div style={{ minWidth: 0 }}>
         {pending ? (
-          <div className="failures">
-            <li style={{ listStyle: 'none' }}>{sk(200)}</li>
-          </div>
+          <ul className="failures">
+            <li>{sk(200)}</li>
+          </ul>
         ) : last.failures.length === 0 ? (
-          <div className="muted">None.</div>
+          <div className="muted">No failures.</div>
         ) : (
           <ul className="failures">
             {last.failures.map((f, i) => (
               <li key={i}>
                 <span className="mono">{f.personaId}</span>
-                <span className="mono muted">exp {f.expected}</span>
-                <span className="mono tone-decline">got {f.got}</span>
+                <span className="chip">exp {f.expected}</span>
+                <span className="chip tone-decline">got {f.got}</span>
                 <span style={{ whiteSpace: 'normal' }}>{f.why}</span>
               </li>
             ))}

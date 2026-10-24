@@ -5,11 +5,13 @@ import { clock, monthlyPayment, num, pct, secs, usd } from '../lib/format'
 import { STATUS_TONE, STATUS_WORD, IN_FLIGHT } from '../lib/status'
 import { noticeRequired, verifiedReasons } from '../lib/select'
 import { ReasonList } from './ReasonList'
+import { Num } from './OfferCard'
 
 export type InspectorTab = 'offer' | 'trace' | 'notice'
 
 interface Props {
   applicant: Applicant | undefined
+  original: Applicant | undefined
   bundle: Bundle | undefined
   offers: Offer[]
   notice: Notice | undefined
@@ -22,7 +24,19 @@ interface Props {
   onApprove: () => Promise<void>
   onDecline: (note: string) => Promise<void>
   onDispute: (index: number) => Promise<void>
-  original: Applicant | undefined
+}
+
+export const ACTOR_COLOR: Record<string, string> = {
+  intake: 'var(--actor-applicant)',
+  applicant: 'var(--actor-applicant)',
+  desk: 'var(--actor-desk)',
+  crs: 'var(--actor-crs)',
+  rules: 'var(--actor-rules)',
+  'underwriter:cu': 'var(--actor-underwriter)',
+  'underwriter:fintech': 'var(--actor-underwriter)',
+  'underwriter:prime': 'var(--actor-underwriter)',
+  compliance: 'var(--actor-compliance)',
+  human: 'var(--actor-human)',
 }
 
 export function Inspector(p: Props) {
@@ -51,7 +65,7 @@ export function Inspector(p: Props) {
       <aside className="pane" aria-label="Inspector">
         <div className="inspector-head">
           <div className="name">Inspector</div>
-          <div className="meta">Select an applicant from the queue.</div>
+          <div className="idrow">select an applicant from the queue</div>
         </div>
         <div className="empty">Credit snapshot, trace and the adverse-action notice appear here.</div>
       </aside>
@@ -60,33 +74,23 @@ export function Inspector(p: Props) {
 
   return (
     <aside className="pane" aria-label="Inspector">
+      {/* Method entity header: name, mono id, status pill */}
       <div className="inspector-head">
-        <div className="name">
-          <span>{applicant.name}</span>
-          <span className={`status tone-${STATUS_TONE[applicant.status]} ${IN_FLIGHT.includes(applicant.status) ? 'live' : ''}`}>
-            {STATUS_WORD[applicant.status]}
-          </span>
-        </div>
-        <div className="meta">
-          <span className="mono">{applicant.personaId}</span> · {applicant.purpose} · <span className="mono">{usd(applicant.amountRequested)}</span> · income{' '}
-          <span className="mono">{usd(applicant.statedIncome)}</span>
-          {original && (
-            <>
-              {' '}
-              · <span className="tone-accent">replay after dispute</span>
-            </>
-          )}
+        <div className="name">{applicant.name}</div>
+        <div className="idrow">
+          <span>{applicant._id}</span>
+          <span className={`pill ${STATUS_TONE[applicant.status]} ${IN_FLIGHT.includes(applicant.status) ? 'live' : ''}`}>{STATUS_WORD[applicant.status]}</span>
+          {original && <span className="pill accent">replay</span>}
         </div>
       </div>
 
-      <StatTiles bundle={bundle} />
+      <Overview applicant={applicant} bundle={bundle} />
       <Tradelines bundle={bundle} canDispute={!!bundle && !IN_FLIGHT.includes(applicant.status) && !applicant.replayOf} onDispute={p.onDispute} />
 
       <div className="tabs" role="tablist">
         {(['offer', 'trace', 'notice'] as InspectorTab[]).map((t) => (
           <button key={t} type="button" role="tab" aria-selected={tab === t} className="tab" onClick={() => onTab(t)}>
-            {t === 'offer' ? 'Offer' : t === 'trace' ? 'Trace' : `Notice${notice ? '' : ' ·'}`}
-            {t === 'notice' && !notice && <span className="muted"> none</span>}
+            {t === 'offer' ? 'Offer' : t === 'trace' ? `Trace ${events.length}` : 'Notice'}
           </button>
         ))}
       </div>
@@ -112,7 +116,7 @@ export function Inspector(p: Props) {
               <button type="button" className="ghost" onClick={() => setDeclining(false)}>
                 Cancel
               </button>
-              <button type="button" disabled={!canDecline || rationale.trim().length < 4} onClick={() => act(() => p.onDecline(rationale.trim()))}>
+              <button type="button" className="decline-pill" disabled={!canDecline || rationale.trim().length < 4} onClick={() => act(() => p.onDecline(rationale.trim()))}>
                 Record decline
               </button>
             </>
@@ -121,7 +125,7 @@ export function Inspector(p: Props) {
               <button type="button" className="ghost" disabled={!canDecline} onClick={() => setDeclining(true)}>
                 Decline…
               </button>
-              <button type="button" className="primary" disabled={!canApprove} onClick={() => act(p.onApprove)}>
+              <button type="button" className="approve-pill" disabled={!canApprove} onClick={() => act(p.onApprove)}>
                 {selectedOffer && canApprove
                   ? `Approve ${LENDERS.find((l) => l.id === selectedOffer.lender)?.label} offer`
                   : applicant.status === 'approved'
@@ -145,36 +149,66 @@ export function Inspector(p: Props) {
   )
 }
 
-function StatTiles({ bundle }: { bundle: Bundle | undefined }) {
-  const tiles: Array<{ k: string; v: string; tone?: string }> = bundle
-    ? [
-        { k: 'FICO 9', v: num(bundle.credit.fico9) },
-        { k: 'Vantage 4', v: num(bundle.credit.vantage4) },
-        { k: 'Utilization', v: pct(bundle.credit.utilization) },
-        { k: 'Inquiries 6mo', v: String(bundle.credit.inquiries6mo) },
-        { k: 'Identity', v: bundle.identity.verified ? 'Verified' : 'Failed', tone: bundle.identity.verified ? 'tone-approve' : 'tone-hard' },
-        {
-          k: 'Fraud score',
-          v: num(bundle.fraud.score),
-          tone: bundle.fraud.score != null && bundle.fraud.score >= 80 ? 'tone-hard' : bundle.fraud.score != null && bundle.fraud.score >= 40 ? 'tone-decline' : undefined,
-        },
-      ]
-    : [
-        { k: 'FICO 9', v: '' },
-        { k: 'Vantage 4', v: '' },
-        { k: 'Utilization', v: '' },
-        { k: 'Inquiries 6mo', v: '' },
-        { k: 'Identity', v: '' },
-        { k: 'Fraud score', v: '' },
-      ]
+/** Hyperexpense tick meter: 2x12px ticks at 4px pitch, lit up to the value. */
+function Meter({ value, max = 1, warn, bad, n = 20 }: { value: number | null; max?: number; warn?: number; bad?: number; n?: number }) {
+  if (value == null) return null
+  const k = Math.round(Math.min(1, value / max) * n)
+  const color = bad != null && value >= bad ? 'var(--hard)' : warn != null && value >= warn ? 'var(--decline)' : 'var(--approve)'
   return (
-    <div className="tiles" aria-label="Credit snapshot" aria-busy={!bundle}>
-      {tiles.map((t) => (
-        <div key={t.k} className="tile">
-          <div className={`v mono ${t.tone ?? ''}`}>{bundle ? t.v : <span className="skel" style={{ width: 44, height: 16 }} />}</div>
-          <div className="k">{t.k}</div>
-        </div>
+    <span className="meter" aria-hidden="true" style={{ ['--meter' as string]: color }}>
+      {Array.from({ length: n }, (_, i) => (
+        <i key={i} className={i < k ? 'on' : ''} />
       ))}
+    </span>
+  )
+}
+
+/** Method "Overview": ruled key/value rows; numbers mono right-aligned. */
+function Overview({ applicant, bundle }: { applicant: Applicant; bundle: Bundle | undefined }) {
+  const sk = <span className="skel" style={{ width: 48, height: 12 }} />
+  const c = bundle?.credit
+  return (
+    <div className="kvgrid" aria-label="Credit snapshot" aria-busy={!bundle}>
+      <span className="k">Requested</span>
+      <span className="v">
+        {applicant.purpose} · <Num value={applicant.amountRequested} digits={0} prefix="$" />
+      </span>
+      <span className="k">Stated income</span>
+      <span className="v">
+        <Num value={applicant.statedIncome} digits={0} prefix="$" />
+      </span>
+      <span className="k">FICO 9</span>
+      <span className="v">{bundle ? num(c!.fico9) : sk}</span>
+      <span className="k">Vantage 4</span>
+      <span className="v">{bundle ? num(c!.vantage4) : sk}</span>
+      <span className="k">Utilization</span>
+      <span className="v">
+        {bundle ? (
+          <>
+            <Meter value={c!.utilization} warn={0.5} bad={0.8} />
+            {pct(c!.utilization)}
+          </>
+        ) : (
+          sk
+        )}
+      </span>
+      <span className="k">Inquiries 6mo</span>
+      <span className="v">{bundle ? String(c!.inquiries6mo) : sk}</span>
+      <span className="k">Identity</span>
+      <span className="v">
+        {bundle ? <span className={`pill ${bundle.identity.verified ? 'approve' : 'hard'}`}>{bundle.identity.verified ? 'Verified' : 'Failed'}</span> : sk}
+      </span>
+      <span className="k">Fraud score</span>
+      <span className="v">
+        {bundle ? (
+          <>
+            <Meter value={bundle.fraud.score} max={100} warn={40} bad={80} />
+            <span className={bundle.fraud.score != null && bundle.fraud.score >= 80 ? 'tone-hard' : ''}>{num(bundle.fraud.score)}</span>
+          </>
+        ) : (
+          sk
+        )}
+      </span>
     </div>
   )
 }
@@ -186,9 +220,14 @@ function Tradelines({ bundle, canDispute, onDispute }: { bundle: Bundle | undefi
   const rows = bundle.credit.tradelines
   return (
     <div className="tradelines">
-      <button type="button" className="ghost tab" onClick={() => setOpen((o) => !o)} aria-expanded={open}>
-        Tradelines <span className="mono muted">{rows.length}</span> {open ? '' : '· show'}
-      </button>
+      <div className="tl-head">
+        <span className="section-label">
+          Tradelines <span className="mono">{rows.length}</span>
+        </span>
+        <button type="button" className="ghost tab" onClick={() => setOpen((o) => !o)} aria-expanded={open}>
+          {open ? 'Hide' : 'Show'}
+        </button>
+      </div>
       {open && rows.length > 0 && (
         <table className="grid tl">
           <tbody>
@@ -196,12 +235,14 @@ function Tradelines({ bundle, canDispute, onDispute }: { bundle: Bundle | undefi
               const derog = /dpd|late|collection|chargeoff|bk/.test(t.status)
               return (
                 <tr key={i}>
-                  <td className="mono muted">[{i}]</td>
-                  <td>{t.type.replace('_', ' ')}</td>
-                  <td className="mono">{usd(t.balance)}</td>
-                  <td className={`mono ${derog ? 'tone-decline' : 'muted'}`}>{t.status}</td>
-                  <td className="mono muted">{t.openedAt.slice(0, 7)}</td>
-                  <td style={{ textAlign: 'right', paddingRight: 8 }}>
+                  <td>[{i}]</td>
+                  <td className="t">{t.type.replace('_', ' ')}</td>
+                  <td className="t" style={{ textAlign: 'right' }}>
+                    {usd(t.balance)}
+                  </td>
+                  <td className={derog ? 'tone-decline' : ''}>{t.status}</td>
+                  <td>{t.openedAt.slice(0, 7)}</td>
+                  <td style={{ textAlign: 'right', paddingRight: 'var(--sp-3)' }}>
                     <button
                       type="button"
                       className="link"
@@ -225,7 +266,7 @@ function Tradelines({ bundle, canDispute, onDispute }: { bundle: Bundle | undefi
           </tbody>
         </table>
       )}
-      {open && rows.length === 0 && <div className="muted" style={{ padding: '0 12px 8px' }}>No tradelines on file.</div>}
+      {open && rows.length === 0 && <div className="muted" style={{ padding: '0 16px 8px' }}>No tradelines on file.</div>}
     </div>
   )
 }
@@ -240,39 +281,41 @@ function OfferTab({ applicant, offer, decision, offers, checks }: { applicant: A
           <div className={`status nodot tone-${decision.outcome === 'approved' ? 'approve' : decision.outcome === 'declined' ? 'decline' : 'hard'}`}>
             {decision.outcome} · by {decision.approvedBy}
           </div>
-          <div className="muted mono" style={{ fontSize: 11 }}>
-            {clock(decision.at)}
-          </div>
+          <div className="chip">{clock(decision.at)}</div>
           <div>{decision.note}</div>
         </div>
       )}
-      {applicant.status === 'hard_stop' && (
-        <div className="muted">Hard stop: no offers exist for this file. See the Trace tab for the triggering field.</div>
-      )}
+      {applicant.status === 'hard_stop' && <div className="muted">Hard stop: no offers exist for this file. See the Trace tab for the triggering field.</div>}
       {!show && applicant.status !== 'hard_stop' && (
-        <div className="muted">
-          {offers.some((o) => o.decision === 'approve') ? 'Click an offer card on the board to inspect it.' : 'No approvable offer yet.'}
-        </div>
+        <div className="muted">{offers.some((o) => o.decision === 'approve') ? 'Click an offer card on the board to inspect it.' : 'No approvable offer yet.'}</div>
       )}
       {show && (
         <>
           <div className="summary">
-            <span className="section-label">{LENDERS.find((l) => l.id === show.lender)?.label}</span>
+            <span className="section-label">{LENDERS.find((l) => l.id === show.lender)?.name}</span>
             <span className="big mono">
-              {show.apr}% <span className="muted" style={{ fontSize: 13, fontWeight: 400 }}>APR</span>
+              <Num value={show.apr ?? 0} />
+              <span className="muted" style={{ fontSize: 'var(--fs-body)', fontWeight: 400 }}>
+                {' '}
+                % APR
+              </span>
             </span>
-            <span className="mono muted">
-              {usd(monthlyPayment(show.amount, show.apr, show.termMonths))} / mo · {show.termMonths} mo · {usd(show.amount)}
+            <span className="chips">
+              <span className="chip">{usd(monthlyPayment(show.amount, show.apr, show.termMonths))} / mo</span>
+              <span className="chip">{show.termMonths} mo</span>
+              <span className="chip">{usd(show.amount)}</span>
             </span>
           </div>
-          <dl className="kv">
-            <dt>Provider</dt>
-            <dd className="mono">{show.provider}</dd>
-            <dt>Run</dt>
-            <dd className="mono">{show.runId ?? '—'}</dd>
-            <dt>Latency</dt>
-            <dd className="mono">{secs(show.latencyMs, 2)}</dd>
-          </dl>
+          <div className="kvgrid" style={{ padding: 0, borderBottom: 'none' }}>
+            <span className="k">Provider</span>
+            <span className="v">{show.provider}</span>
+            <span className="k">Run</span>
+            <span className="v">{show.runId ?? '—'}</span>
+            <span className="k">Latency</span>
+            <span className="v">{secs(show.latencyMs, 2)}</span>
+            <span className="k">Classification</span>
+            <span className="v">{show.classification ?? '—'}</span>
+          </div>
           {show.conditions.length > 0 && (
             <div className="block">
               <span className="label">Conditions</span>
@@ -293,34 +336,32 @@ function OfferTab({ applicant, offer, decision, offers, checks }: { applicant: A
   )
 }
 
+/** Laminar transcript: actor square, action, right-aligned mono chips. */
 function TraceTab({ applicant, events }: { applicant: Applicant; events: AuditEvent[] }) {
   const rows = events.slice().sort((a, b) => a.at - b.at)
   return (
     <ol className="timeline" aria-label="Trace">
-      {rows.map((e) => {
-        const dot =
-          e.action === 'hard_stop' ? 'hard' : e.action.endsWith('approve') || e.action === 'offer.approved' ? 'approve' : e.action.endsWith('decline') || e.action === 'application.declined' ? 'decline' : e.actor === 'human' ? 'human' : ''
-        return (
-          <li key={e._id}>
-            <span className="t mono">+{((e.at - applicant.createdAt) / 1000).toFixed(2)}s</span>
-            <span className={`d ${dot}`} />
-            <span className="body">
-              <div>
-                <span className="mono">{e.action}</span>
-                {e.ref && <span className="ref mono"> · {e.ref}</span>}
-              </div>
-              <div className="actor">
-                {e.actor} · {e.note}
-              </div>
-            </span>
-          </li>
-        )
-      })}
+      {rows.map((e) => (
+        <li key={e._id}>
+          <span className="d" style={{ ['--actor' as string]: ACTOR_COLOR[e.actor] }} />
+          <span className="body">
+            <div>
+              <span className="mono">{e.action}</span>
+              {e.ref && <span className="chip"> · {e.ref}</span>}
+            </div>
+            <div className="actor">
+              {e.actor} · {e.note}
+            </div>
+          </span>
+          <span className="t">+{((e.at - applicant.createdAt) / 1000).toFixed(2)}s</span>
+        </li>
+      ))}
       {rows.length === 0 && <li className="muted">No events yet.</li>}
     </ol>
   )
 }
 
+/** Evidence document: sans headings, serif body, Method key/value header, reason codes as Label: value bullets. */
 function NoticeTab({ applicant, bundle, notice, declined, offers, decision, checks }: { applicant: Applicant; bundle: Bundle | undefined; notice: Notice | undefined; declined: Offer[]; offers: Offer[]; decision: Decision | undefined; checks: ReasonCheck[] }) {
   const [reviewed, setReviewed] = useState(false)
   const [copied, setCopied] = useState(false)
@@ -359,38 +400,88 @@ function NoticeTab({ applicant, bundle, notice, declined, offers, decision, chec
       /* clipboard unavailable */
     }
   }
+  const jump = (id: string) => document.getElementById(id)?.scrollIntoView({ block: 'start', behavior: 'smooth' })
   return (
     <>
       {requiredLine}
       <article className="doc" aria-label="Adverse action notice">
-        <span className="section-label">Adverse action notice · {reviewed ? 'Reviewed' : 'Draft'}</span>
-        {paras.map((t, i) => (
+        <h1 id="n-decision">Notice of adverse action</h1>
+        <span className="dateline">
+          {new Date(notice.createdAt).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })} · {reviewed ? 'reviewed' : 'draft'}
+        </span>
+        <div className="toc">
+          <button type="button" onClick={() => jump('n-decision')}>
+            Decision
+          </button>
+          <button type="button" onClick={() => jump('n-reasons')}>
+            Principal reasons
+          </button>
+          <button type="button" onClick={() => jump('n-rights')}>
+            Your rights
+          </button>
+        </div>
+        <div className="kv">
+          <span className="k">Applicant</span>
+          <span className="v">{applicant.name}</span>
+          <span className="k">Application</span>
+          <span className="v">
+            <span className="mono">{applicant._id}</span>
+          </span>
+          <span className="k">Report</span>
+          <span className="v">
+            {bundle?.source ?? 'mock'} · {bundle ? clock(bundle.pulledAt) : '—'}
+          </span>
+          <span className="k">Decision</span>
+          <span className="v">
+            <span className="state" style={{ ['--state' as string]: 'var(--doc-bad)' }}>
+              {notice.lendersDeclined.length} of {offers.length} lenders
+            </span>
+          </span>
+        </div>
+        {paras.slice(0, -1).map((t, i) => (
           <p key={i} className="para" style={{ animationDelay: `${i * 120}ms` }}>
             {t}
           </p>
         ))}
-        {declined.map((o) => (
-          <div className="block" key={o._id}>
-            <span className="label">Reason codes · {LENDERS.find((l) => l.id === o.lender)?.name}</span>
-            {verifiedReasons(checks, o).length === 0 ? (
-              <span className="muted">No reason on this decline survived the counterfactual test.</span>
-            ) : (
-              <ReasonList offer={o} checks={checks} numbered only={verifiedReasons(checks, o)} />
-            )}
-          </div>
-        ))}
-        <div className="prov">
-          {verified} of {total} reasons verified by counterfactual test · generated by compliance agent · based on {bundle?.source ?? 'mock'} pull at{' '}
-          {bundle ? clock(bundle.pulledAt) : '—'} · {notice.lendersDeclined.join(', ')} · ECOA §1002.9, FCRA §615
+        <h2 id="n-reasons">Principal reasons</h2>
+        {declined.map((o) => {
+          const v = verifiedReasons(checks, o)
+          return (
+            <div key={o._id}>
+              <p className="muted">{LENDERS.find((l) => l.id === o.lender)?.name}</p>
+              {v.length === 0 ? (
+                <p className="muted">No reason on this decline survived the counterfactual test.</p>
+              ) : (
+                <ul>
+                  {v.map((r, i) => {
+                    const [lbl, ...rest] = r.text.split(/(?<=^[^:]{3,60}?)(?=\s(?:of|is|exceeds|in|on|shows|are))/)
+                    return (
+                      <li key={i}>
+                        <span className="lbl">{lbl.trim()}</span>
+                        {rest.length ? ':' : ''} {rest.join('').trim()}
+                        <span className="code">{r.field}</span>
+                        <span className="ok">verified</span>
+                      </li>
+                    )
+                  })}
+                </ul>
+              )}
+            </div>
+          )
+        })}
+        <h2 id="n-rights">Your rights</h2>
+        <p className="para">{paras[paras.length - 1]}</p>
+        <div className="sig">
+          {verified} of {total} reasons verified by counterfactual test · generated by the compliance agent · ECOA §1002.9, FCRA §615 · a loan officer reviews every notice before it is sent.
         </div>
-      <div className="actions">
-        <button type="button" onClick={copy}>
-          {copied ? 'Copied' : 'Copy'}
-        </button>
-        <button type="button" onClick={() => setReviewed((r) => !r)} aria-pressed={reviewed}>
-          {reviewed ? 'Reviewed' : 'Mark reviewed'}
-        </button>
-      </div>
+        <div className="actions">
+          <button type="button" onClick={copy}>
+            {copied ? 'Copied' : 'Copy'}
+          </button>
+          <button type="button" onClick={() => setReviewed((r) => !r)} aria-pressed={reviewed}>
+            {reviewed ? 'Reviewed' : 'Mark reviewed'}
+          </button>
+        </div>
       </article>
     </>
   )
