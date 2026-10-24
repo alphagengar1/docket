@@ -1,0 +1,87 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8"><title>Persona card deck</title>
+
+<style>
+:root{--ink:#14181f;--mute:#5c6573;--rule:#c9ced6;--acc:#0b7a6b}
+@page{size:letter;margin:0}
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{background:#fff}
+body{font-family:Inter,"Helvetica Neue",Arial,sans-serif;color:var(--ink);font-size:11px;line-height:1.35;-webkit-print-color-adjust:exact;print-color-adjust:exact}
+.mono,.id,.n,dd.n,td.m{font-family:"JetBrains Mono",ui-monospace,Menlo,monospace;font-variant-numeric:tabular-nums}
+.page{width:8.5in;height:11in;padding:.5in;page-break-after:always;break-after:page;overflow:hidden}
+.page:last-child{page-break-after:auto;break-after:auto}
+.grid{display:grid;grid-template-columns:3.75in 3.75in;grid-template-rows:repeat(4,2.5in);width:7.5in;height:10in}
+.card{border:.75px dashed #8a929e;margin:-.375px;padding:.17in .2in .12in;display:flex;flex-direction:column;position:relative;border-left:3px solid var(--acc)}
+.card.blank{border-left:.75px dashed #8a929e}
+.top{display:flex;align-items:baseline;justify-content:space-between}
+.id{font-size:36px;font-weight:700;line-height:1;color:var(--acc);letter-spacing:-.02em}
+.tag{font-size:8px;text-transform:uppercase;letter-spacing:.14em;color:var(--mute)}
+.name{font-size:18px;font-weight:600;margin-top:6px;line-height:1.15}
+.about{font-size:11px;color:var(--mute);margin-top:3px;min-height:30px}
+dl{display:grid;grid-template-columns:54px 1fr;row-gap:2px;margin-top:6px;border-top:.75px solid var(--rule);padding-top:6px}
+dt{font-size:8px;text-transform:uppercase;letter-spacing:.12em;color:var(--mute);padding-top:2px}
+dd{font-size:11px}
+dd.n{font-size:11px;font-weight:600}
+.foot{margin-top:auto;font-size:8px;color:var(--mute);letter-spacing:.04em;font-family:"JetBrains Mono",ui-monospace,Menlo,monospace}
+
+@media screen{body{background:#e8eaee}.page{margin:16px auto;background:#fff;box-shadow:0 1px 6px #0003}}
+</style></head><body><section class="page"><div class="grid"><div class="card"><div class="top"><span class="id">P01</span><span class="tag">Applicant</span></div>
+<div class="name">Margaret Okafor</div><div class="about">San Jose homeowner planning a kitchen renovation.</div>
+<dl><dt>Purpose</dt><dd>Home improvement</dd><dt>Amount</dt><dd class="n">$38,000</dd><dt>Income</dt><dd class="n">$95,000 / yr</dd></dl>
+<div class="foot">sandbox test persona &middot; CRS Credit API</div></div><div class="card"><div class="top"><span class="id">P02</span><span class="tag">Applicant</span></div>
+<div class="name">Daniel Whitfield</div><div class="about">Established homeowner funding a home addition.</div>
+<dl><dt>Purpose</dt><dd>Home improvement</dd><dt>Amount</dt><dd class="n">$42,000</dd><dt>Income</dt><dd class="n">$105,000 / yr</dd></dl>
+<div class="foot">sandbox test persona &middot; CRS Credit API</div></div><div class="card"><div class="top"><span class="id">P03</span><span class="tag">Applicant</span></div>
+<div class="name">Jasmine Reyes</div><div class="about">Berkeley student with a part-time job buying a laptop.</div>
+<dl><dt>Purpose</dt><dd>Electronics / education</dd><dt>Amount</dt><dd class="n">$3,500</dd><dt>Income</dt><dd class="n">$28,000 / yr</dd></dl>
+<div class="foot">sandbox test persona &middot; CRS Credit API</div></div><div class="card"><div class="top"><span class="id">P04</span><span class="tag">Applicant</span></div>
+<div class="name">Tomas Lindqvist</div><div class="about">Newcomer to the area starting a delivery side business.</div>
+<dl><dt>Purpose</dt><dd>Small business</dd><dt>Amount</dt><dd class="n">$6,000</dd><dt>Income</dt><dd class="n">$42,000 / yr</dd></dl>
+<div class="foot">sandbox test persona &middot; CRS Credit API</div></div><div class="card"><div class="top"><span class="id">P05</span><span class="tag">Applicant</span></div>
+<div class="name">Ricky Dalton</div><div class="about">Warehouse worker covering a car repair.</div>
+<dl><dt>Purpose</dt><dd>Auto repair</dd><dt>Amount</dt><dd class="n">$4,000</dd><dt>Income</dt><dd class="n">$38,000 / yr</dd></dl>
+<div class="foot">sandbox test persona &middot; CRS Credit API</div></div><div class="card"><div class="top"><span class="id">P06</span><span class="tag">Applicant</span></div>
+<div class="name">Angela Morrissey</div><div class="about">Nurse&#x27;s aide buying a used car.</div>
+<dl><dt>Purpose</dt><dd>Auto purchase</dd><dt>Amount</dt><dd class="n">$9,000</dd><dt>Income</dt><dd class="n">$52,000 / yr</dd></dl>
+<div class="foot">sandbox test persona &middot; CRS Credit API</div></div><div class="card"><div class="top"><span class="id">P07</span><span class="tag">Applicant</span></div>
+<div class="name">Marcus Bellamy</div><div class="about">Delivery driver replacing a work van engine.</div>
+<dl><dt>Purpose</dt><dd>Vehicle repair</dd><dt>Amount</dt><dd class="n">$12,000</dd><dt>Income</dt><dd class="n">$58,000 / yr</dd></dl>
+<div class="foot">sandbox test persona &middot; CRS Credit API</div></div><div class="card"><div class="top"><span class="id">P08</span><span class="tag">Applicant</span></div>
+<div class="name">Priya Venkatesan</div><div class="about">Freelance designer funding a home office.</div>
+<dl><dt>Purpose</dt><dd>Home office</dd><dt>Amount</dt><dd class="n">$15,000</dd><dt>Income</dt><dd class="n">$110,000 / yr</dd></dl>
+<div class="foot">sandbox test persona &middot; CRS Credit API</div></div></div></section><section class="page"><div class="grid"><div class="card"><div class="top"><span class="id">P09</span><span class="tag">Applicant</span></div>
+<div class="name">Derek Holloway</div><div class="about">Electrician&#x27;s apprentice buying tools and a truck.</div>
+<dl><dt>Purpose</dt><dd>Work equipment</dd><dt>Amount</dt><dd class="n">$14,000</dd><dt>Income</dt><dd class="n">$64,000 / yr</dd></dl>
+<div class="foot">sandbox test persona &middot; CRS Credit API</div></div><div class="card"><div class="top"><span class="id">P10</span><span class="tag">Applicant</span></div>
+<div class="name">Lauren Kowalczyk</div><div class="about">Teacher paying for a wedding.</div>
+<dl><dt>Purpose</dt><dd>Wedding / event</dd><dt>Amount</dt><dd class="n">$11,000</dd><dt>Income</dt><dd class="n">$68,000 / yr</dd></dl>
+<div class="foot">sandbox test persona &middot; CRS Credit API</div></div><div class="card"><div class="top"><span class="id">P11</span><span class="tag">Applicant</span></div>
+<div class="name">Brandon Szabo</div><div class="about">Restaurant shift lead moving to a new apartment.</div>
+<dl><dt>Purpose</dt><dd>Moving / relocation</dd><dt>Amount</dt><dd class="n">$5,000</dd><dt>Income</dt><dd class="n">$45,000 / yr</dd></dl>
+<div class="foot">sandbox test persona &middot; CRS Credit API</div></div><div class="card"><div class="top"><span class="id">P12</span><span class="tag">Applicant</span></div>
+<div class="name">Victor Anand</div><div class="about">Software engineer relocating for a new job.</div>
+<dl><dt>Purpose</dt><dd>Relocation</dd><dt>Amount</dt><dd class="n">$20,000</dd><dt>Income</dt><dd class="n">$130,000 / yr</dd></dl>
+<div class="foot">sandbox test persona &middot; CRS Credit API</div></div><div class="card"><div class="top"><span class="id">P13</span><span class="tag">Applicant</span></div>
+<div class="name">Kayla Brennan</div><div class="about">Recent graduate starting an online shop.</div>
+<dl><dt>Purpose</dt><dd>Small business</dd><dt>Amount</dt><dd class="n">$15,000</dd><dt>Income</dt><dd class="n">$60,000 / yr</dd></dl>
+<div class="foot">sandbox test persona &middot; CRS Credit API</div></div><div class="card"><div class="top"><span class="id">P14</span><span class="tag">Applicant</span></div>
+<div class="name">Harold Pettigrew</div><div class="about">74-year-old applying for a home repair loan.</div>
+<dl><dt>Purpose</dt><dd>Home repair</dd><dt>Amount</dt><dd class="n">$12,000</dd><dt>Income</dt><dd class="n">$36,000 / yr</dd></dl>
+<div class="foot">sandbox test persona &middot; CRS Credit API</div></div><div class="card"><div class="top"><span class="id">P15</span><span class="tag">Applicant</span></div>
+<div class="name">Nicole Farragut</div><div class="about">Marketing manager consolidating moving costs.</div>
+<dl><dt>Purpose</dt><dd>Debt consolidation</dd><dt>Amount</dt><dd class="n">$16,000</dd><dt>Income</dt><dd class="n">$85,000 / yr</dd></dl>
+<div class="foot">sandbox test persona &middot; CRS Credit API</div></div><div class="card"><div class="top"><span class="id">P16</span><span class="tag">Applicant</span></div>
+<div class="name">Samuel Oyelaran</div><div class="about">Accountant funding a family trip.</div>
+<dl><dt>Purpose</dt><dd>Travel</dd><dt>Amount</dt><dd class="n">$10,000</dd><dt>Income</dt><dd class="n">$78,000 / yr</dd></dl>
+<div class="foot">sandbox test persona &middot; CRS Credit API</div></div></div></section><section class="page"><div class="grid"><div class="card"><div class="top"><span class="id">P17</span><span class="tag">Applicant</span></div>
+<div class="name">Elena Castellanos</div><div class="about">Dental hygienist financing home solar panels.</div>
+<dl><dt>Purpose</dt><dd>Home improvement</dd><dt>Amount</dt><dd class="n">$28,000</dd><dt>Income</dt><dd class="n">$70,000 / yr</dd></dl>
+<div class="foot">sandbox test persona &middot; CRS Credit API</div></div><div class="card"><div class="top"><span class="id">P18</span><span class="tag">Applicant</span></div>
+<div class="name">Terrence Abernathy</div><div class="about">Warehouse supervisor buying a reliable used car.</div>
+<dl><dt>Purpose</dt><dd>Auto purchase</dd><dt>Amount</dt><dd class="n">$9,000</dd><dt>Income</dt><dd class="n">$54,000 / yr</dd></dl>
+<div class="foot">sandbox test persona &middot; CRS Credit API</div></div><div class="card"><div class="top"><span class="id">P19</span><span class="tag">Applicant</span></div>
+<div class="name">Grace Nakamura</div><div class="about">Bakery owner buying a new oven and delivery van.</div>
+<dl><dt>Purpose</dt><dd>Small business equipment</dd><dt>Amount</dt><dd class="n">$48,000</dd><dt>Income</dt><dd class="n">$120,000 / yr</dd></dl>
+<div class="foot">sandbox test persona &middot; CRS Credit API</div></div><div class="card"><div class="top"><span class="id">P20</span><span class="tag">Applicant</span></div>
+<div class="name">Dolores Whitcomb</div><div class="about">Retiree replacing a furnace.</div>
+<dl><dt>Purpose</dt><dd>Home repair</dd><dt>Amount</dt><dd class="n">$8,000</dd><dt>Income</dt><dd class="n">$31,000 / yr</dd></dl>
+<div class="foot">sandbox test persona &middot; CRS Credit API</div></div><div class="card blank"></div><div class="card blank"></div><div class="card blank"></div><div class="card blank"></div></div></section></body></html>
