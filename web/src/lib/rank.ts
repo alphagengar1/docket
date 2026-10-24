@@ -16,7 +16,9 @@ export function rankDecisions(applicants: Applicant[], offers: Offer[]): Ranked[
     .map((a) => {
       const done = offers.filter((o) => o.applicantId === a._id && o.status === 'done')
       const approving = done.filter((o) => o.decision === 'approve' && o.apr != null).sort((x, y) => x.apr! - y.apr!)
-      return { applicant: a, best: approving[0] ?? null, approvals: approving.length, done: done.length }
+      // The borrower's own pick (phone) wins over the lowest APR, so A / Approve best honours what the judge chose.
+      const chosen = a.chosenOfferId ? approving.find((o) => o._id === a.chosenOfferId) : undefined
+      return { applicant: a, best: chosen ?? approving[0] ?? null, approvals: approving.length, done: done.length }
     })
   return rows.sort(
     (x, y) => y.approvals - x.approvals || (x.best?.apr ?? 999) - (y.best?.apr ?? 999) || x.applicant.createdAt - y.applicant.createdAt,
