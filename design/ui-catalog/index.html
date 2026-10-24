@@ -1,0 +1,359 @@
+<title>Docket UI References</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap">
+<style>
+  /* Layout: a catalog of 20 shipped-product screens, one card each, with a sticky pick list. Dark-first to match the Docket console. */
+  :root {
+    --bg: #101010;
+    --surface: #161616;
+    --card: #111114;
+    --hair: #222226;
+    --hair-2: #2d2d33;
+    --text: #e6e4e2;
+    --muted: #8d8d96;
+    --accent: #6f9ce0;
+    --accent-ink: #0a0a0a;
+    --good: #3dd68c;
+    --warn: #f0a030;
+    --sans: 'Inter', system-ui, -apple-system, 'Segoe UI', sans-serif;
+    --mono: 'JetBrains Mono', ui-monospace, 'SF Mono', Menlo, monospace;
+    color-scheme: dark;
+  }
+  @media (prefers-color-scheme: light) {
+    :root:not([data-theme="dark"]) {
+      --bg: #f6f5f2; --surface: #ffffff; --card: #ffffff; --hair: #e3e1dc; --hair-2: #cfcdc6;
+      --text: #1a1a1c; --muted: #6a6a72; --accent: #2f62b8; --accent-ink: #ffffff; --good: #178a55; --warn: #b36a00;
+      color-scheme: light;
+    }
+  }
+  :root[data-theme="light"] {
+    --bg: #f6f5f2; --surface: #ffffff; --card: #ffffff; --hair: #e3e1dc; --hair-2: #cfcdc6;
+    --text: #1a1a1c; --muted: #6a6a72; --accent: #2f62b8; --accent-ink: #ffffff; --good: #178a55; --warn: #b36a00;
+    color-scheme: light;
+  }
+  * { box-sizing: border-box; }
+  body {
+    background: var(--bg); color: var(--text); font-family: var(--sans); font-size: 14px; line-height: 1.5;
+    padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); padding-block: 0 48px;
+  }
+  a { color: var(--accent); text-decoration: none; }
+  a:hover { text-decoration: underline; }
+  header.top { max-width: 1180px; margin: 0 auto; padding: 28px 0 18px; display: flex; flex-wrap: wrap; gap: 12px 24px; align-items: end; justify-content: space-between; }
+  h1 { font-size: 22px; font-weight: 600; margin: 0 0 4px; letter-spacing: -0.01em; text-wrap: balance; }
+  .lede { color: var(--muted); max-width: 62ch; margin: 0; }
+  .legend { display: flex; flex-wrap: wrap; gap: 6px; }
+  .tag { font-family: var(--mono); font-size: 11px; letter-spacing: 0.04em; text-transform: uppercase; padding: 3px 8px; border: 1px solid var(--hair-2); border-radius: 999px; color: var(--muted); white-space: nowrap; }
+  .tag.cat-decision { border-color: color-mix(in srgb, var(--good) 50%, transparent); color: var(--good); }
+  .tag.cat-ops { border-color: color-mix(in srgb, var(--accent) 60%, transparent); color: var(--accent); }
+  .tag.cat-trace { border-color: color-mix(in srgb, var(--warn) 60%, transparent); color: var(--warn); }
+  .tag.cat-shell { border-color: var(--hair-2); color: var(--text); }
+  .picks {
+    position: sticky; top: env(safe-area-inset-top, 0px); z-index: 5; max-width: 1180px; margin: 0 auto 18px;
+    background: var(--surface); border: 1px solid var(--hair); border-radius: 8px; padding: 10px 14px;
+    display: flex; flex-wrap: wrap; gap: 8px 14px; align-items: center;
+  }
+  .picks .lbl { font-family: var(--mono); font-size: 11px; text-transform: uppercase; letter-spacing: 0.06em; color: var(--muted); }
+  .picks .list { font-family: var(--mono); font-size: 13px; flex: 1; min-width: 0; overflow-wrap: anywhere; }
+  .picks button { font: inherit; font-size: 12px; padding: 5px 10px; border-radius: 6px; border: 1px solid var(--hair-2); background: transparent; color: var(--text); cursor: pointer; }
+  .picks button.primary { background: var(--accent); color: var(--accent-ink); border-color: transparent; }
+  .picks button:focus-visible, .want:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+  .grid { max-width: 1180px; margin: 0 auto; display: grid; grid-template-columns: repeat(auto-fill, minmax(340px, 1fr)); gap: 16px; }
+  .ref { background: var(--card); border: 1px solid var(--hair); border-radius: 10px; overflow: hidden; display: flex; flex-direction: column; min-width: 0; }
+  .ref.picked { border-color: var(--accent); box-shadow: inset 3px 0 0 var(--accent); }
+  .shot { aspect-ratio: 16 / 9; background: var(--surface); border-bottom: 1px solid var(--hair); overflow: hidden; display: grid; place-items: center; }
+  .shot img { width: 100%; height: 100%; object-fit: cover; object-position: top left; display: block; max-width: 100%; }
+  .shot .none { font-family: var(--mono); font-size: 12px; color: var(--muted); text-align: center; padding: 16px; }
+  .shot .none b { display: block; font-size: 40px; font-weight: 500; color: var(--text); line-height: 1; margin-bottom: 8px; }
+  .body { padding: 12px 14px 14px; display: flex; flex-direction: column; gap: 8px; }
+  .head { display: flex; align-items: baseline; gap: 10px; }
+  .num { font-family: var(--mono); font-size: 12px; color: var(--muted); min-width: 2ch; }
+  .name { font-size: 15px; font-weight: 600; }
+  .name a { color: inherit; }
+  .what, .steal { margin: 0; }
+  .what { color: var(--muted); }
+  .steal b { color: var(--text); font-weight: 600; }
+  .foot { display: flex; align-items: center; justify-content: space-between; gap: 8px; margin-top: 4px; }
+  .want { font: inherit; font-size: 12px; padding: 5px 10px; border-radius: 6px; border: 1px solid var(--hair-2); background: transparent; color: var(--text); cursor: pointer; }
+  .want[aria-pressed="true"] { background: var(--accent); color: var(--accent-ink); border-color: transparent; }
+  .src { font-family: var(--mono); font-size: 11px; color: var(--muted); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; min-width: 0; }
+  section.group { max-width: 1180px; margin: 28px auto 10px; }
+  section.group h2 { font-size: 12px; font-family: var(--mono); text-transform: uppercase; letter-spacing: 0.08em; color: var(--muted); margin: 0 0 10px; font-weight: 500; }
+  @media (prefers-reduced-motion: no-preference) { .ref { transition: border-color 120ms ease; } }
+</style>
+
+<header class="top">
+  <div>
+    <h1>Docket UI references</h1>
+    <p class="lede">Twenty shipped product screens worth borrowing from, each with the one feature that would help the lending desk. Press "Want this" on any card, then copy the pick list and paste it back into the chat.</p>
+  </div>
+  <div class="legend" aria-label="Categories">
+    <span class="tag cat-decision">decisioning</span>
+    <span class="tag cat-ops">fintech ops</span>
+    <span class="tag cat-trace">traces and eval</span>
+    <span class="tag cat-shell">shell and queue</span>
+  </div>
+</header>
+
+<div class="picks" id="picks">
+  <span class="lbl">Your picks</span>
+  <span class="list" id="picklist">none yet</span>
+  <button type="button" id="copy" class="primary">Copy pick list</button>
+  <button type="button" id="clear">Clear</button>
+</div>
+
+<section class="group"><h2>Decisioning and lending</h2></section>
+<div class="grid">
+  <article class="ref" data-n="1" data-name="Lendflow">
+    <div class="shot"><img src="../refs/lendflow/deal-pipeline.png" alt="Lendflow deal pipeline: applicant header, chevron stage rail, orchestration run card" loading="lazy"></div>
+    <div class="body">
+      <div class="head"><span class="num">01</span><span class="name"><a href="https://www.lendflow.com" target="_blank" rel="noopener">Lendflow</a></span><span class="tag cat-decision">decisioning</span></div>
+      <p class="what">A lending workspace. Applicant name with status chips, a chevron rail from Application through Underwriting to Funded, and an "orchestration run" card that groups each check (KYB, KYC, credit) with the providers it called.</p>
+      <p class="steal"><b>Borrow:</b> the chevron stage rail as the default pipeline view instead of a timing waterfall, and a per-check card that names the data source behind each rule.</p>
+      <div class="foot"><span class="src">lendflow.com</span><button type="button" class="want" aria-pressed="false">Want this</button></div>
+    </div>
+  </article>
+
+  <article class="ref" data-n="2" data-name="Alloy">
+    <div class="shot"><div class="none"><b>A</b>link only, no capture on file</div></div>
+    <div class="body">
+      <div class="head"><span class="num">02</span><span class="name"><a href="https://www.alloy.com" target="_blank" rel="noopener">Alloy</a></span><span class="tag cat-decision">decisioning</span></div>
+      <p class="what">Identity and credit decisioning for banks. An application queue with a review screen that leads with the outcome and the rule that produced it, then the evidence underneath.</p>
+      <p class="steal"><b>Borrow:</b> a one-line decision summary banner at the top of an applicant ("Declined by 4 of 5 lenders, best offer 15.9% from Northstar") before any card or chart.</p>
+      <div class="foot"><span class="src">alloy.com</span><button type="button" class="want" aria-pressed="false">Want this</button></div>
+    </div>
+  </article>
+
+  <article class="ref" data-n="3" data-name="Sardine">
+    <div class="shot"><div class="none"><b>S</b>link only, no capture on file</div></div>
+    <div class="body">
+      <div class="head"><span class="num">03</span><span class="name"><a href="https://www.sardine.ai" target="_blank" rel="noopener">Sardine</a></span><span class="tag cat-decision">decisioning</span></div>
+      <p class="what">Fraud and compliance ops. An alert table with a "Make decision" action and a bulk-decision modal that asks for a rationale once and applies it to every selected row.</p>
+      <p class="steal"><b>Borrow:</b> multi-select in the queue with one bulk approve or decline and a single rationale field, for clearing a stack of clean approvals fast.</p>
+      <div class="foot"><span class="src">sardine.ai</span><button type="button" class="want" aria-pressed="false">Want this</button></div>
+    </div>
+  </article>
+
+  <article class="ref" data-n="4" data-name="Method">
+    <div class="shot"><img src="../refs/method/entity-detail.webp" alt="Method entity detail: name, mono id, status pill, key/value overview, ruled tables" loading="lazy"></div>
+    <div class="body">
+      <div class="head"><span class="num">04</span><span class="name"><a href="https://methodfi.com" target="_blank" rel="noopener">Method</a></span><span class="tag cat-decision">decisioning</span></div>
+      <p class="what">Liability data API. Entity pages with a big name, a mono id and an "Active" pill, then a two-column key/value overview and tables that use hairlines only, no card chrome.</p>
+      <p class="steal"><b>Borrow:</b> the no-chrome overview for the inspector snapshot, and status pills with a 6px dot for lender states so color carries meaning at a glance.</p>
+      <div class="foot"><span class="src">methodfi.com</span><button type="button" class="want" aria-pressed="false">Want this</button></div>
+    </div>
+  </article>
+
+  <article class="ref" data-n="5" data-name="Evidence">
+    <div class="shot"><img src="../refs/evidence/weekly-report.png" alt="Evidence business review: document layout with serif body and an on-this-page table of contents" loading="lazy"></div>
+    <div class="body">
+      <div class="head"><span class="num">05</span><span class="name"><a href="https://evidence.dev" target="_blank" rel="noopener">Evidence</a></span><span class="tag cat-decision">decisioning</span></div>
+      <p class="what">Reports that read like documents: sans headings, serif body, inline numbers, an "On this page" rail, and grey commentary blocks with a left rule.</p>
+      <p class="steal"><b>Borrow:</b> a reviewer commentary block on the adverse-action notice where the loan officer's note is stored next to the text they approved.</p>
+      <div class="foot"><span class="src">evidence.dev</span><button type="button" class="want" aria-pressed="false">Want this</button></div>
+    </div>
+  </article>
+</div>
+
+<section class="group"><h2>Fintech ops</h2></section>
+<div class="grid">
+  <article class="ref" data-n="6" data-name="Mercury">
+    <div class="shot"><div class="none"><b>M</b>link only, no capture on file</div></div>
+    <div class="body">
+      <div class="head"><span class="num">06</span><span class="name"><a href="https://mercury.com" target="_blank" rel="noopener">Mercury</a></span><span class="tag cat-ops">fintech ops</span></div>
+      <p class="what">Business banking. A transaction list where clicking a row slides open a detail panel on the right, so the list never leaves the screen. Colour is used only for state.</p>
+      <p class="steal"><b>Borrow:</b> the list-plus-side-panel rhythm: keep the queue visible while the inspector opens, and never use colour for decoration.</p>
+      <div class="foot"><span class="src">mercury.com</span><button type="button" class="want" aria-pressed="false">Want this</button></div>
+    </div>
+  </article>
+
+  <article class="ref" data-n="7" data-name="Ramp">
+    <div class="shot"><div class="none"><b>R</b>link only, no capture on file</div></div>
+    <div class="body">
+      <div class="head"><span class="num">07</span><span class="name"><a href="https://ramp.com" target="_blank" rel="noopener">Ramp</a></span><span class="tag cat-ops">fintech ops</span></div>
+      <p class="what">Spend management. Approvals are exception-first: anything in policy clears on its own and only the exceptions reach a person, each with the policy line it broke.</p>
+      <p class="steal"><b>Borrow:</b> an "exceptions only" filter on the queue that hides applicants every lender agreed on, so the officer looks at split decisions first.</p>
+      <div class="foot"><span class="src">ramp.com</span><button type="button" class="want" aria-pressed="false">Want this</button></div>
+    </div>
+  </article>
+
+  <article class="ref" data-n="8" data-name="Fey">
+    <div class="shot"><img src="../refs/fey/portfolio-holdings.jpg" alt="Fey holdings table: large value with dimmed cents, right-aligned tabular numbers, change pills" loading="lazy"></div>
+    <div class="body">
+      <div class="head"><span class="num">08</span><span class="name"><a href="https://www.fey.com" target="_blank" rel="noopener">Fey</a></span><span class="tag cat-ops">fintech ops</span></div>
+      <p class="what">Markets app. A hero value with the cents dimmed, 38px rows with hairline separators, numbers right-aligned in tabular figures, and small green or red pills for change.</p>
+      <p class="steal"><b>Borrow:</b> group subtotal rows for the queue (approved today, declined today, dollars offered) and a delta pill on every offer against the best rate.</p>
+      <div class="foot"><span class="src">fey.com (archived)</span><button type="button" class="want" aria-pressed="false">Want this</button></div>
+    </div>
+  </article>
+
+  <article class="ref" data-n="9" data-name="Hyperexpense">
+    <div class="shot"><img src="../refs/hyperexpense/fpa-dashboard.png" alt="Hyperexpense FP&A dashboard: stat tiles, tick-bar meters and an arc gauge" loading="lazy"></div>
+    <div class="body">
+      <div class="head"><span class="num">09</span><span class="name"><a href="https://www.hyperexpense.com" target="_blank" rel="noopener">Hyperexpense</a></span><span class="tag cat-ops">fintech ops</span></div>
+      <p class="what">Finance dashboard. Stat tiles with a large value and a "vs last month" pill, a policy-compliance arc gauge built from ticks, and horizontal tick-bar meters for percentages.</p>
+      <p class="steal"><b>Borrow:</b> one arc gauge for "reasons verified" on the eval panel, and tick meters for utilization and fraud score (the inspector already uses a version of this).</p>
+      <div class="foot"><span class="src">hyperexpense.com</span><button type="button" class="want" aria-pressed="false">Want this</button></div>
+    </div>
+  </article>
+
+  <article class="ref" data-n="10" data-name="Finary">
+    <div class="shot"><img src="../refs/finary/portfolio-dashboard.png" alt="Finary portfolio: large net worth, timeframe segmented control, barcode allocation bars" loading="lazy"></div>
+    <div class="body">
+      <div class="head"><span class="num">10</span><span class="name"><a href="https://finary.com" target="_blank" rel="noopener">Finary</a></span><span class="tag cat-ops">fintech ops</span></div>
+      <p class="what">Wealth tracker. A single huge number, a timeframe control (1D, 1W, 1M), and an allocation list where every row is a label, a barcode-style bar and a percentage.</p>
+      <p class="steal"><b>Borrow:</b> a lender share bar: what fraction of today's approvals each lender won, as one barcode row per lender above the queue.</p>
+      <div class="foot"><span class="src">finary.com</span><button type="button" class="want" aria-pressed="false">Want this</button></div>
+    </div>
+  </article>
+
+  <article class="ref" data-n="11" data-name="Lightyear">
+    <div class="shot"><img src="../refs/lightyear/account-home.webp" alt="Lightyear account home: light three-column layout" loading="lazy"></div>
+    <div class="body">
+      <div class="head"><span class="num">11</span><span class="name"><a href="https://lightyear.com" target="_blank" rel="noopener">Lightyear</a></span><span class="tag cat-ops">fintech ops</span></div>
+      <p class="what">Investing app. A light three-column home with the account value first, holdings in the middle, and a quiet right column for actions. Nothing competes with the number.</p>
+      <p class="steal"><b>Borrow:</b> the light-theme palette for the console's light mode, and the rule that one number per screen gets the large size.</p>
+      <div class="foot"><span class="src">lightyear.com</span><button type="button" class="want" aria-pressed="false">Want this</button></div>
+    </div>
+  </article>
+
+  <article class="ref" data-n="12" data-name="Cobalt">
+    <div class="shot"><img src="../refs/cobalt/insights.png" alt="Cobalt insights dashboard: four-tile summary row above detail" loading="lazy"></div>
+    <div class="body">
+      <div class="head"><span class="num">12</span><span class="name"><a href="https://joincobalt.com" target="_blank" rel="noopener">Cobalt</a></span><span class="tag cat-ops">fintech ops</span></div>
+      <p class="what">Property finance. A four-tile insight row across the top, then detail. The tiles answer "is everything fine" before the user reads anything else.</p>
+      <p class="steal"><b>Borrow:</b> a four-tile desk summary (waiting on you, decided today, median time to decision, dollars approved) as the first thing on the console.</p>
+      <div class="foot"><span class="src">joincobalt.com</span><button type="button" class="want" aria-pressed="false">Want this</button></div>
+    </div>
+  </article>
+
+  <article class="ref" data-n="13" data-name="Stripe">
+    <div class="shot"><div class="none"><b>S</b>link only, no capture on file</div></div>
+    <div class="body">
+      <div class="head"><span class="num">13</span><span class="name"><a href="https://stripe.com" target="_blank" rel="noopener">Stripe Dashboard</a></span><span class="tag cat-ops">fintech ops</span></div>
+      <p class="what">The reference for tabular figures and state-only colour. Ids are mono with a hover-to-copy affordance; every status is a muted pill; the page has almost no borders.</p>
+      <p class="steal"><b>Borrow:</b> copy-on-hover for applicant and offer ids, and dropping every decorative border in the inspector.</p>
+      <div class="foot"><span class="src">stripe.com</span><button type="button" class="want" aria-pressed="false">Want this</button></div>
+    </div>
+  </article>
+</div>
+
+<section class="group"><h2>Traces and eval</h2></section>
+<div class="grid">
+  <article class="ref" data-n="14" data-name="Respan">
+    <div class="shot"><img src="../refs/respan/kpi-logs.jpg" alt="Respan KPI tiles with sparklines above a log table" loading="lazy"></div>
+    <div class="body">
+      <div class="head"><span class="num">14</span><span class="name"><a href="https://www.respan.ai" target="_blank" rel="noopener">Respan</a></span><span class="tag cat-trace">traces and eval</span></div>
+      <p class="what">LLM observability. Five KPI tiles with a coloured tick, a big mono number, a delta and a 24-bar sparkline, over a log table with sum and average rows. Its trace waterfall is what Docket's pipeline view copies.</p>
+      <p class="steal"><b>Borrow:</b> the KPI tile with sparkline for lender latency and approval rate, and the sum/average sub-header on the audit table.</p>
+      <div class="foot"><span class="src">respan.ai</span><button type="button" class="want" aria-pressed="false">Want this</button></div>
+    </div>
+  </article>
+
+  <article class="ref" data-n="15" data-name="Laminar">
+    <div class="shot"><img src="../refs/laminar/trace-console.png" alt="Laminar trace console: traces table with status bars and an inspector with a failure detector card" loading="lazy"></div>
+    <div class="body">
+      <div class="head"><span class="num">15</span><span class="name"><a href="https://www.lmnr.ai" target="_blank" rel="noopener">Laminar</a></span><span class="tag cat-trace">traces and eval</span></div>
+      <p class="what">Agent tracing. Three panes: nav, a traces table with a 3px status bar on the left of each row, and an inspector that opens with a "Failure Detector" card before the transcript. Docket's shell is modelled on it.</p>
+      <p class="steal"><b>Borrow:</b> the failure card pattern for every decline, with a category chip and one sentence, shown before the detail.</p>
+      <div class="foot"><span class="src">lmnr.ai</span><button type="button" class="want" aria-pressed="false">Want this</button></div>
+    </div>
+  </article>
+
+  <article class="ref" data-n="16" data-name="Arize Phoenix">
+    <div class="shot"><img src="../refs/arize-phoenix/experiment-compare.png" alt="Arize Phoenix experiment compare: side-by-side A and B output columns with score chips" loading="lazy"></div>
+    <div class="body">
+      <div class="head"><span class="num">16</span><span class="name"><a href="https://phoenix.arize.com" target="_blank" rel="noopener">Arize Phoenix</a></span><span class="tag cat-trace">traces and eval</span></div>
+      <p class="what">Eval tooling. Experiments compared side by side as A and B columns with a score chip and a progress bar, plus per-row stat strips (latency, tokens, cost).</p>
+      <p class="steal"><b>Borrow:</b> the A/B column layout for the dispute replay, so before and after sit side by side with the changed fields scored.</p>
+      <div class="foot"><span class="src">phoenix.arize.com</span><button type="button" class="want" aria-pressed="false">Want this</button></div>
+    </div>
+  </article>
+
+  <article class="ref" data-n="17" data-name="Axiom">
+    <div class="shot"><img src="../refs/axiom/query-results.png" alt="Axiom query results: count column filled with a proportional bar inside each cell" loading="lazy"></div>
+    <div class="body">
+      <div class="head"><span class="num">17</span><span class="name"><a href="https://axiom.co" target="_blank" rel="noopener">Axiom</a></span><span class="tag cat-trace">traces and eval</span></div>
+      <p class="what">Log analytics. Query steps as pill chips and a results table where the count column has a translucent bar filling each cell from the right in proportion to its value.</p>
+      <p class="steal"><b>Borrow:</b> in-cell bars for the eval failures and the per-lender agreement table, so the biggest number is visible without reading.</p>
+      <div class="foot"><span class="src">axiom.co</span><button type="button" class="want" aria-pressed="false">Want this</button></div>
+    </div>
+  </article>
+
+  <article class="ref" data-n="18" data-name="Dash0">
+    <div class="shot"><img src="../refs/dash0/span-heatmap.png" alt="Dash0 span heatmap with attribute chips" loading="lazy"></div>
+    <div class="body">
+      <div class="head"><span class="num">18</span><span class="name"><a href="https://www.dash0.com" target="_blank" rel="noopener">Dash0</a></span><span class="tag cat-trace">traces and eval</span></div>
+      <p class="what">Observability. A latency heatmap over time with attribute chips beneath it, so a slow lender shows up as a dark band rather than a number in a table.</p>
+      <p class="steal"><b>Borrow:</b> a lender latency heatmap on the eval tab, one row per lender across the 20 personas.</p>
+      <div class="foot"><span class="src">dash0.com</span><button type="button" class="want" aria-pressed="false">Want this</button></div>
+    </div>
+  </article>
+</div>
+
+<section class="group"><h2>Shell and queue</h2></section>
+<div class="grid">
+  <article class="ref" data-n="19" data-name="Linear">
+    <div class="shot"><div class="none"><b>L</b>link only, no capture on file</div></div>
+    <div class="body">
+      <div class="head"><span class="num">19</span><span class="name"><a href="https://linear.app" target="_blank" rel="noopener">Linear</a></span><span class="tag cat-shell">shell and queue</span></div>
+      <p class="what">Issue tracking. The Triage inbox: one item at a time, numbered keyboard actions, a command palette for everything else. Dense, dark-first, no chrome that does not earn its place.</p>
+      <p class="steal"><b>Borrow:</b> a command palette (Cmd+K) for jumping to an applicant or running eval, and a one-at-a-time "triage" mode that shows the top of the queue full-width with A and X as the only actions.</p>
+      <div class="foot"><span class="src">linear.app</span><button type="button" class="want" aria-pressed="false">Want this</button></div>
+    </div>
+  </article>
+
+  <article class="ref" data-n="20" data-name="Opik">
+    <div class="shot"><img src="../refs/opik/trace-spans.webp" alt="Opik trace view: light three-pane trace with spans list and detail" loading="lazy"></div>
+    <div class="body">
+      <div class="head"><span class="num">20</span><span class="name"><a href="https://www.comet.com/site/products/opik/" target="_blank" rel="noopener">Opik</a></span><span class="tag cat-shell">shell and queue</span></div>
+      <p class="what">LLM evaluation. A light three-pane trace view: spans on the left, the selected span's input and output in the middle, metadata on the right, with the selected row carried by a left accent only.</p>
+      <p class="steal"><b>Borrow:</b> the light-theme three-pane treatment for the Trace tab, where each lender's input and output is readable without opening the audit log.</p>
+      <div class="foot"><span class="src">comet.com/opik</span><button type="button" class="want" aria-pressed="false">Want this</button></div>
+    </div>
+  </article>
+</div>
+
+<script>
+  (function () {
+    var KEY = 'docket.ui-refs.picks';
+    var picks = {};
+    try { picks = JSON.parse(localStorage.getItem(KEY) || '{}') || {}; } catch (e) { picks = {}; }
+    var cards = Array.prototype.slice.call(document.querySelectorAll('.ref'));
+    var list = document.getElementById('picklist');
+    function save() { try { localStorage.setItem(KEY, JSON.stringify(picks)); } catch (e) {} }
+    function render() {
+      var chosen = cards.filter(function (c) { return picks[c.dataset.n]; });
+      cards.forEach(function (c) {
+        var on = !!picks[c.dataset.n];
+        c.classList.toggle('picked', on);
+        c.querySelector('.want').setAttribute('aria-pressed', on ? 'true' : 'false');
+        c.querySelector('.want').textContent = on ? 'Wanted' : 'Want this';
+      });
+      list.textContent = chosen.length ? chosen.map(function (c) { return c.dataset.n + ' ' + c.dataset.name; }).join(' · ') : 'none yet';
+    }
+    cards.forEach(function (c) {
+      c.querySelector('.want').addEventListener('click', function () {
+        var n = c.dataset.n;
+        if (picks[n]) delete picks[n]; else picks[n] = true;
+        save(); render();
+      });
+    });
+    document.getElementById('clear').addEventListener('click', function () { picks = {}; save(); render(); });
+    document.getElementById('copy').addEventListener('click', function () {
+      var btn = this;
+      var chosen = cards.filter(function (c) { return picks[c.dataset.n]; });
+      var text = chosen.length
+        ? 'Docket UI picks: ' + chosen.map(function (c) { return '#' + c.dataset.n + ' ' + c.dataset.name + ' (' + c.querySelector('.steal').textContent.replace(/^Borrow:\s*/, '') + ')'; }).join('; ')
+        : 'No picks yet.';
+      function done(ok) { btn.textContent = ok ? 'Copied' : 'Select and copy'; setTimeout(function () { btn.textContent = 'Copy pick list'; }, 1500); }
+      if (navigator.clipboard && navigator.clipboard.writeText) {
+        navigator.clipboard.writeText(text).then(function () { done(true); }, function () { fallback(); });
+      } else { fallback(); }
+      function fallback() {
+        var range = document.createRange(); range.selectNodeContents(list);
+        var sel = window.getSelection(); sel.removeAllRanges(); sel.addRange(range); done(false);
+      }
+    });
+    render();
+  })();
+</script>
