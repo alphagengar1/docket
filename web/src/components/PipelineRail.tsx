@@ -10,10 +10,12 @@ interface Props {
 }
 
 export function PipelineRail({ applicant, steps, offers, now }: Props) {
+  // Total = intake to board-ready (human step start), or to the hard stop. Waiting on the human is not pipeline time.
   const started = applicant?.createdAt ?? null
-  const lastDone = steps.reduce<number | null>((m, s) => (s.finishedAt != null && (m == null || s.finishedAt > m) ? s.finishedAt : m), null)
-  const running = steps.some((s) => s.state === 'running') || steps.some((s) => s.state === 'queued')
-  const total = started == null ? null : (running && applicant && !['approved', 'declined', 'hard_stop'].includes(applicant.status) ? now : lastDone ?? now) - started
+  const human = steps.find((s) => s.id === 'human')
+  const guard = steps.find((s) => s.id === 'guardrails')
+  const endAt = human?.startedAt ?? (guard?.state === 'failed' ? guard.finishedAt : null)
+  const total = started == null ? null : (endAt ?? now) - started
   return (
     <nav className="rail" aria-label="Pipeline">
       <div className="total mono" title="Total run time">

@@ -1,0 +1,118 @@
+/* ============================================================================
+   Docket design tokens. Re-skin the console by editing this file only.
+   Light values on :root, dark values under prefers-color-scheme and [data-theme].
+   ============================================================================ */
+
+:root {
+  /* color */
+  --bg: #f6f7f9;
+  --surface: #ffffff;
+  --hair: #e5e7eb;
+  --text: #0f172a;
+  --muted: #64748b;
+  --accent: #2563eb;
+  --accent-ink: #ffffff;
+  --approve: #16a34a;
+  --decline: #d97706;
+  --hard: #dc2626;
+  --skeleton: #eceef2;
+  --hover: rgba(15, 23, 42, 0.04);
+  --selected: rgba(37, 99, 235, 0.07);
+  --scrim: rgba(15, 23, 42, 0.35);
+  color-scheme: light;
+
+  /* type */
+  --sans: 'Geist', 'Instrument Sans', system-ui, -apple-system, sans-serif;
+  --mono: 'Geist Mono', 'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, monospace;
+  --fs-body: 13px;
+  --fs-small: 12px;
+  --fs-label: 11px;
+  --fs-tag: 10px;
+  --fs-title: 16px;
+  --fs-brand: 14px;
+  --fs-stat: 18px;
+  --fs-big: 22px;
+  --fs-hero: 28px;
+  --fs-hero-suffix: 16px;
+  --lh: 1.45;
+  --wt-regular: 400;
+  --wt-medium: 500;
+  --wt-semibold: 600;
+  --tracking-status: 0.06em;
+  --tracking-tight: -0.01em;
+
+  /* shape + space */
+  --radius: 6px;
+  --radius-lg: 8px;
+  --sp-1: 4px;
+  --sp-2: 8px;
+  --sp-3: 12px;
+  --sp-4: 16px;
+  --sp-6: 24px;
+  --edge: 2px; /* selection / semantic left edge */
+  --dot: 6px; /* status dot */
+  --rail-dot: 10px;
+
+  /* layout */
+  --queue-w: 272px;
+  --inspector-w: 344px;
+  --rail-w: 92px;
+  --drawer-h: 232px;
+  --drawer-bar: 32px;
+  --topbar-h: 44px;
+  --pane-head-h: 40px;
+  --queue-row-h: 48px;
+  --row-h: 28px;
+  --control-h: 28px;
+  --control-h-lg: 32px;
+  --input-h: 30px;
+  --rail-step-h: 54px;
+
+  /* motion */
+  --t-fast: 180ms;
+  --t-count: 400ms;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme='light']) {
+    --bg: #0b0d10;
+    --surface: #14171c;
+    --hair: #23272f;
+    --text: #e6e8eb;
+    --muted: #8b919a;
+    --accent: #5b8def;
+    --accent-ink: #0b0d10;
+    --approve: #3dbe6c;
+    --decline: #f0a030;
+    --hard: #f0564e;
+    --skeleton: #1c2027;
+    --hover: rgba(230, 232, 235, 0.05);
+    --selected: rgba(91, 141, 239, 0.12);
+    --scrim: rgba(0, 0, 0, 0.5);
+    color-scheme: dark;
+  }
+}
+:root[data-theme='dark'] {
+  --bg: #0b0d10;
+  --surface: #14171c;
+  --hair: #23272f;
+  --text: #e6e8eb;
+  --muted: #8b919a;
+  --accent: #5b8def;
+  --accent-ink: #0b0d10;
+  --approve: #3dbe6c;
+  --decline: #f0a030;
+  --hard: #f0564e;
+  --skeleton: #1c2027;
+  --hover: rgba(230, 232, 235, 0.05);
+  --selected: rgba(91, 141, 239, 0.12);
+  --scrim: rgba(0, 0, 0, 0.5);
+  color-scheme: dark;
+}
+
+@media (max-width: 1439px) {
+  :root {
+    --queue-w: 248px;
+    --inspector-w: 320px;
+  }
+}

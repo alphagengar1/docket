@@ -126,7 +126,7 @@ export function runEval(store: DeskStore): Promise<void> {
       if (t.op.kind === 'offer.upsert') t.op.row.reasons.forEach((r) => fieldsSeen.add(r.field))
       if (t.op.kind === 'audit.insert' && t.op.row.action === 'hard_stop' && t.op.row.ref) fieldsSeen.add(t.op.row.ref)
     }
-    const missing = c.expectedReasonsIncludes.filter((f) => !fieldsSeen.has(f))
+    const missing = c.expectedReasonsIncludes.filter((f) => ![...fieldsSeen].some((seen) => seen === f || seen.startsWith(f + '[') || seen.startsWith(f + '.')))
 
     if (got !== c.expected) failures.push({ personaId: c.personaId, expected: c.expected, got, why: `Outcome mismatch. ${c.note}` })
     else if (missing.length) failures.push({ personaId: c.personaId, expected: c.expected, got, why: `Expected reason fields missing: ${missing.join(', ')}.` })

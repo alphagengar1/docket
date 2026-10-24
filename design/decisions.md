@@ -7,3 +7,4 @@
 - 2026-10-24 01:40 Agent providers degrade: claude → stub when no ANTHROPIC_API_KEY; CRS → mock on any error unless CRS_STRICT=1. The audit log always records which one ran.
 - 2026-10-24 01:45 Underwriter "temperature 0" implemented as structured outputs + Zod + effort "low" (the current Messages API rejects `temperature`).
 - 2026-10-24 01:45 CREAO completion = webhook (re-fetch, never trust payload) AND a 5 s poll loop inside the workflow, so it works without a public URL.
+- 2026-10-24 02:05 Added three differentiators (reason verification, approve/counteroffer/deny classification + FCRA statement, dispute-and-replay). Lead with reason verification. Banned claims list in design/differentiators.md.

@@ -112,17 +112,17 @@ function EvalPanel({ last, cases, running }: { last: EvalRun | undefined; cases:
       </div>
       <div className="stat">
         <div className={`v mono ${!pending && last.agreement < 0.9 ? 'tone-decline' : ''}`}>{pending ? sk(56) : pct(last.agreement)}</div>
-        <div className="k">Agreement with answer key</div>
+        <div className="k">Agreement</div>
       </div>
       <div className="stat">
         <div className={`v ${pending ? '' : last.fraudZeroOffers ? 'tone-approve' : 'tone-hard'}`}>
           {pending ? sk(40) : <span className="check">{last.fraudZeroOffers ? 'Yes' : 'No'}</span>}
         </div>
-        <div className="k">Fraud personas got zero offers</div>
+        <div className="k">Fraud → zero offers</div>
       </div>
       <div className="stat">
         <div className="v mono">{pending ? sk(40) : last.avgReasonsPerDenial.toFixed(2)}</div>
-        <div className="k">Avg reasons per denial (≥ 2)</div>
+        <div className="k">Reasons / denial</div>
       </div>
       <div className="stat" style={{ padding: 0, border: 'none' }}>
         <div className="k" style={{ padding: '0 0 4px' }}>

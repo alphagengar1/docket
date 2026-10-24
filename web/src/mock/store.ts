@@ -113,7 +113,9 @@ export class DeskStore {
 
   /** Schedule a batch of timed ops relative to now. Returns a cancel function. */
   schedule(ops: TimedOp[], speed = 1) {
-    const handles = ops.map((t) => {
+    // Ops due now land synchronously so callers can select the new row immediately.
+    ops.filter((t) => t.atMs <= 0).forEach((t) => this.apply(t.op))
+    const handles = ops.filter((t) => t.atMs > 0).map((t) => {
       const h = setTimeout(() => {
         this.timers.delete(h)
         this.apply(t.op)
