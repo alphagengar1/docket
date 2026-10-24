@@ -444,6 +444,12 @@ export const completeRun = internalMutation({
     if (outcome === "completed" && text) {
       try {
         parsed = extractJson(text);
+        // CREAO builder agents sometimes omit empty arrays; default them so a clean approval is not rejected by the validator.
+        if (parsed && typeof parsed === "object") {
+          const o = parsed as Record<string, unknown>;
+          if (o.conditions == null) o.conditions = [];
+          if (o.reasons == null) o.reasons = [];
+        }
       } catch (e: any) {
         failure = `agent reply had no JSON: ${e.message}`;
       }

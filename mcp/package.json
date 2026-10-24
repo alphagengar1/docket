@@ -1,0 +1,10 @@
+{
+  "name": "docket-mcp",
+  "version": "0.1.0",
+  "description": "MCP server for the Docket underwriting API (stdio).",
+  "type": "module",
+  "bin": { "docket-mcp": "dist/index.js" },
+  "scripts": { "build": "tsc -p .", "start": "node dist/index.js" },
+  "dependencies": { "@modelcontextprotocol/sdk": "^1.0.0", "zod": "^3.25.0" },
+  "devDependencies": { "@types/node": "^22.0.0", "typescript": "^5.6.0" }
+}

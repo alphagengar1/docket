@@ -17,6 +17,8 @@ Three additions:
 - Approve, counteroffer or deny is classified in code.
 - Dispute and replay: dispute a tradeline and see which offers and notices change.
 
+Docket is also an integration layer. A finance company can call it from its own agents over a bearer-authenticated HTTP API or an MCP server, plug in its own lender policies as markdown files, and get one standard DecisionRecord per applicant with a verification verdict on every denial reason. A benchmark endpoint scores Docket against the company's own answer key, so it can see where its internal tooling disagrees. A human still approves every offer.
+
 Screens: an operator console with a decision summary, ranked decision queue, decision sheet, editor-style side rails and a desk assistant that summarizes the audit trail; a judge board at `#/board`; a borrower phone at `#/borrower`.
 
 Simulated: the lenders are ours, no money moves, and every applicant is one of 20 CRS test personas.

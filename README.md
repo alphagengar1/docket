@@ -69,7 +69,7 @@ Latest recorded runs: 20/20 agreement with the key and 60/60 per-lender agreemen
    4. compliance   -> agents.ts   claude-sonnet-5-5, notice from verified reasons
    5. ready        -> awaiting_human; Approve writes decisions
  convex/eval.ts    20 personas -> evalRuns (nightly via crons.ts)
- convex/http.ts    GET /health, POST /creao/webhook
+ convex/http.ts    GET /health, POST /creao/webhook, /api/v1/* (convex/api.ts)
 ```
 
 ## How to run
@@ -84,6 +84,10 @@ cd web && npm install && npm run dev           # set VITE_CONVEX_URL from web/.e
 ```
 
 Open `#/borrower` on a phone and `#/board` on a second screen. Set env vars with `npx convex env set NAME value`. Names only: `ANTHROPIC_API_KEY` (unset runs a deterministic stub, labeled in the audit log), `CRS_PROVIDER`, `CRS_USERNAME`, `CRS_PASSWORD`, `CRS_STRICT`, `LENDER_TIMEOUT_MS`, `GIT_SHA`, `AGENT_PROVIDER_UNDERWRITER`, `AGENT_PROVIDER_COMPLIANCE`, and the optional `CREAO_*` set. See `convex/README.md`.
+
+## Integrate it
+
+Docket is a drop-in underwriting layer: a bearer-authenticated HTTP API (`/api/v1/*`) that returns one standard DecisionRecord per applicant ([schema](docs/schema/decision-record.schema.json)), an MCP server in [`mcp/`](mcp/README.md) for your own agents, and a benchmark endpoint that scores Docket against your answer key. A human still approves every offer. Start with [docs/integration.md](docs/integration.md).
 
 ## Sponsors
 

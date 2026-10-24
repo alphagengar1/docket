@@ -5,6 +5,7 @@ import { action, internalAction, internalMutation, internalQuery, query } from "
 import { internal } from "./_generated/api";
 import type { Doc, Id } from "./_generated/dataModel";
 import { findPersona } from "./crs.mock";
+import { expectedOutcome, perLenderOutcome } from "./schema";
 import { aggregate, scoreCase, type CaseResult, type Expected, type ExpectedPerLender } from "./evalScore";
 import map from "../personas/map.json";
 
@@ -151,9 +152,16 @@ export type EvalSummary = {
   latencyP50Ms: Record<string, number | null>;
 };
 
-async function runEvalImpl(ctx: any, keep: boolean): Promise<EvalSummary> {
-  await ctx.runMutation(internal.eval.seedCases, {});
-  const evalCases: Array<{ personaId: string; expected: Expected; expectedReasonsIncludes: string[]; expectedPerLender?: ExpectedPerLender }> = await ctx.runQuery(internal.eval.listCases, {});
+type EvalCaseInput = { personaId: string; expected: Expected; expectedReasonsIncludes: string[]; expectedPerLender?: ExpectedPerLender };
+
+async function runEvalImpl(ctx: any, keep: boolean, custom?: EvalCaseInput[]): Promise<EvalSummary> {
+  let evalCases: EvalCaseInput[];
+  if (custom) {
+    evalCases = custom; // caller-supplied answer key (HTTP API); the stored key is left untouched
+  } else {
+    await ctx.runMutation(internal.eval.seedCases, {});
+    evalCases = await ctx.runQuery(internal.eval.listCases, {});
+  }
   const runId: Id<"evalRuns"> = await ctx.runMutation(internal.eval.beginRun, { cases: evalCases.length });
 
   // Start every case in parallel (each is its own durable workflow).
@@ -215,6 +223,24 @@ export const runEval = action({
 export const runEvalNow = action({
   args: { keep: v.optional(v.boolean()) },
   handler: async (ctx, { keep }): Promise<EvalSummary> => runEvalImpl(ctx, keep ?? false),
+});
+
+/** Run the harness against a caller-supplied answer key (POST /api/v1/eval). Does not touch evalCases. */
+export const runEvalWithCases = internalAction({
+  args: {
+    cases: v.array(
+      v.object({
+        personaId: v.string(),
+        expected: expectedOutcome,
+        expectedReasonsIncludes: v.optional(v.array(v.string())),
+        expectedPerLender: v.optional(
+          v.object({ cu: v.optional(perLenderOutcome), fintech: v.optional(perLenderOutcome), prime: v.optional(perLenderOutcome), regional: v.optional(perLenderOutcome), subprime: v.optional(perLenderOutcome) }),
+        ),
+      }),
+    ),
+  },
+  handler: async (ctx, { cases }): Promise<EvalSummary> =>
+    runEvalImpl(ctx, false, cases.map((c) => ({ ...c, expectedReasonsIncludes: c.expectedReasonsIncludes ?? [] }))),
 });
 
 /** Cron target. */

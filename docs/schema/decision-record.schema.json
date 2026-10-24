@@ -1,0 +1,153 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://docket.example/schema/decision-record-1.0.json",
+  "title": "Docket DecisionRecord",
+  "description": "One record per applicant: the bureau summary, every lender's decision with verified reasons, the adverse-action notice, the human decision and timings. Returned by GET /api/v1/decisions/{applicantId}. Never contains raw bureau payloads, tradelines, fraud signals or contact data.",
+  "type": "object",
+  "required": ["schemaVersion", "applicant", "bundle", "lenders", "timings", "links"],
+  "additionalProperties": false,
+  "properties": {
+    "schemaVersion": { "const": "1.0" },
+    "applicant": {
+      "type": "object",
+      "required": ["id", "personaId", "name", "purpose", "amountRequested", "statedIncome", "status", "consentAt", "createdAt"],
+      "additionalProperties": false,
+      "properties": {
+        "id": { "type": "string" },
+        "personaId": { "type": "string" },
+        "name": { "type": "string" },
+        "purpose": { "type": "string" },
+        "amountRequested": { "type": "number" },
+        "statedIncome": { "type": "number" },
+        "status": { "enum": ["intake", "pulling", "guardrails", "underwriting", "compliance", "awaiting_human", "approved", "declined", "hard_stop"] },
+        "consentAt": { "type": "string", "format": "date-time" },
+        "createdAt": { "type": "string", "format": "date-time" }
+      }
+    },
+    "bundle": {
+      "description": "Null until the bureau pull finishes.",
+      "oneOf": [
+        { "type": "null" },
+        {
+          "type": "object",
+          "required": ["credit", "identity", "fraud", "flags"],
+          "additionalProperties": false,
+          "properties": {
+            "credit": {
+              "type": "object",
+              "required": ["score", "vantage4", "utilization", "inquiries6mo", "tradelineCount"],
+              "additionalProperties": false,
+              "properties": {
+                "score": { "type": ["number", "null"], "description": "TransUnion score." },
+                "vantage4": { "type": ["number", "null"] },
+                "utilization": { "type": ["number", "null"], "description": "0..1" },
+                "inquiries6mo": { "type": "number" },
+                "tradelineCount": { "type": "integer", "minimum": 0 }
+              }
+            },
+            "identity": {
+              "type": "object",
+              "required": ["verified", "flags"],
+              "additionalProperties": false,
+              "properties": { "verified": { "type": "boolean" }, "flags": { "type": "array", "items": { "type": "string" } } }
+            },
+            "fraud": { "type": "object", "required": ["score"], "additionalProperties": false, "properties": { "score": { "type": ["number", "null"] } } },
+            "flags": {
+              "type": "object",
+              "required": ["deceased", "frozen", "bankruptcy", "eviction", "lienOrJudgment"],
+              "additionalProperties": false,
+              "properties": {
+                "deceased": { "type": "boolean" },
+                "frozen": { "type": "boolean" },
+                "bankruptcy": { "type": "boolean" },
+                "eviction": { "type": "boolean" },
+                "lienOrJudgment": { "type": "boolean" }
+              }
+            }
+          }
+        }
+      ]
+    },
+    "hardStop": {
+      "type": "object",
+      "required": ["field", "label", "reason"],
+      "additionalProperties": false,
+      "properties": { "field": { "type": "string" }, "label": { "type": "string" }, "reason": { "type": "string" } }
+    },
+    "lenders": {
+      "description": "One entry per lender that ran. Empty on a hard stop.",
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["lender", "name", "policy", "decision", "classification", "apr", "termMonths", "amount", "monthlyPayment", "conditions", "reasons", "latencyMs", "provider"],
+        "additionalProperties": false,
+        "properties": {
+          "lender": { "enum": ["cu", "fintech", "prime", "regional", "subprime"] },
+          "name": { "type": "string" },
+          "policy": { "type": "string", "description": "Path of the markdown policy that was the underwriter's prompt." },
+          "decision": { "enum": ["approve", "counteroffer", "deny", "failed", "pending"] },
+          "classification": { "enum": ["approve", "counteroffer", "deny", null] },
+          "apr": { "type": ["number", "null"] },
+          "termMonths": { "type": ["number", "null"] },
+          "amount": { "type": ["number", "null"] },
+          "monthlyPayment": { "type": ["number", "null"] },
+          "conditions": { "type": "array", "items": { "type": "string" } },
+          "reasons": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "required": ["field", "label", "text", "verification"],
+              "additionalProperties": false,
+              "properties": {
+                "field": { "type": "string" },
+                "label": { "type": "string" },
+                "text": { "type": "string" },
+                "verification": {
+                  "enum": ["verified", "unsupported", "untested", "inconclusive"],
+                  "description": "verified: changing the field flipped the decision. unsupported: it did not (kept visible, withheld from the notice). untested: no counterfactual mapping. inconclusive: tested but the re-run failed."
+                }
+              }
+            }
+          },
+          "latencyMs": { "type": ["number", "null"] },
+          "provider": { "enum": ["claude", "creao"] }
+        }
+      }
+    },
+    "notice": {
+      "type": "object",
+      "required": ["required", "requiredBecause", "text"],
+      "additionalProperties": false,
+      "properties": {
+        "required": { "type": "boolean" },
+        "requiredBecause": { "type": "string" },
+        "text": { "type": "string" },
+        "approvedAt": { "type": "string", "format": "date-time" }
+      }
+    },
+    "human": {
+      "type": "object",
+      "required": ["outcome", "chosenLender", "at", "note", "source"],
+      "additionalProperties": false,
+      "properties": {
+        "outcome": { "enum": ["approved", "declined", "hard_stop"] },
+        "chosenLender": { "type": ["string", "null"] },
+        "at": { "type": "string", "format": "date-time" },
+        "note": { "type": "string" },
+        "source": { "enum": ["console", "api"] }
+      }
+    },
+    "timings": {
+      "type": "object",
+      "required": ["pullMs", "guardrailsMs", "underwriteMs", "verifyMs", "complianceMs", "totalMs"],
+      "additionalProperties": false,
+      "patternProperties": { "^(pull|guardrails|underwrite|verify|compliance|total)Ms$": { "type": ["number", "null"], "minimum": 0 } }
+    },
+    "links": {
+      "type": "object",
+      "required": ["console", "board"],
+      "additionalProperties": false,
+      "properties": { "console": { "type": "string" }, "board": { "type": "string" } }
+    }
+  }
+}
