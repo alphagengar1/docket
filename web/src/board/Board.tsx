@@ -7,6 +7,7 @@ import { LENDERS, type Applicant, type AuditEvent, type Bundle, type Decision, t
 import { clock, monthlyPayment, usd } from '../lib/format'
 import { eventsFor, offersFor, stepTimings } from '../lib/select'
 import { fieldLabel } from '../../../convex/labels'
+import { Mark } from '../components/Logo'
 import './board.css'
 
 type Stage = 'done' | 'now' | 'next' | 'cancelled'
@@ -94,7 +95,7 @@ function Strip({ stage }: { stage: Stage[] }) {
 function Wordmark({ big }: { big?: boolean }) {
   return (
     <div className={`bd-word ${big ? 'big' : ''}`}>
-      <i />
+      <Mark size={big ? 64 : 24} className="mk" />
       <span className="disp">{PRODUCT_NAME}</span>
     </div>
   )

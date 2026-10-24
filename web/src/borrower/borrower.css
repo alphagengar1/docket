@@ -3,7 +3,7 @@
 .bw-in { max-width: 480px; min-height: 100%; margin: 0 auto; padding: 24px 20px; display: flex; flex-direction: column; gap: 16px; }
 .bw-top { display: flex; justify-content: space-between; align-items: center; }
 .bw-word { display: flex; align-items: center; gap: 8px; }
-.bw-word i { width: 14px; height: 14px; background: var(--signal); display: block; }
+.bw-word .mk { color: var(--signal); display: block; flex: none; }
 .bw-word .disp { font-size: 15px; }
 .bw .lbl.ink { color: var(--ink); }
 .bw .center { text-align: center; }

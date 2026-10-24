@@ -5,6 +5,7 @@ import { useEffect, useMemo, useRef, useState, type ReactNode } from 'react'
 import { useMutation, useQuery } from 'convex/react'
 import { anyApi } from 'convex/server'
 import { PRODUCT_NAME } from '../config'
+import { Mark } from '../components/Logo'
 import { LENDERS } from '../types'
 import './borrower.css'
 
@@ -73,7 +74,7 @@ function Shell({ step, no, right, children, onReset }: { step?: number; no?: str
       <div className="bw-in">
         <div className="bw-top">
           <div className="bw-word">
-            <i />
+            <Mark size={16} className="mk" />
             <span className="disp">{PRODUCT_NAME}</span>
           </div>
           <span className="lbl">{r}</span>

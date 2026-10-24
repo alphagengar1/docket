@@ -4,9 +4,9 @@
 .bd .lbl { font-size: 22px; letter-spacing: 0.06em; }
 .bd-top { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: 16px; }
 .bd-word { display: flex; align-items: center; gap: 14px; }
-.bd-word i { width: 24px; height: 24px; background: var(--signal); display: block; }
+.bd-word .mk { color: var(--signal); display: block; flex: none; }
 .bd-word .disp { font-size: 30px; }
-.bd-word.big i { width: 64px; height: 64px; }
+.bd-word.big .mk { width: 64px; height: 64px; }
 .bd-word.big .disp { font-size: 128px; line-height: 1; }
 .bd-word.big { gap: 28px; }
 

@@ -1,4 +1,5 @@
 import { PRODUCT_NAME } from '../config'
+import { Mark } from './Logo'
 import type { Connection } from '../hooks/useDesk'
 
 interface Props {
@@ -20,7 +21,10 @@ interface Props {
 export function TopBar({ connection, inFlight, replaying, view, onView, onDeck, onReplay, onStopReplay, theme, onTheme, sandbox, onReset }: Props) {
   return (
     <header className="topbar">
-      <span className="brand">{PRODUCT_NAME}</span>
+      <span className="brand">
+        <Mark size={18} className="brand-mark" />
+        {PRODUCT_NAME}
+      </span>
       <span className="label">lending desk</span>
       <span className="sep" />
       <div className="seg" role="group" aria-label="View">

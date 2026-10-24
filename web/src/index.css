@@ -1838,3 +1838,22 @@ table.grid.tl tr:last-child td {
   margin-left: auto;
   font-size: var(--fs-label);
 }
+
+/* Brand mark in the console top bar; verification icons sit on the text baseline */
+.topbar .brand {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+.topbar .brand-mark {
+  color: var(--signal, #ff5a1f);
+  flex: none;
+}
+.check-mark {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+.check-mark svg {
+  flex: none;
+}

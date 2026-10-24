@@ -1,4 +1,5 @@
 import type { Offer, Reason, ReasonCheck } from '../types'
+import { CheckIcon, WarnIcon } from './Logo'
 import { checkFor, type CheckState } from '../lib/select'
 
 interface Props {
@@ -30,7 +31,7 @@ export function ReasonList({ offer, checks, numbered, only }: Props) {
               {c.state === 'pending' && <span className="skel" style={{ width: 52, height: 10 }} aria-label="testing" />}
               {mark && (
                 <span className={`check-mark ${mark.cls}`} title={c.check ? `${r.field}: ${String(c.check.original)} → ${String(c.check.counterfactual)} (${c.check.latencyMs} ms)` : undefined}>
-                  {c.state === 'verified' ? '✓ ' : '⚠ '}
+                  {c.state === 'verified' ? <CheckIcon /> : <WarnIcon />}{' '}
                   {mark.text}
                 </span>
               )}

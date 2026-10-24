@@ -30,3 +30,22 @@ Same project as above. The judging format at Cal Hacks is a 3-minute pitch plus 
 ## 4. Claude Web (research, no code): slides
 
 Same project. Judges also see a Devpost page and sponsors may watch a video asynchronously. Give me a 6-slide outline for a 3-minute pitch (title, one line of content per slide, what visual is on it) built so slide 2 is "the moment" (the deceased-file catch), plus a 2-minute video storyboard with shot list, and the Devpost description structure (sections, word counts) that past Cal Hacks winners used. Then list the five things on a Devpost page that make a sponsor judge decide a project actually used their tool rather than mentioning it.
+
+## Session split (Sat 10:20)
+
+Three Claude Code sessions on this repo, each with its own lane. Paste the matching prompt as the first message of a new session opened in the repo root. Every session: never add Claude attribution to commits; show the commit message before pushing; `git pull --rebase` before every push; commit only files in your lane; one line in design/STATUS.md per finished step, prefixed with your lane name; anything you need from another lane goes in design/open.md, not into their files. Node is not on PATH in non-interactive shells: use /Users/swrj/.nvm/versions/node/v22.18.0/bin/{node,npm,npx} by absolute path. A Convex dev watcher and a Vite dev server (localhost:5173) are usually already running; check before starting another.
+
+### Lane A: desk (this session). Backend, integration, deploy, submission
+Owns: convex/, policies/, personas/, design/ (except deck/), docs/, README.md, vercel.json, root configs. Deploys to Vercel and Convex, runs the eval, owns Devpost text and the track checklist.
+
+### Lane B: console. Paste into a new session
+```
+You own the operator console only: web/src/ except web/src/board/ and web/src/borrower/, plus web/src/index.css and web/src/tokens.css. Read CLAUDE.md, design/product.md, design/theme.md, design/ui-donors.md and the "Session split" section of design/prompts-for-other-sessions.md first. Do not touch convex/, board/, borrower/ or design/deck/; if you need a backend field or a token change that affects the board or phone, write it in design/open.md. Dev server: http://localhost:5173 (start with /Users/swrj/.nvm/versions/node/v22.18.0/bin/npm run dev from web/ only if nothing is listening on 5173). Typecheck with ./node_modules/.bin/tsc -b from web/. Current asks: the trace and waterfall are readable but keep tightening legibility; the ranked decision queue (web/src/components/Queue.tsx, lib/rank.ts) should feel like the primary way to work; the brand mark lives in web/src/components/Logo.tsx, use it instead of any square or emoji placeholder; no generic icons anywhere. Commit only your files, show me the commit message, pull --rebase, push.
+```
+
+### Lane C: judge screens. Paste into a new session
+```
+You own the judge-facing surfaces only: web/src/board/, web/src/borrower/, design/deck/ and design/canvas/. Read CLAUDE.md, design/theme.md, design/demo-day-kit.md, design/card-codes.json and the "Session split" section of design/prompts-for-other-sessions.md first. The theme is Instrument Tag (tokens under .itag in web/src/tokens.css; do not edit tokens.css or index.css, ask in design/open.md). The brand mark is web/src/components/Logo.tsx; the phone and board already use it. Do not touch convex/ or the console components. Dev server: http://localhost:5173/#/board and /#/borrower. Typecheck with ./node_modules/.bin/tsc -b from web/. Current asks: the board must be readable from 2 m (nothing under 22px), the phone flow Code → Offers → Notice must match the canvas artboards, the printed deck PDFs must match the on-screen brand. Commit only your files, show me the commit message, pull --rebase, push.
+```
+
+### Lane D: scrabblebot. Separate project at /Users/swrj/Downloads/Code/Projects/scrabblebot-climb, already has its own session.
