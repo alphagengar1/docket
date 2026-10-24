@@ -177,7 +177,7 @@ function Overview({ applicant, bundle }: { applicant: Applicant; bundle: Bundle 
       <span className="v">
         <Num value={applicant.statedIncome} digits={0} prefix="$" />
       </span>
-      <span className="k">FICO 9</span>
+      <span className="k">Score (TU)</span>
       <span className="v">{bundle ? num(c!.fico9) : sk}</span>
       <span className="k">Vantage 4</span>
       <span className="v">{bundle ? num(c!.vantage4) : sk}</span>

@@ -93,6 +93,8 @@ export default function App() {
   return (
     <div className="app">
       <TopBar
+        sandbox={desk.sandbox}
+        onReset={desk.resetBoard ? () => { if (window.confirm('Reset the board? This deletes every applicant.')) { setSelectedId(null); setSelectedOfferId(null); void desk.resetBoard?.() } } : undefined}
         connection={desk.connection}
         inFlight={inFlight}
         replaying={desk.replaying}

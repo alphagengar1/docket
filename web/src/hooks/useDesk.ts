@@ -25,6 +25,10 @@ export interface Desk extends DeskState {
   /** Applicant disputes a tradeline: re-pull + re-run as a linked replay applicant. Returns the replay's id. */
   disputeTradeline: (applicantId: string, tradelineIndex: number) => Promise<string>
   runEval: () => Promise<void>
+  /** Delete every applicant (operator Reset). Undefined when the backend has no such verb (mock). */
+  resetBoard?: () => Promise<void>
+  /** Backend config chrome: SANDBOX tag. Undefined for mock. */
+  sandbox?: boolean
   startReplay: () => void
   stopReplay: () => void
 }

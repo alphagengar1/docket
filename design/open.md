@@ -25,3 +25,5 @@
 - Backend gap: `desk:auditEvents` with limit 1000 times out (1s query limit) and a Convex query error throws into React render (blank page). web asks for limit 300. Consider an index/limit cap or a per-applicant query for the board.
 - Global queries are capped (applicants 200, offers 600, audit 300): a long-lived board loses old rows. Not a problem for the demo with Reset.
 - Mapping done in web only: evalRuns.reasonsVerifiedPct -> reasonsVerified; reasonChecks (several rows per field, method single|leave_one_out|all_fixed) collapsed to one per (offer, field) with flipped := offers.reasons[].verified.
+- Phone route notes (wire-agent): hard-stop notice text from approveNotice lists raw rule fields ("flags.deceased: ...", "fraud.score: ...") as the reasons; fine for the demo, but plain-language labels would read better on the phone. Notice also does not name the freeze/free-report right explicitly beyond fcraParagraph; check the wording before judging.
+- Reset button wired to desk:resetBoard (confirm dialog); not click-tested to avoid wiping the shared local board.

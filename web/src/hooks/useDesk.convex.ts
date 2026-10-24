@@ -88,6 +88,8 @@ export function useConvexDesk(): Desk {
   const declineM = useMutation(api.desk.declineApplicant)
   const disputeM = useMutation(api.desk.disputeTradeline)
   const evalA = useAction(api.eval.runEvalNow)
+  const resetM = useMutation(api.desk.resetBoard)
+  const configQ = useQuery(api.desk.config, skip ?? {}) as { sandbox?: boolean } | undefined
 
   const createApplicant = useCallback(
     async (input: IntakeInput) => {
@@ -121,6 +123,11 @@ export function useConvexDesk(): Desk {
     if (replaying) return mock.runEval(mock.replayStore)
     await evalA({})
   }, [replaying, evalA])
+
+  const resetBoard = useCallback(async () => {
+    if (replaying) return
+    await resetM({})
+  }, [replaying, resetM])
 
   const personas = useMemo<DeskPersona[]>(() => {
     if (!deckQ) return mock.DECK
@@ -160,9 +167,11 @@ export function useConvexDesk(): Desk {
       declineApplicant,
       disputeTradeline,
       runEval,
+      resetBoard: replaying ? undefined : resetBoard,
+      sandbox: configQ?.sandbox ?? true,
       startReplay: () => setReplaying(true),
       stopReplay: () => setReplaying(false),
     }),
-    [replaying, replayState, live, personas, createApplicant, approveOffer, declineApplicant, disputeTradeline, runEval],
+    [replaying, replayState, live, personas, createApplicant, approveOffer, declineApplicant, disputeTradeline, runEval, resetBoard, configQ],
   )
 }

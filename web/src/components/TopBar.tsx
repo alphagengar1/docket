@@ -12,10 +12,12 @@ interface Props {
   onStopReplay: () => void
   theme: 'dark' | 'light'
   onTheme: () => void
+  sandbox?: boolean
+  onReset?: () => void
 }
 
 /** Laminar top bar: title, segmented control, outlined 28px controls, metric chips. */
-export function TopBar({ connection, inFlight, replaying, view, onView, onDeck, onReplay, onStopReplay, theme, onTheme }: Props) {
+export function TopBar({ connection, inFlight, replaying, view, onView, onDeck, onReplay, onStopReplay, theme, onTheme, sandbox, onReset }: Props) {
   return (
     <header className="topbar">
       <span className="brand">{PRODUCT_NAME}</span>
@@ -32,7 +34,17 @@ export function TopBar({ connection, inFlight, replaying, view, onView, onDeck, 
       <span className="sep" />
       <span className={`pill ${inFlight > 0 ? 'live' : ''}`}>{inFlight > 0 ? `Running ${inFlight}` : 'Idle'}</span>
       <span className="chip">{connection}</span>
+      {sandbox && (
+        <span className="chip" title="Sandbox data only: CRS test personas" style={{ color: 'var(--warn, #ff8a3d)' }}>
+          SANDBOX
+        </span>
+      )}
       <span className="spacer" />
+      {onReset && (
+        <button type="button" className="ghost" onClick={onReset} title="Delete every applicant on the board">
+          Reset
+        </button>
+      )}
       <button type="button" onClick={onDeck}>
         Persona deck
       </button>

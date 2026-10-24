@@ -3,19 +3,19 @@ import { createRoot } from 'react-dom/client'
 import { ConvexProvider, ConvexReactClient } from 'convex/react'
 import './index.css'
 import App from './App.tsx'
+import Borrower from './borrower/Borrower.tsx'
 import { DATA_SOURCE } from './hooks/useDesk'
 
-// One client for the page. If the backend is unreachable the hook falls back to loading/empty state; ?replay=1 stays local.
-const convex = DATA_SOURCE !== 'convex' ? null : new ConvexReactClient((import.meta.env.VITE_CONVEX_URL as string | undefined) ?? 'http://127.0.0.1:3210')
+// Phone route: /borrower or #/borrower. Always live (needs Convex).
+const isBorrower = window.location.hash.includes('borrower') || window.location.pathname.startsWith('/borrower')
+// One client for the page. ?replay=1 on the desk stays local if the backend is unreachable.
+const convex =
+  DATA_SOURCE !== 'convex' && !isBorrower
+    ? null
+    : new ConvexReactClient((import.meta.env.VITE_CONVEX_URL as string | undefined) ?? 'http://127.0.0.1:3210')
+
+const page = isBorrower ? <Borrower /> : <App />
 
 createRoot(document.getElementById('root')!).render(
-  <StrictMode>
-    {convex ? (
-      <ConvexProvider client={convex}>
-        <App />
-      </ConvexProvider>
-    ) : (
-      <App />
-    )}
-  </StrictMode>,
+  <StrictMode>{convex ? <ConvexProvider client={convex}>{page}</ConvexProvider> : page}</StrictMode>,
 )
