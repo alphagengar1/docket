@@ -77,8 +77,8 @@ function stages(a: Applicant | undefined, desk: Desk, notice?: Notice, decision?
   const st = stepTimings(a, events)
   const get = (id: string) => st.find((s) => s.id === id)!
   if (!a) return ['next', 'next', 'next', 'next']
-  const hard = a.status === 'hard_stop'
-  const finished = a.status === 'approved' || a.status === 'declined'
+  const hard = a.status === 'hard_stop' || decision?.outcome === 'hard_stop' || events.some((e) => e.action === 'rules.hard_stop' || e.action === 'hard_stop')
+  const finished = !hard && (a.status === 'approved' || a.status === 'declined')
   const bureauDone = ['done', 'failed'].includes(get('guardrails').state) || hard || finished || a.status === 'awaiting_human'
   const bureau: Stage = bureauDone ? 'done' : 'now'
   if (hard) return ['done', 'cancelled', notice ? 'done' : 'next', decision ? 'done' : 'now']
