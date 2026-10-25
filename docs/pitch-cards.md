@@ -42,3 +42,7 @@ Backup lines: Is the data real? CRS sandbox test identities, no real consumers. 
 - [check] Whether CREAO or direct Claude is the live provider (AGENT_PROVIDER_*)
 - [check] Cloud replay recordings were made with three lenders; re-run eval:recordAll
 - Names on the cards: [name], [ask], [reason] come from each persona card
+
+
+**Q: What happens when a hosted agent fails or stalls?**
+Schema-gated provider failover. Every reply is validated against the same schema regardless of provider. If a CREAO run comes back as prose, fails validation, or misses the 90-second window, that lender or the notice is re-run on Claude, the failed row is dropped, and the audit trail says so. The judge sees the same record either way.
