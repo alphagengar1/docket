@@ -81,7 +81,7 @@ takeaway(s, L, 6.3, CW, [("Every outcome right, no invalid answers, and the agen
 # ---------------------------------------------------------------- 3 Speed
 s = new_slide(3, notes=(
     "SAY: speed is the biggest reason. Days become about a minute, a fraud file stops in seconds, and the officer reviews instead of assembling.\n"
-    "IF ASKED: 62 s is one live application on the cloud desk after the CREAO fix (Oct 24 20:58): pull 1.5 s, hard stops 1.9 s, five lenders 27.7 s, reason tests 1.8 s, notice 25.8 s. "
+    "IF ASKED: 62 s is one live application on the cloud desk after the CREAO fix (Oct 24 20:58): pull 1.5 s, hard stops 1.9 s, five lenders 27.7 s, reason tests 1.8 s, notice 25.8 s. The pull replayed saved CRS sandbox responses; a live pull takes about 3 s. "
     "Hard stops: median of 3 cloud runs, about 5 s. Most of the minute is the agents on CREAO hosting; called directly, a Claude lender answers in 2.7 s. "
     "Under load, 20 applications at once finished in about 2.5 minutes. Human figure: Bankrate, personal loan approval timelines."))
 frame(s, "Why agents over people: the borrower waits about a minute instead of 1 to 7 business days, and the officer reviews instead of assembles", tracker=False)

@@ -39,7 +39,7 @@ def stacked(slide, x, y, w, items, gap=0.62, head=13, sub=10):
 IF_ASKED = {
     2: "Regulation B, 12 CFR 1002.9(b)(2): 'internal standards or policies' is not a sufficient reason. FCRA section 615(a) requires naming the consumer reporting agency, the free report and the right to dispute.",
     3: "Code: convex/desk.ts (runDesk workflow), rules.ts, verify.ts, classify.ts, pii.ts. The next six slides take one layer each.",
-    4: "convex/crs.ts (live sandbox) and convex/pii.ts (allowlist projection, tested). 20 personas captured in convex/fixtures/crs. The sandbox's TransUnion product returns VantageScore 4; the UI says 'TransUnion score'. Fields: credit.fico9, utilization, inquiries6mo, vantage4, flags.frozen, identity.verified, flags.deceased, fraud.score, flags.bankruptcy, flags.eviction, flags.lienOrJudgment.",
+    4: "convex/crs.ts and convex/pii.ts (allowlist projection, tested). The demo replays real CRS sandbox responses, captured live for all 20 personas on Oct 24 (convex/fixtures/crs). CRS_PROVIDER=crs switches to live soft pulls, about 3 s per persona, and the borrower's score doesn't move. The sandbox's TransUnion product returns VantageScore 4; the UI says 'TransUnion score'. Fields: credit.fico9, utilization, inquiries6mo, vantage4, flags.frozen, identity.verified, flags.deceased, fraud.score, flags.bankruptcy, flags.eviction, flags.lienOrJudgment.",
     5: "convex/rules.ts (8 unit tests) and desk:attemptOverride. Persona P14 (deceased indicator) is the demo card.",
     6: "Policies are the literal prompt each agent receives: policies/{prime,regional,cu,fintech,subprime}.md. P18 outcome from personas/map.json. On CREAO, an unusable reply is re-run on Claude.",
     7: "convex/verify.ts and the reasonChecks table. Single-field flip first; leave-one-out for jointly sufficient reasons, gated by an all-fixed sanity run. Verification runs before the notice is written.",
@@ -80,7 +80,7 @@ s = slide(3)
 frame(s, "Docket is a six-layer workflow: code decides what agents may touch, agents decide inside policies, and a person only needs a quick finalization.", 0, 3)
 WHO = {"Code": (None, INK), "Agent": (GO, PAPER), "Human": (SIGNAL, INK)}
 rows = [["", "Layer", "What it guarantees", "Who decides"],
-        [[("1", DETAIL_M)], [("Credit pull", B)], point("Every lender sees the same file, with no identity in it", "One soft pull. No name, address, ZIP or SSN ever reaches a model."), "Code"],
+        [[("1", DETAIL_M)], [("Credit pull", B)], point("Every lender sees the same file, with no identity in it", "Real CRS sandbox data, replayed. No name, address, ZIP or SSN ever reaches a model."), "Code"],
         [[("2", DETAIL_M)], [("Hard stops", B)], point("Risky files stop before any AI sees them", "Deceased, unscorable, identity fail or fraud ≥ 80"), "Code"],
         [[("3", DETAIL_M)], [("Underwriters ×5", B)], point("Five lenders decide in parallel", "Five written policies. Prices come from policy instead of agents."), "Agent"],
         [[("4", DETAIL_M)], [("Verify", B)], point("Every reason is tested", "Each denial reason is re-tested by flipping only that field. Mistaken reasons that don't change the decision are withheld."), "Code"],
@@ -99,7 +99,7 @@ text(s, L, 6.35, CW, 0.5, [[("Convex runs it all as one workflow.", B), ("  Ever
 
 # ---------------------------------------------------------------- 4 Data
 s = slide(4)
-frame(s, "Layer 1: one soft pull from the CRS Credit API gives every lender the same file, and the file an agent sees has no identity in it.", 1, 4)
+frame(s, "Layer 1: every lender gets the same CRS Credit API sandbox file, and the file an agent sees has no identity in it.", 1, 4)
 rows = [["What we pull", "What comes back", "Fields the policies use"],
         [[("Three bureaus", B)], [("Score, tradelines, inquiries, utilization from TransUnion, Equifax and Experian. A freeze at one bureau is a flag, not a stop.", DETAIL)], [("credit.fico9 · vantage4 · utilization · inquiries6mo · flags.frozen", DETAIL_M)]],
         [[("Identity", B)], [("Verified or not; SSN belongs to a deceased person", DETAIL)], [("identity.verified · flags.deceased", DETAIL_M)]],
@@ -111,7 +111,7 @@ box(s, x2, 1.95, w2, 1.6, fill=PANEL, line=HAIR); label(s, x2 + 0.2, 2.07, w2, "
 stacked(s, x2 + 0.2, 2.35, w2 - 0.4, [("Scores, flags and the loan request", "Utilization, inquiries, identity and fraud results, purpose, amount, income")], gap=0.6)
 box(s, x2, 3.7, w2, 1.6, line=HAIR, dashed=True); label(s, x2 + 0.2, 3.82, w2, "Never reaches a model")
 stacked(s, x2 + 0.2, 4.1, w2 - 0.4, [("Name, address, ZIP, SSN", "Also date of birth, phone, email, raw bureau data, criminal records")], gap=0.6)
-takeaway(s, L, 5.75, CW, [("Same file for every lender, no identity in it, in about 3 seconds, and the borrower's score doesn't move.", B)], size=14, h=0.55)
+takeaway(s, L, 5.75, CW, [("Same file for every lender, no identity in it. The demo replays real CRS sandbox pulls; live pulls are one setting away.", B)], size=14, h=0.55)
 
 # ---------------------------------------------------------------- 5 Hard stops
 s = slide(5)

@@ -15,7 +15,7 @@ Nobody checks the reasons. A reason is only lawful if the lender relied on it, a
 
 ## What Docket does
 
-1. **Be the borrower.** Draw a persona card and type its four digits on the phone (`#/borrower`). One soft pull from the CRS Credit API sandbox returns all three bureaus plus identity, fraud and public records. Name, address, ZIP and SSN never reach a model.
+1. **Be the borrower.** Draw a persona card and type its four digits on the phone (`#/borrower`). The desk loads that persona's file from the CRS Credit API sandbox: all three bureaus plus identity, fraud and public records. The demo replays real sandbox responses captured live for all 20 personas; one setting (`CRS_PROVIDER=crs`) switches to live soft pulls. Name, address, ZIP and SSN never reach a model.
 2. **Hard stops end risky files in code.** Deceased, every bureau file frozen, identity mismatch, and fraud score 80 or higher are stopped by `convex/rules.ts` before any model sees the file. Override is refused and logged.
 3. **Five lenders read one file in parallel.** Each policy in `policies/*.md` is the prompt its agent receives. The agent decides yes, no or counteroffer and names the field behind each reason; prices come from each policy's grid by score band. The borrower picks the cheapest yes.
 4. **Every denial reason is tested.** Docket changes only the field behind a reason to a passing value and re-runs the lender. If the decision flips, the reason is kept. If not, it is withheld.
@@ -45,7 +45,7 @@ Six layers, one workflow: code decides what agents may touch, agents decide insi
 
 | Layer | Who decides | What it guarantees |
 | --- | --- | --- |
-| 1. Credit pull | Code | One soft pull, about 3 s; every lender sees the same file with no identity in it |
+| 1. Credit pull | Code | Real CRS sandbox file, replayed in the demo (a live soft pull takes about 3 s); every lender sees the same file with no identity in it |
 | 2. Hard stops | Code | Risky files stop before any AI sees them |
 | 3. Underwriters x5 | Agents | Five lenders decide in parallel on written policies; prices come from policy, not agents |
 | 4. Verify | Code | Each denial reason is re-tested by flipping only that field; reasons that do not change the decision are withheld |
@@ -58,7 +58,7 @@ Simulated: the five lenders are fictional, no money moves, and every applicant i
 
 ## Sponsor tools, and what each one does here
 
-- **CRS Credit API**: one soft pull per applicant returns TransUnion, Equifax and Experian data, identity verification, a fraud score and public records. The 20 test personas are its sandbox consumers, so the deceased, frozen and synthetic files are real sandbox pulls.
+- **CRS Credit API**: supplies TransUnion, Equifax and Experian data, identity verification, a fraud score and public records. The 20 test personas are its sandbox consumers. Their responses were pulled live and the demo replays them, so the deceased, frozen and synthetic files are real sandbox data; `CRS_PROVIDER=crs` pulls live instead.
 - **Convex**: the six layers run as one durable workflow with retries; live queries drive the console, the board and the phone; the scheduler runs the nightly 20-applicant eval; httpActions serve the API, the health check and agent webhooks.
 - **Claude (Anthropic)**: powers the desk assistant and the counterfactual re-runs behind reason verification.
 - **CREAO**: six hosted agents, five underwriters and a compliance writer.
