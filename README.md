@@ -101,10 +101,29 @@ Public share links:
 - Pacific Ridge Credit Union: https://agent.creao.ai/share/56d4f68bf156887262f1577bda1b4d08 (approve, 26.5 s)
 - Compliance notice: https://agent.creao.ai/share/05a0baa157ff22dea5662a58b7bbb837 (notice parsed, awaiting_human, 23.4 s)
 
+## Pitch deck
+
+The Cal Hacks 13.0 deck is in [`design/deck/pitch/`](design/deck/pitch/), in two versions. Both are editable PowerPoint files that also open in Google Slides. On each slide the bold line is what we say and the grey line under it is the detail. The talk track, timings and every source are in the speaker notes.
+
+| File | For | Slides shown |
+| --- | --- | --- |
+| [`docket-deck-v7-general.pptx`](design/deck/pitch/docket-deck-v7-general.pptx) | A general audience: the problem, the market, why an agent desk beats a human one on speed and consistency, the six layers on one slide, the eval, the moat and the business | 13 |
+| [`docket-deck-v7-technical.pptx`](design/deck/pitch/docket-deck-v7-technical.pptx) | Technical judging: one slide per layer, clicked through as the live demo reaches each step | 17 |
+
+Both files hold the same 20 slides, and each version hides the ones it does not use. The slides after "Backup" are for questions: the agent scorecard (Claude direct against CREAO with Claude fallback) and how every number was measured. Every Docket number comes from logged runs on the cloud desk on Oct 24, and every human benchmark from a published source; [`benchmarks.md`](design/deck/pitch/benchmarks.md) has the derivations.
+
+To rebuild both decks after editing the scripts (needs `python-pptx` and Pillow; the layout pass measures text with the macOS Arial fonts):
+
+```sh
+python3 design/deck/pitch/build_v7.py general
+python3 design/deck/pitch/build_v7.py technical
+```
+
 ## Links
 
 - Live site: https://docket-sepia-ten.vercel.app
 - Video: https://youtu.be/MmCWVIkHxjI
+- Pitch deck: [general](design/deck/pitch/docket-deck-v7-general.pptx) and [technical](design/deck/pitch/docket-deck-v7-technical.pptx) versions
 - Repo: https://github.com/alphagengar1/docket
 
 ## Team

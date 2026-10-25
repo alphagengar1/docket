@@ -1,0 +1,17 @@
+{
+  "_": "Speaker notes per slide in file order. Slide 10 is the hidden CREAO alternate of slide 9. (A) = pitch, holds the deck and the timer. (B) = driver at the laptop. The judge holds the phone at #/borrower; the board is on the second screen. 3:00 total.",
+  "slides": [
+    "0:00 (A) Docket is a one-person credit union: one loan officer leading a whole lending desk of agents. And every reason in a denial letter is tested.",
+    "0:05 (A) When a lender says no, the letter tells you almost nothing. Regulation B says 'internal standards' is not a reason. Nobody tests whether the stated reason drove the decision. We do. For two minutes, you are the borrower.",
+    "0:15 (A) Six layers, one workflow. Code decides what the agents may touch, agents decide inside written policies, a person signs. (B) 'Draw a card. Type the four digits on the phone.' Leave this slide up while the judge types; the board shows the layers lighting up. Move on when the first offer lands.",
+    "0:30 (B) 'That pulled your file from the CRS Credit API sandbox: TransUnion, Equifax, Experian, identity, fraud. Soft pull. Your name, address and SSN never reach a model.'",
+    "0:45 (A) Before any lender saw it, four rules ran in code. Hand over the deceased card: 'Here is a bad day.' Board goes red. (B) 'A rule in code stopped this, not the model. Zero lenders, zero offers.' (A) 'Try to fund it anyway.' Judge taps Override. (B) 'Refused and logged.'",
+    "1:15 (A) Back to your file: five lenders, five written policies, one file, five independent answers. The agent has no pricing discretion; APR comes from the policy grid. Offers are ranked by cost to borrow. 'Pick one.' (B) approves: 'Nothing funds until a person signs.' If asked: lender and borrower want opposite things on price, so we do not let the agents negotiate. Five fixed policies compete and the borrower picks.",
+    "1:45 (A) Every reason in a decline was tested. Change only that field to a passing value, re-run the lender. If the decision flips, the reason stays. If not, it is withheld. Our own agents padded declines with 'score meets minimum'; this catches it.",
+    "2:05 (A) Offer, counteroffer or decline is classified in code. The notice names CRS as the agency that did not make the decision. Dispute a tradeline and all five lenders re-run on the corrected file.",
+    "2:20 (B) A person signs every offer and every notice. Convex runs the six layers as one durable workflow; live queries drive the phone and the board; the scheduler runs the eval nightly. Claude haiku-5-5 underwrites, sonnet-5-5 writes the notice.",
+    "ALTERNATE for slide 9 (hidden): unhide this one and hide slide 9 if CREAO is entered. (B) Same flow; the five underwriter agents and the compliance agent run as CREAO hosted agents, with the Anthropic SDK as fallback.",
+    "2:35 (A) The persona deck is our test suite. 20 of 20 personas, 96 of 100 per-lender cells (the four open ones are all Harbor, an answer-key amount issue, not policy), 82% of reasons hold up. Consistency with our own key, not proof of fairness. Paired tests are next.",
+    "2:50 (A) 'Draw a card. Ask us what breaks.' Stop. Leave this slide up for Q&A. We are Swaraj Adhikari from UCLA and Matthew Pun from UC Berkeley."
+  ]
+}
