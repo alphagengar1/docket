@@ -216,9 +216,28 @@ export async function creaoFetchRun(runId: string, role: Role, lender: Lender | 
   const json: any = await res.json();
   const status = String(json?.status ?? "unknown").toLowerCase();
   const primary: string | null = json?.result?.chatText ?? json?.result?.text ?? (typeof json?.result === "string" ? json.result : null);
-  // CREAO builder agents sometimes write the JSON to a saved file/artifact and end the chat with prose.
-  // If the chat text carries no JSON object, fall back to the first string anywhere under `result` that does.
-  const text = primary && hasJsonObject(primary) ? primary : (firstJsonBearingString(json?.result) ?? primary);
+  // CREAO builder agents often write the JSON to a saved file (an artifact with a download URL) and end the chat with
+  // prose. If the chat text carries no JSON object, download the JSON artifacts with the same key and use the first
+  // one that parses; then fall back to any string under `result` that holds JSON.
+  let text: string | null = primary && hasJsonObject(primary) ? primary : null;
+  if (!text) {
+    const arts: any[] = Array.isArray(json?.result?.artifacts) ? json.result.artifacts : [];
+    const jsonArts = arts.filter((a) => typeof a?.url === "string" && (/json/i.test(String(a?.type ?? "")) || /\.json$/i.test(String(a?.title ?? a?.id ?? ""))));
+    for (const a of [...jsonArts, ...arts.filter((a) => typeof a?.url === "string" && !jsonArts.includes(a))]) {
+      try {
+        const ar = await fetch(a.url, { headers: creaoHeaders(key) });
+        if (!ar.ok) continue;
+        const body = await ar.text();
+        if (hasJsonObject(body)) {
+          text = body;
+          break;
+        }
+      } catch {
+        /* try the next artifact */
+      }
+    }
+  }
+  if (!text) text = firstJsonBearingString(json?.result) ?? primary;
   const error = json?.error?.message ?? json?.errorCode ?? null;
   return { status, text, error: error ? String(error) : null };
 }
@@ -538,6 +557,52 @@ export const completeRun = internalMutation({
   },
 });
 
+
+/** A CREAO run that came back unusable is re-run on Claude so the desk never shows a failed lender or a missing notice. */
+async function fallbackToClaude(ctx: any, run: Doc<"agentRuns">): Promise<void> {
+  try {
+    if (run.role === "underwriter" && run.lender) {
+      await ctx.runAction(internal.agents.runUnderwriter, { applicantId: run.applicantId, lender: run.lender, forceProvider: "claude" });
+      if (run.offerId) await ctx.runMutation(internal.agents.dropFailedOffer, { offerId: run.offerId, applicantId: run.applicantId, lender: run.lender });
+    } else if (run.role === "compliance") {
+      await ctx.runAction(internal.agents.runCompliance, { applicantId: run.applicantId, forceProvider: "claude" });
+      await ctx.runMutation(internal.agents.noteFallback, { applicantId: run.applicantId, actor: "compliance", action: "compliance.fallback" });
+    }
+  } catch (err: any) {
+    console.warn(`fallback to claude failed for run ${run.runId}: ${err?.message ?? err}`);
+  }
+}
+
+export const dropFailedOffer = internalMutation({
+  args: { offerId: v.id("offers"), applicantId: v.id("applicants"), lender: lenderValidator },
+  handler: async (ctx, { offerId, applicantId, lender }) => {
+    const o = await ctx.db.get(offerId);
+    if (o && o.status === "failed") await ctx.db.delete(offerId);
+    await ctx.db.insert("auditEvents", {
+      applicantId,
+      at: Date.now(),
+      actor: `underwriter:${lender}` as const,
+      action: "underwrite.fallback",
+      ref: null,
+      note: "CREAO reply was unusable; this lender was re-run on Claude [provider=claude]",
+    });
+  },
+});
+
+export const noteFallback = internalMutation({
+  args: { applicantId: v.id("applicants"), actor: v.literal("compliance"), action: v.string() },
+  handler: async (ctx, { applicantId, actor, action }) => {
+    await ctx.db.insert("auditEvents", {
+      applicantId,
+      at: Date.now(),
+      actor,
+      action,
+      ref: null,
+      note: "CREAO reply was unusable; the notice was written on Claude [provider=claude]",
+    });
+  },
+});
+
 /** Re-fetch a run from CREAO (webhooks are unsigned, so we never trust the payload) and complete it. */
 export const verifyAndCompleteRun = internalAction({
   args: { runId: v.string() },
@@ -546,11 +611,13 @@ export const verifyAndCompleteRun = internalAction({
     if (!run || run.status !== "pending") return { status: run?.status ?? "unknown" };
     const r = await creaoFetchRun(runId, run.role, run.lender ?? null);
     if (r.status === "completed") {
-      await ctx.runMutation(internal.agents.completeRun, { runId, outcome: "completed", text: r.text, error: null });
+      const done = await ctx.runMutation(internal.agents.completeRun, { runId, outcome: "completed", text: r.text, error: null });
+      if (done.failed) await fallbackToClaude(ctx, run);
       return { status: "completed" };
     }
     if (r.status === "failed" || r.status === "cancelled") {
       await ctx.runMutation(internal.agents.completeRun, { runId, outcome: "failed", text: null, error: r.error ?? r.status });
+      await fallbackToClaude(ctx, run);
       return { status: "failed" };
     }
     return { status: r.status };
@@ -686,15 +753,15 @@ export async function underwriteWithTimeout(
 export type AgentStepResult = { status: "done" | "pending" | "failed"; decision?: "approve" | "decline" | null; note: string };
 
 export const runUnderwriter = internalAction({
-  args: { applicantId: v.id("applicants"), lender: lenderValidator },
-  handler: async (ctx, { applicantId, lender }): Promise<AgentStepResult> => {
+  args: { applicantId: v.id("applicants"), lender: lenderValidator, forceProvider: v.optional(v.literal("claude")) },
+  handler: async (ctx, { applicantId, lender, forceProvider }): Promise<AgentStepResult> => {
     const { applicant, bundle, marketAnchor, offers } = await ctx.runQuery(internal.agents.loadCase, { applicantId });
     // Idempotent under workflow retries.
     const existing = offers.find((o: Doc<"offers">) => o.lender === lender && o.status !== "failed");
     if (existing) return { status: existing.status, decision: existing.decision, note: "already present" };
 
     const input: UnderwriterInput = buildUnderwriterInput(applicant, bundle, POLICIES[lender], marketAnchor);
-    const provider = providerFor("underwriter");
+    const provider: ProviderName = forceProvider ?? providerFor("underwriter");
 
     if (provider === "creao") {
       const offerId: Id<"offers"> = await ctx.runMutation(internal.agents.insertOffer, {
@@ -755,8 +822,8 @@ export const setOfferRunId = internalMutation({
 });
 
 export const runCompliance = internalAction({
-  args: { applicantId: v.id("applicants") },
-  handler: async (ctx, { applicantId }): Promise<AgentStepResult> => {
+  args: { applicantId: v.id("applicants"), forceProvider: v.optional(v.literal("claude")) },
+  handler: async (ctx, { applicantId, forceProvider }): Promise<AgentStepResult> => {
     const { applicant, offers, source, pulledAt } = await ctx.runQuery(internal.agents.loadCase, { applicantId });
     const done = offers.filter((o: Doc<"offers">) => o.status === "done");
     const need = noticeRequired(done.map((o: Doc<"offers">) => o.classification ?? (o.decision === "decline" ? "deny" : "approve")));
@@ -807,7 +874,7 @@ export const runCompliance = internalAction({
       droppedReasons: dropped,
       fcraSource: fcra,
     };
-    const provider = providerFor("compliance");
+    const provider: ProviderName = forceProvider ?? providerFor("compliance");
 
     if (provider === "creao") {
       try {
