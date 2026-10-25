@@ -84,7 +84,7 @@ for k, (lab, items) in enumerate(cols):
         yy += 1.0
 text(s, L, 4.95, CW, 0.6, [[("Next: a lender network.", B), (" Outside lenders plug in their own policy file, and we earn a referral fee on funded loans.", {"color": MUTE, "size": 12})]],
      size=14)
-takeaway(s, L, 5.75, CW, [("Cents to run, dollars to sell, and every new customer is a policy file, not a rebuild.", B)], size=14, h=0.55)
+takeaway(s, L, 5.75, CW, [("Cents to run, dollars to sell, and every new customer is just a policy file.", B)], size=14, h=0.55)
 
 M = {"cover": 0, "problem": 1, "stack": 2, "l1": 3, "l2": 4, "l3": 5, "l4": 6, "l5": 7, "l6": 8, "creao": 9, "eval": 10, "close": 11,
      "vs_humans": 12, "scorecard": 13, "speed": 14, "moat": 15, "method": 16, "backup": 17, "market": 18, "business": 19}

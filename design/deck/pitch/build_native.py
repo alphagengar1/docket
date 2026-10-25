@@ -55,7 +55,7 @@ def slide(i, hidden=False):
 # ---------------------------------------------------------------- 1 Cover
 s = slide(1)
 wordmark(s, L, 2.75, 48)
-text(s, L, 3.45, 10.5, 0.7, "One loan officer leading a whole lending desk of agents.", size=28, bold=True, line_spacing=1.15)
+text(s, L, 3.45, 10.5, 0.7, "One loan officer leveraging a desk of agents.", size=28, bold=True, line_spacing=1.15)
 text(s, L, 4.3, 8.2, 0.8, "A one-person credit union. Six layers, one workflow: code decides what agents may see, agents decide inside written policies, a person signs.", size=14, color=MUTE, line_spacing=1.3)
 label(s, L, H - 0.72, 5, "Cal Hacks 13.0 · October 2026")
 text(s, W - R - 6, H - 0.72, 6, 0.25, "SWARAJ ADHIKARI, UCLA · MATTHEW PUN, UC BERKELEY", size=9, color=MUTE, font=MONO, align=PP_ALIGN.RIGHT)
