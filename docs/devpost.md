@@ -7,45 +7,37 @@ Docket
 A one-person credit union with tested denial reasons
 
 ## Inspiration
-When a lender says no, the letter usually tells you almost nothing. Regulation B says the notice must give the principal reasons, and "internal standards" is not a reason. We wanted to see whether one loan officer and a team of agents could give a borrower an answer they can act on, for the loan officers at small credit unions who currently have to send a "no" with no usable reason.
+Most people who are turned down for a loan get a letter that says "Reason: internal standards." Regulation B and the FCRA say the letter must give the principal reasons and name the bureau. Nobody checks whether the reason was real. We wanted one loan officer, with agents, to send a "no" a borrower can act on, for the loan officers at small credit unions who have no usable reason to give.
 
 ## What it does
-An applicant gives consent, a loan purpose and stated income. Docket pulls CRS Credit API sandbox data: TransUnion prequal with VantageScore, Equifax and Experian prequal, identity verification, FraudFinder, and PitchPoint liens, judgments and evictions. Deterministic hard stops (deceased, unscorable, failed identity, high fraud) run first. If a file passes, five underwriter agents, each with a written policy in `policies/`, return an offer or a decline: Pacific Ridge Credit Union, Northstar Lending, Meridian Bank Prime, Cascade Regional Bank and Harbor Second Chance Finance. A compliance agent drafts the ECOA/FCRA adverse-action notice with the CRS source paragraph. A human approves every offer and every notice.
+You are the borrower: draw a persona card, type its four digits, and Docket pulls your file from TransUnion, Equifax and Experian through the CRS Credit API sandbox. Five written lender policies read the same file in parallel. A bad day, such as a deceased file, stops in code before any model sees it. Every denial reason is then tested by flipping one field: if the decision flips, the reason stays; if not, it is withheld. The letter is rewritten from the reasons that survived, and a person signs.
 
-Three additions:
-- Counterfactual reason verification: change one factor and re-run the lender, then a leave-one-out pass for reasons that are only sufficient together. Reasons that do not change the decision are withheld from the notice.
-- Approve, counteroffer or deny is classified in code.
-- Dispute and replay: dispute a tradeline and see which offers and notices change.
-
-Docket is also an integration layer. A finance company can call it from its own agents over a bearer-authenticated HTTP API or an MCP server, plug in its own lender policies as markdown files, and get one standard DecisionRecord per applicant with a verification verdict on every denial reason. A benchmark endpoint scores Docket against the company's own answer key, so it can see where its internal tooling disagrees. A human still approves every offer.
-
-Screens: an operator console with a decision summary, ranked decision queue, decision sheet, editor-style side rails and a desk assistant that summarizes the audit trail; a judge board at `#/board`; a borrower phone at `#/borrower`.
+Docket is also an integration layer. Inside a company, your agents call a bearer-authenticated HTTP API or an MCP server with your own policies and answer key, and get one DecisionRecord per applicant. On your own, you are the one-person desk.
 
 Simulated: the lenders are ours, no money moves, and every applicant is one of 20 CRS test personas.
 
 ## How we built it
-Convex is the backend: a durable Workflow runs the desk (pull, guardrails, five underwriters in parallel, verification, compliance, human), live queries drive all three screens, httpActions take webhooks, and a cron runs the nightly eval. CREAO hosts six agents (five underwriters and compliance). Claude is the other provider: claude-haiku-5-5 for underwriters, claude-sonnet-5-5 for compliance, with Zod-validated output. Agent input is an allowlist projection, so name, address, ZIP and SSN never reach a model. The web app is Vite and React in the Instrument Tag theme.
+Six steps: credit pull, hard stops, five underwriters, verify, notice, human. A durable Convex workflow runs them, and live queries drive the phone, the board and the console. Claude haiku underwrites and sonnet writes the notice. CREAO hosts the six agents; every reply is checked against a Zod schema and re-run on Claude if it fails. Agent input is an allowlist, so name, address, ZIP and SSN never reach a model.
 
 ## Challenges
-- The sandbox "fico9" product returns VantageScore 4.0, so we label scores VantageScore.
-- A freeze at one bureau should not stop a file another bureau can score, so the rule became a flag.
-- Jointly sufficient reasons do not flip a decision one at a time, which needed the leave-one-out pass.
-- Hosted CREAO runs take 23 to 33 s per lender, so we added a 20 s timeout setting and a replay of each persona.
-- Keeping the applicant's name away from the compliance agent while still producing a personal letter.
+- The sandbox's TransUnion product returns VantageScore 4.0, so we label scores VantageScore.
+- A freeze at one bureau should not stop a file another bureau can score, so that rule became a flag.
+- Jointly sufficient reasons do not flip a decision one at a time, which needed a leave-one-out pass.
+- Hosted CREAO runs take 23 to 33 s per lender, so we added a 20 s timeout setting and replay.
+- Writing a personal letter without giving the compliance agent the applicant's name.
 
 ## Accomplishments
-- 20 of 20 personas agree with the answer key on the last cloud eval, which also scores each lender against its expected outcome. [check: re-run with five lenders for final figures]
-- Agents padded some declines with filler reasons such as "score meets minimum". Verification caught and withheld them.
+- 20 of 20 personas agree with the answer key on the last cloud eval. [check: re-run with five lenders for final figures]
+- Agents padded some declines with filler such as "score meets minimum". Verification caught and withheld them.
 - Hard stops, classification and the PII boundary are code with tests.
-- A judge can draw a persona card, type its code on the phone and run the flow.
 
 ## What we learned
-Agents read the file and draft the letter; the rules that must never fail belong in code. Testing the reasons found a problem we would not have seen by reading outputs. Twenty personas show consistency with our own key, not fairness.
+Agents read the file and draft the letter; rules that must never fail belong in code. Testing the reasons found a problem we would not have seen by reading outputs. Twenty personas show consistency with our own key, not fairness.
 
 ## What's next
 - Paired tests: two personas identical except one proxy field must get the same decision.
-- Real lender policy files in place of our five agents.
-- Show the applicant the notice and a dispute path in their own view.
+- A real lender policy file in place of ours.
+- Show the applicant the notice and a dispute path.
 
 ## Built with
 convex, convex-workflow, typescript, react, vite, zod, anthropic-claude, claude-haiku-5-5, claude-sonnet-5-5, creao, crs-credit-api, transunion, equifax, experian, vercel, node
@@ -73,7 +65,7 @@ Tracks to opt into:
 Items:
 - [x] Deploy URL in README
 - [ ] Flip repo public
-- [ ] Upload 3-minute demo video
+- [x] Upload 3-minute demo video
 - [ ] Create six public CREAO run links and paste into README
 - [ ] Project image: design/devpost/thumbnail.png (1280x720); cover.png is 1920x1080
 - [ ] Check in at the venue
