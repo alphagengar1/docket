@@ -276,6 +276,19 @@ export function DecisionSummary({ applicant: a, offers, hardStop, canDecide, onA
       </div>
       <div className="ax-sum-main sum-main">
         <h3 className="ax-headline">{s.headline}</h3>
+        {s.best && !hard && (
+          <div className="ax-sum-rate" aria-label="Best offer">
+            <span className="ax-label">Best offer</span>
+            <span className="ax-sum-big mono">
+              {s.best.apr!.toFixed(2)}%<small>APR</small>
+            </span>
+            <span className="ax-sum-sub mono">
+              {s.lenders.find((l) => l.lender === s.best!.lender)?.name ?? s.best.lender}
+              {s.bestMonthly != null && <> · {usd(s.bestMonthly)}/mo</>}
+              {s.best.termMonths != null && <> · {s.best.termMonths} mo</>}
+            </span>
+          </div>
+        )}
         {canDecide && (
           <div className="ax-sum-actions">
             <button type="button" className="ax-btn primary" disabled={!s.best} onClick={() => s.best && onApprove(s.best._id)} title="Shortcut: A">

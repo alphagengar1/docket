@@ -24,9 +24,10 @@ import { ApplicantView } from './components/ApplicantView'
 import { DecisionSheet } from './components/DecisionSheet'
 import { Rail, type PanelId } from './components/Rail'
 import { Assistant } from './components/Assistant'
+import { LenderGrid } from './components/LenderGrid'
 import { useAssistant } from './hooks/useAssistant'
 
-type Theme = 'tag' | 'dark' | 'light'
+type Theme = 'precision' | 'tag' | 'dark' | 'light'
 
 const PANEL_KEY = 'docket.panels'
 const NO_PANELS: Record<PanelId, boolean> = { queue: false, inspector: false, log: false, assistant: false }
@@ -54,7 +55,7 @@ export default function App() {
   const [applicantView, setApplicantView] = useState(false)
   const [tab, setTab] = useState<InspectorTab>('offer')
   const [sheetOpen, setSheetOpen] = useState(false)
-  const [theme, setTheme] = useState<Theme>('tag')
+  const [theme, setTheme] = useState<Theme>('precision')
   // Focus (default): only what the decision needs. Detail: every panel, the timing waterfall and the log.
   const [focus, setFocus] = useState<boolean>(() => {
     try {
@@ -122,7 +123,10 @@ export default function App() {
   }, [desk.applicants])
 
   useEffect(() => {
-    document.documentElement.dataset.theme = theme
+    // Precision is a skin on top of the Instrument Tag theme: it keeps every Tag rule and overrides tokens and layout.
+    document.documentElement.dataset.theme = theme === 'precision' ? 'tag' : theme
+    if (theme === 'precision') document.documentElement.dataset.skin = 'precision'
+    else delete document.documentElement.dataset.skin
   }, [theme])
   useEffect(() => {
     try {
@@ -292,7 +296,7 @@ export default function App() {
           desk.stopReplay()
         }}
         theme={theme}
-        onTheme={() => setTheme((t) => (t === 'tag' ? 'dark' : t === 'dark' ? 'light' : 'tag'))}
+        onTheme={() => setTheme((t) => (t === 'precision' ? 'tag' : t === 'tag' ? 'dark' : t === 'dark' ? 'light' : 'precision'))}
       />
       <div className={`main ${Object.values(panels).some(Boolean) ? '' : 'bare'}`}>
         <Rail side="left" items={['queue']} open={panels} onToggle={togglePanel} waiting={ranked.length} />
@@ -324,9 +328,24 @@ export default function App() {
             </div>
           ) : (
             <div className="board">
+                <div className="pv-page" aria-hidden={theme !== 'precision'}>
+                  <p className="pv-crumb mono">Workspace / Applicant review</p>
+                  <div className="pv-page-head">
+                    <div>
+                      <h1>Application review.</h1>
+                      <p>Compare offers. Inspect the evidence. A person signs every decision.</p>
+                    </div>
+                    <span className="pv-eyebrow mono">Credit decision workspace</span>
+                  </div>
+                </div>
+                <div className="ov">
                 <div className="board-head">
                   {applicant ? (
                     <>
+                      <span className="pv-eyebrow mono pv-ov-label">Applicant overview</span>
+                      <span className="pv-avatar mono" aria-hidden="true">
+                        {applicant.name.split(/\s+/).slice(0, 2).map((w) => w[0]).join('').toUpperCase()}
+                      </span>
                       <h2>{applicant.name}</h2>
                       <span className={`status tone-${STATUS_TONE[applicant.status]} ${IN_FLIGHT.includes(applicant.status) ? 'live' : ''}`}>
                         {STATUS_WORD[applicant.status]}
@@ -359,6 +378,7 @@ export default function App() {
                     onTiming={() => setTiming((t) => !t)}
                   />
                 )}
+                </div>
                 {(!focus || timing || inFlightSel) && (
                   <Waterfall applicant={applicant} steps={steps} offers={offers} checks={desk.reasonChecks.filter((c) => c.applicantId === selectedId)} now={now} />
                 )}
@@ -405,7 +425,28 @@ export default function App() {
                     ))}
                   </div>
                 )}
-                {applicant && applicant.status !== 'hard_stop' && (() => {
+                {applicant && applicant.status !== 'hard_stop' && theme === 'precision' && !original && (
+                  <LenderGrid
+                    applicant={applicant}
+                    offers={offers}
+                    hardStop={hs}
+                    checks={desk.reasonChecks}
+                    bestApr={bestApr}
+                    underwriteStartedAt={underwriteStart}
+                    now={now}
+                    selectedOfferId={selectedOfferId}
+                    chosenOfferId={decision?.chosenOfferId ?? null}
+                    decided={!!decision}
+                    canSelect={applicant.status === 'awaiting_human'}
+                    compact={focus}
+                    onSelect={(oid) => {
+                      setSelectedOfferId((cur) => (cur === oid ? null : oid))
+                      setTab('offer')
+                    }}
+                    onTrace={() => inspect('trace')}
+                  />
+                )}
+                {applicant && applicant.status !== 'hard_stop' && !(theme === 'precision' && !original) && (() => {
                   // One disclosure row per lender: the glance sentence from summarize(), the card underneath.
                   // The group's Expand all / Collapse all opens every row and the count reads "N of 5 open".
                   const sm = summarize(applicant, offers, hs, desk.reasonChecks)
