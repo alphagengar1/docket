@@ -1,0 +1,152 @@
+/* Precision skin (design/ui-preview/docket-live-preview.html). Active when <html data-skin="precision">,
+   always on top of the Instrument Tag theme. Every rule here is scoped to the skin except the defaults
+   block, which hides the skin-only elements in the other themes. */
+
+/* ---- defaults for every theme: skin-only markup stays invisible, wrappers are transparent ---- */
+.ov { display: contents; }
+.pv-page, .pv-avatar, .pv-ov-label, .ax-sum-rate { display: none; }
+.topbar .brand-sub { display: none; }
+
+/* ---- page and shell ---- */
+:root[data-theme='tag'][data-skin='precision'] body { background: var(--bg); font-family: var(--sans); }
+:root[data-theme='tag'][data-skin='precision'] .topbar { background: var(--surface); border-bottom: 2px solid var(--text); padding: 0 24px; gap: 12px; }
+:root[data-theme='tag'][data-skin='precision'] .topbar .brand { font-family: var(--sans); font-stretch: 100%; font-weight: 900; font-size: 22px; letter-spacing: -1.2px; text-transform: uppercase; gap: 10px; }
+:root[data-theme='tag'][data-skin='precision'] .topbar .brand-mark { color: var(--pv-orange); }
+:root[data-theme='tag'][data-skin='precision'] .topbar .brand-sub { display: inline; font: 600 10px var(--mono); letter-spacing: 1px; text-transform: uppercase; color: var(--muted); margin-left: 6px; padding-left: 14px; border-left: 1px solid var(--hair-2); }
+:root[data-theme='tag'][data-skin='precision'] .topbar button { font: 600 11px var(--mono); text-transform: uppercase; letter-spacing: 0.3px; border: 1px solid var(--text); background: var(--surface); color: var(--text); padding: 9px 14px; border-radius: 0; height: auto; }
+:root[data-theme='tag'][data-skin='precision'] .topbar button:hover:not(:disabled) { background: var(--panel); }
+:root[data-theme='tag'][data-skin='precision'] .topbar button.ghost { border-color: transparent; }
+:root[data-theme='tag'][data-skin='precision'] .topbar .pill, :root[data-theme='tag'][data-skin='precision'] .topbar .chip { font: 600 10px var(--mono); text-transform: uppercase; letter-spacing: 1px; border: 1px solid var(--hair-2); background: transparent; border-radius: 0; padding: 4px 8px; }
+:root[data-theme='tag'][data-skin='precision'] .topbar .pill.live { background: var(--pv-blue); border-color: var(--pv-blue); color: #fff; }
+
+/* the work surface scrolls as one page, like the preview */
+:root[data-theme='tag'][data-skin='precision'] .board { overflow: auto; background: var(--bg); }
+:root[data-theme='tag'][data-skin='precision'] .board-scroll { flex: none; overflow: visible; min-height: auto; padding-bottom: 40px; }
+
+/* ---- page heading ---- */
+:root[data-theme='tag'][data-skin='precision'] .pv-page { display: block; padding: 24px 32px 0; flex: none; }
+:root[data-theme='tag'][data-skin='precision'] .pv-crumb { margin: 0 0 18px; font-size: 10px; letter-spacing: 1px; text-transform: uppercase; color: #73766c; }
+:root[data-theme='tag'][data-skin='precision'] .pv-page-head { display: flex; align-items: flex-end; justify-content: space-between; gap: 20px; padding-bottom: 22px; border-bottom: 2px solid var(--text); }
+:root[data-theme='tag'][data-skin='precision'] .pv-page h1 { margin: 0; font-size: clamp(30px, 3.6vw, 48px); font-weight: 900; text-transform: uppercase; letter-spacing: -2px; line-height: 1; }
+:root[data-theme='tag'][data-skin='precision'] .pv-page-head p { margin: 10px 0 0; font-size: 13px; color: #62665b; }
+:root[data-theme='tag'][data-skin='precision'] .pv-eyebrow { font-size: 10px; letter-spacing: 1.4px; text-transform: uppercase; color: var(--muted); }
+:root[data-theme='tag'][data-skin='precision'] .pv-page-head .pv-eyebrow { max-width: 130px; text-align: right; line-height: 1.8; }
+
+/* ---- applicant overview: name and facts on the left, review progress on the right ---- */
+:root[data-theme='tag'][data-skin='precision'] .ov {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 290px;
+  grid-template-areas: 'head prog' 'facts prog';
+  margin: 24px 32px 0;
+  border: 1px solid #b5b8ac;
+  background: var(--surface);
+  flex: none;
+}
+:root[data-theme='tag'][data-skin='precision'] .ov > .board-head {
+  grid-area: head;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px 12px;
+  height: auto;
+  padding: 22px 26px 4px;
+  border: 0;
+  background: transparent;
+  white-space: normal;
+  overflow: visible;
+}
+:root[data-theme='tag'][data-skin='precision'] .pv-ov-label { display: block; flex-basis: 100%; }
+:root[data-theme='tag'][data-skin='precision'] .pv-avatar { display: inline-grid; place-items: center; width: 38px; height: 38px; background: var(--text); color: var(--surface); font-size: 13px; font-weight: 700; flex: none; }
+:root[data-theme='tag'][data-skin='precision'] .ov > .board-head h2 { font-family: var(--sans); font-stretch: 100%; font-size: 25px; font-weight: 800; letter-spacing: -0.8px; text-transform: uppercase; margin: 0; }
+:root[data-theme='tag'][data-skin='precision'] .ov > .board-head .status { font: 600 10px var(--mono); letter-spacing: 0.5px; text-transform: uppercase; border: 1px solid currentColor; padding: 4px 7px; border-radius: 0; }
+:root[data-theme='tag'][data-skin='precision'] .ov > .ax-facts {
+  grid-area: facts;
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+  gap: 18px 20px;
+  padding: 16px 26px 24px;
+  border: 0;
+  background: transparent;
+}
+:root[data-theme='tag'][data-skin='precision'] .ov > .ax-facts > div { display: block; border-left: 2px solid #d5d6cd; padding-left: 12px; }
+:root[data-theme='tag'][data-skin='precision'] .ov > .ax-facts dt { font: 10px var(--mono); text-transform: uppercase; letter-spacing: 0.5px; color: var(--muted); margin-bottom: 6px; }
+:root[data-theme='tag'][data-skin='precision'] .ov > .ax-facts dd { font-size: 15px; font-weight: 700; }
+:root[data-theme='tag'][data-skin='precision'] .ov > .pstrip {
+  grid-area: prog;
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 0;
+  padding: 20px 24px;
+  background: #e2e4da;
+  border: 0;
+  border-left: 1px solid #b5b8ac;
+}
+:root[data-theme='tag'][data-skin='precision'] .ov > .pstrip::before { content: 'Review progress'; font: 600 10px var(--mono); letter-spacing: 1.4px; text-transform: uppercase; color: var(--muted); padding-bottom: 10px; margin-bottom: 10px; border-bottom: 1px solid #b4b6ab; }
+:root[data-theme='tag'][data-skin='precision'] .ov > .pstrip .steps { flex-direction: column; flex-wrap: nowrap; gap: 9px; }
+:root[data-theme='tag'][data-skin='precision'] .ov > .pstrip .step { height: auto; padding: 0; border: 0; border-radius: 0; font: 11px var(--mono); background: transparent; color: var(--text); }
+:root[data-theme='tag'][data-skin='precision'] .ov > .pstrip .step .dot { width: 7px; height: 7px; border-radius: 0; }
+:root[data-theme='tag'][data-skin='precision'] .ov > .pstrip .step.done .dot { background: var(--pv-blue); }
+:root[data-theme='tag'][data-skin='precision'] .ov > .pstrip .step .met { margin-left: auto; font-size: 10px; color: var(--muted); }
+:root[data-theme='tag'][data-skin='precision'] .ov > .pstrip .total { margin: 14px 0 0; padding-top: 10px; border-top: 1px solid #b4b6ab; font-size: 11px; }
+:root[data-theme='tag'][data-skin='precision'] .ov > .pstrip .link { align-self: flex-start; margin-top: 6px; font: 600 10px var(--mono); text-transform: uppercase; color: var(--pv-blue); }
+
+:root[data-theme='tag'][data-skin='precision'] .waterfall { margin: 16px 32px 0; border: 1px solid #b5b8ac; flex: none; }
+
+/* ---- decision summary ---- */
+:root[data-theme='tag'][data-skin='precision'] .ax-sum {
+  position: relative;
+  margin: 26px 32px 30px;
+  padding: 28px 30px;
+  background: linear-gradient(115deg, #f9f8f3 0%, #f9f8f3 65%, #eeeff7 100%);
+  border: 1px solid #252821;
+  border-left: 7px solid var(--pv-blue);
+  box-shadow: 5px 5px 0 rgba(23, 25, 20, 0.04);
+}
+:root[data-theme='tag'][data-skin='precision'] .ax-sum::before { content: ''; position: absolute; right: 0; top: 0; width: 42px; height: 6px; background: var(--pv-orange); }
+:root[data-theme='tag'][data-skin='precision'] .ax-sum.hard { border-left-color: var(--hard); }
+:root[data-theme='tag'][data-skin='precision'] .ax-sum .ax-label { font: 600 10px var(--mono); letter-spacing: 1.4px; text-transform: uppercase; color: var(--pv-blue); }
+:root[data-theme='tag'][data-skin='precision'] .ax-sum .ax-headline { font-family: var(--sans); font-stretch: 100%; font-weight: 900; font-size: clamp(24px, 2.6vw, 36px); line-height: 1.08; letter-spacing: -1.2px; text-transform: uppercase; }
+:root[data-theme='tag'][data-skin='precision'] .ax-sum .sum-main {
+  grid-template-columns: minmax(0, 1fr) 270px;
+  grid-template-areas: 'head rate' 'actions rate' 'more more';
+  align-items: start;
+  gap: 16px 32px;
+}
+:root[data-theme='tag'][data-skin='precision'] .ax-sum .sum-main > .ax-sum-actions { justify-self: start; }
+:root[data-theme='tag'][data-skin='precision'] .ax-sum-rate { display: flex; flex-direction: column; gap: 6px; grid-area: rate; padding-left: 30px; border-left: 1px solid #bec2d3; align-self: stretch; }
+:root[data-theme='tag'][data-skin='precision'] .ax-sum-big { font-size: 56px; font-weight: 650; letter-spacing: -4px; line-height: 1.05; color: var(--pv-blue); }
+:root[data-theme='tag'][data-skin='precision'] .ax-sum-big small { font-size: 12px; letter-spacing: 0; color: var(--text); margin-left: 6px; }
+:root[data-theme='tag'][data-skin='precision'] .ax-sum-sub { font-size: 11px; color: var(--muted); line-height: 1.5; }
+:root[data-theme='tag'][data-skin='precision'] .ax-btn { border-radius: 0; font: 600 11px var(--mono); text-transform: uppercase; letter-spacing: 0.3px; padding: 11px 16px; border: 1px solid var(--text); background: var(--surface); color: var(--text); }
+:root[data-theme='tag'][data-skin='precision'] .ax-btn.primary { background: var(--pv-blue); border-color: var(--pv-blue); color: #fff; }
+:root[data-theme='tag'][data-skin='precision'] .ax-btn.primary:disabled { opacity: 0.5; }
+:root[data-theme='tag'][data-skin='precision'] .ax-assure { font-size: 12px; line-height: 1.7; }
+:root[data-theme='tag'][data-skin='precision'] .board { container-type: inline-size; container-name: work; }
+@container work (max-width: 980px) {
+  :root[data-theme='tag'][data-skin='precision'] .ax-sum .sum-main { grid-template-columns: minmax(0, 1fr); grid-template-areas: 'head' 'rate' 'actions' 'more'; }
+  :root[data-theme='tag'][data-skin='precision'] .ax-sum-rate { border-left: 0; border-top: 1px solid #bec2d3; padding: 14px 0 0; }
+  :root[data-theme='tag'][data-skin='precision'] .ov { grid-template-columns: minmax(0, 1fr); grid-template-areas: 'head' 'facts' 'prog'; }
+  :root[data-theme='tag'][data-skin='precision'] .ov > .pstrip { border-left: 0; border-top: 1px solid #b5b8ac; }
+  :root[data-theme='tag'][data-skin='precision'] .lgv-cards { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+@container work (max-width: 640px) {
+  :root[data-theme='tag'][data-skin='precision'] .lgv-cards { grid-template-columns: minmax(0, 1fr); }
+  :root[data-theme='tag'][data-skin='precision'] .pv-page, :root[data-theme='tag'][data-skin='precision'] .ov, :root[data-theme='tag'][data-skin='precision'] .ax-sum, :root[data-theme='tag'][data-skin='precision'] .lgv { margin-left: 16px; margin-right: 16px; }
+  :root[data-theme='tag'][data-skin='precision'] .pv-page { padding-left: 16px; padding-right: 16px; }
+}
+
+
+/* ---- hard stop and the dispute-diff rows keep their layout, with the skin's spacing ---- */
+:root[data-theme='tag'][data-skin='precision'] .board-scroll > .columns { padding: 0 32px; }
+:root[data-theme='tag'][data-skin='precision'] .board-scroll > .lg { margin: 0 32px; }
+
+/* ---- side panels: same paper, ink rules and mono labels ---- */
+:root[data-theme='tag'][data-skin='precision'] .rail { background: var(--surface); }
+:root[data-theme='tag'][data-skin='precision'] .rail-btn[aria-pressed='true'] { background: var(--text); color: var(--surface); }
+:root[data-theme='tag'][data-skin='precision'] .rail-lbl { font-family: var(--mono); text-transform: uppercase; letter-spacing: 0.5px; }
+:root[data-theme='tag'][data-skin='precision'] .queue-row .q-rank { background: var(--pv-blue); }
+
+/* plain wash, no particles or grain behind the work surface */
+:root[data-theme='tag'][data-skin='precision'] { --particles: none; --grain: none; }
+:root[data-theme='tag'][data-skin='precision'] .work, :root[data-theme='tag'][data-skin='precision'] .board-scroll, :root[data-theme='tag'][data-skin='precision'] .board { background: var(--bg); background-image: none; }

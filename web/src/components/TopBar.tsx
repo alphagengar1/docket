@@ -13,7 +13,7 @@ interface Props {
   onNew: () => void
   onReplay: () => void
   onStopReplay: () => void
-  theme: 'tag' | 'dark' | 'light'
+  theme: 'precision' | 'tag' | 'dark' | 'light'
   onTheme: () => void
   sandbox?: boolean
   onReset?: () => void
@@ -57,6 +57,7 @@ export function TopBar({ connection, inFlight, replaying, view, onView, onDeck, 
       <span className="brand">
         <Mark size={18} className="brand-mark" />
         {PRODUCT_NAME}
+        <small className="brand-sub">Decision workspace</small>
       </span>
       <span className={`pill ${inFlight > 0 ? 'live' : ''}`}>{inFlight > 0 ? `Running ${inFlight}` : 'Idle'}</span>
       {!focus && <span className="chip">{connection}</span>}
@@ -87,7 +88,7 @@ export function TopBar({ connection, inFlight, replaying, view, onView, onDeck, 
         </button>
         {menu && (
           <div className="menu" role="menu">
-            {item(`Theme: ${theme === 'tag' ? 'Tag' : theme === 'dark' ? 'Dark' : 'Light'}`, onTheme, 'next')}
+            {item(`Theme: ${theme === 'precision' ? 'Precision' : theme === 'tag' ? 'Tag' : theme === 'dark' ? 'Dark' : 'Light'}`, onTheme, 'next')}
             {item(focus ? 'Switch to Detail' : 'Switch to Focus', () => onFocus(!focus), focus ? 'Focus' : 'Detail')}
             {item(view === 'desk' ? 'Applicant view' : 'Desk view', () => onView(view === 'desk' ? 'applicant' : 'desk'))}
             {replaying ? item('Exit replay', onStopReplay) : item('Replay recorded run', onReplay)}
