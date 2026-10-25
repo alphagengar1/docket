@@ -91,6 +91,22 @@ def card_png(kind, spec, path):
     for l in lines: d.text((120, yy), l.upper(), font=F_MONO(26), fill=fg); yy += 40
     img.save(path)
 
+
+def panel_png(spec, path):
+    """Side panel card (16:9) for a talking clip: eyebrow, big line, sub, in the Instrument Tag look."""
+    PW, PH = 1600, 900
+    img = Image.new("RGBA", (PW, PH), CREAM); d = ImageDraw.Draw(img)
+    d.rectangle([0, 0, PW, 10], fill=INK); d.rectangle([0, PH - 10, PW, PH], fill=INK)
+    d.rectangle([80, 80, 128, 128], fill=ORANGE)
+    if spec.get("eyebrow"): d.text((150, 86), spec["eyebrow"].upper(), font=F_MONO(30), fill=(86, 89, 82, 255))
+    y = 230
+    big = spec.get("big", "")
+    bf = F_DISP(spec.get("bigsize", 150)); d.text((80, y), big, font=bf, fill=tuple(spec.get("bigcolor", INK))); y += int(spec.get("bigsize", 150) * 1.15) + 30
+    for l in wrap(d, spec.get("sub", ""), F_BODY(54), PW - 160): d.text((82, y), l, font=F_BODY(54), fill=INK); y += 70
+    for l in spec.get("lines", []):
+        y += 10; d.rectangle([82, y + 18, 100, y + 36], fill=BLUE); d.text((120, y), l, font=F_BODY(46), fill=INK); y += 64
+    img.save(path)
+
 def run(cmd):
     print("+", " ".join(cmd[:12]), "...", flush=True)
     subprocess.run(cmd, check=True)
@@ -125,12 +141,22 @@ for i, c in enumerate(EDL["clips"]):
     src, tin, tout = c["src"], c.get("in", 0.0), c["out"]; dur = tout - tin
     # overlays
     inputs = ["-ss", f"{tin:.3f}", "-t", f"{dur:.3f}", "-i", src]
+    side = c.get("side")
+    if isinstance(side, dict):
+        sp = os.path.join(TMP, f"side{i:02d}.png"); panel_png(side, sp); side = sp
+    fg_x = "(W-w)/2" if not side else "90"
     fc = ["[0:v:0]split=2[sa][sb]",
           f"[sa]scale=-2:{H}:flags=lanczos,setsar=1[fg]",
           f"[sb]scale={W}:{H}:force_original_aspect_ratio=increase,crop={W}:{H},boxblur=40:8,eq=brightness=-0.25,setsar=1[bg]",
-          "[bg][fg]overlay=(W-w)/2:(H-h)/2[v0]"]
+          f"[bg][fg]overlay={fg_x}:(H-h)/2[v0]"]
     n = 1; last = "v0"
     overlays = []
+    if side:
+        # the slide/product panel slides in from the right over 0.45 s and fades up, sitting beside the speaker
+        pw = 1120
+        inputs += ["-loop", "1", "-framerate", str(FPS), "-t", f"{dur:.3f}", "-i", side]
+        fc.append(f"[{n}:v]scale={pw}:-2,format=rgba,fade=t=in:st=0:d=0.4:alpha=1[side]")
+        fc.append(f"[{last}][side]overlay=x='(W-w-80)+(w+80)*pow(max(0,1-t/0.45),2)':y=(H-h)/2:eval=frame:shortest=1[v{n}]"); last = f"v{n}"; n += 1
     for j, cap in enumerate(c.get("captions", [])):
         p = os.path.join(TMP, f"cap{i:02d}_{j}.png"); caption_png(cap["text"], p); overlays.append((p, cap["t0"], cap["t1"]))
     for j, tg in enumerate(c.get("tags", [])):

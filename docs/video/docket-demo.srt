@@ -23,93 +23,81 @@ Nobody checks whether the reason is true.
 Docket tests every reason before it is sent. In our tests, 16% of AI-written reasons failed and never reached a borrower. 20 of 20 personas matched our answer key.
 
 7
-00:00:36,533 --> 00:00:41,913
-Docket: a one-person credit union. One loan officer runs a desk of agents.
-
-8
-00:00:41,980 --> 00:00:49,490
-Six layers: one soft pull, hard stops in code, five lender quotes.
-
-9
-00:00:49,510 --> 00:00:55,320
-Every decline reason is verified, the notice is written from what survived, and a person signs.
-
-10
-00:00:55,390 --> 00:01:00,980
-Every applicant is a printed card. Margaret wants $38,000 for a kitchen.
-
-11
-00:01:01,000 --> 00:01:05,810
-Five lenders quote her at once, on five different policies.
-
-12
-00:01:06,032 --> 00:01:08,832
-Five written policies read the same file, in parallel. Blue is an offer, amber a decline.
-
-13
-00:01:09,082 --> 00:01:14,632
-Nothing funds on its own. The agents do the work and escalate the decision to a person.
-
-14
-00:01:14,702 --> 00:01:19,282
-Every step is in the audit log. Agents are in the seat; a human holds the pen.
-
-15
-00:01:19,350 --> 00:01:25,460
-Kayla’s identity does not verify, and her CRS fraud score is 88.
-
-16
-00:01:25,480 --> 00:01:28,560
-Rules in code stop her before any model sees the file. Zero lenders.
-
-17
-00:01:28,776 --> 00:01:31,376
-Hard stop in code. Zero lenders, zero offers, and the override is refused.
-
-18
-00:01:31,626 --> 00:01:36,786
-Even the reviewer cannot push it through, and the attempt is logged.
-
-19
-00:01:36,806 --> 00:01:38,366
-She still gets a notice that tells her how to dispute it.
-
-20
-00:01:38,438 --> 00:01:46,798
-The part nobody does: for every decline reason, change only that one fact and re-run the lender.
-
-21
-00:01:47,019 --> 00:01:49,819
-Flip one field, re-run the lender. If the decision does not change, the reason is withheld.
-
-22
-00:01:50,069 --> 00:01:57,269
-Instead of “internal standards”, the borrower gets the reason that actually decided it, and knows what to fix.
-
-23
-00:01:57,343 --> 00:02:03,793
-A freeze at one bureau is not a dead end. We underwrite on the other two.
-
-24
-00:02:03,859 --> 00:02:07,469
+00:00:36,533 --> 00:00:40,143
 Powered by CRS: three bureaus, identity and fraud in one call.
 
-25
-00:02:07,489 --> 00:02:09,829
+8
+00:00:40,163 --> 00:00:42,503
 So we can test the files that break lenders.
 
-26
-00:02:09,849 --> 00:02:13,179
+9
+00:00:42,523 --> 00:00:45,853
 Deceased, frozen and synthetic identities.
 
-27
-00:02:13,254 --> 00:02:19,274
+10
+00:00:45,928 --> 00:00:51,948
 CREAO hosts every lender as its own agent with its own credit policy, plus a compliance agent that writes the notice.
 
-28
-00:02:19,345 --> 00:02:24,625
+11
+00:00:52,019 --> 00:00:57,299
 All of it runs as one Convex workflow: retries, timeouts, a live board, a nightly eval.
 
-29
-00:02:24,700 --> 00:02:27,660
+12
+00:00:57,374 --> 00:01:02,754
+Docket: a one-person credit union. One loan officer runs a desk of agents.
+
+13
+00:01:02,821 --> 00:01:10,331
+Six layers: one soft pull, hard stops in code, five lender quotes.
+
+14
+00:01:10,351 --> 00:01:16,161
+Every decline reason is verified, the notice is written from what survived, and a person signs.
+
+15
+00:01:16,231 --> 00:01:21,821
+Every applicant is a printed card. Margaret wants $38,000 for a kitchen.
+
+16
+00:01:21,841 --> 00:01:26,651
+Five lenders quote her at once, on five different policies.
+
+17
+00:01:26,723 --> 00:01:32,273
+Nothing funds on its own. The agents do the work and escalate the decision to a person.
+
+18
+00:01:32,343 --> 00:01:36,923
+Every step is in the audit log. Agents are in the seat; a human holds the pen.
+
+19
+00:01:36,991 --> 00:01:43,101
+Kayla’s identity does not verify, and her CRS fraud score is 88.
+
+20
+00:01:43,121 --> 00:01:46,201
+Rules in code stop her before any model sees the file. Zero lenders.
+
+21
+00:01:46,267 --> 00:01:51,427
+Even the reviewer cannot push it through, and the attempt is logged.
+
+22
+00:01:51,447 --> 00:01:53,007
+She still gets a notice that tells her how to dispute it.
+
+23
+00:01:53,079 --> 00:02:01,439
+The part nobody does: for every decline reason, change only that one fact and re-run the lender.
+
+24
+00:02:01,510 --> 00:02:08,710
+Instead of “internal standards”, the borrower gets the reason that actually decided it, and knows what to fix.
+
+25
+00:02:08,784 --> 00:02:15,234
+A freeze at one bureau is not a dead end. We underwrite on the other two.
+
+26
+00:02:15,300 --> 00:02:18,260
 That is why we built Docket.
