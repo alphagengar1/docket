@@ -102,12 +102,23 @@ export default function App() {
   const prevStatus = useRef(new Map<string, string>())
   useEffect(() => {
     let arrived = false
+    let started: string | null = null
     for (const a of desk.applicants) {
       const before = prevStatus.current.get(a._id)
+      if (before === undefined && prevStatus.current.size > 0 && IN_FLIGHT.includes(a.status)) started = a._id
       if (before !== undefined && before !== 'awaiting_human' && a.status === 'awaiting_human') arrived = true
       prevStatus.current.set(a._id, a.status)
     }
     if (arrived) setPanels((p) => (Object.values(p).some(Boolean) ? p : { ...p, queue: true }))
+    // A run that just started (phone, API or console) takes the screen unless the user is already watching one.
+    if (started && !intakeOpen) {
+      const cur = desk.applicants.find((a) => a._id === selectedId)
+      if (!cur || !IN_FLIGHT.includes(cur.status)) {
+        setSelectedId(started)
+        setSelectedOfferId(null)
+        setSheetOpen(false)
+      }
+    }
   }, [desk.applicants])
 
   useEffect(() => {
@@ -144,6 +155,8 @@ export default function App() {
   const steps = useMemo(() => stepTimings(applicant, events), [applicant, events])
   const inFlight = desk.applicants.filter((a) => IN_FLIGHT.includes(a.status)).length
   const running = !!applicant && (IN_FLIGHT.includes(applicant.status) || applicant.status === 'awaiting_human')
+  // The timing waterfall is always on screen while the selected run is in flight.
+  const inFlightSel = !!applicant && IN_FLIGHT.includes(applicant.status)
   const now = useNow(running)
 
   const selectedOffer = offers.find((o) => o._id === selectedOfferId && o.decision === 'approve')
@@ -342,11 +355,11 @@ export default function App() {
                     offers={offers}
                     checks={desk.reasonChecks.filter((c) => c.applicantId === selectedId)}
                     now={now}
-                    timingOpen={timing}
+                    timingOpen={timing || inFlightSel}
                     onTiming={() => setTiming((t) => !t)}
                   />
                 )}
-                {(!focus || timing) && (
+                {(!focus || timing || inFlightSel) && (
                   <Waterfall applicant={applicant} steps={steps} offers={offers} checks={desk.reasonChecks.filter((c) => c.applicantId === selectedId)} now={now} />
                 )}
                 <div className="board-scroll">
