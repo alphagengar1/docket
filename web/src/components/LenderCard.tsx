@@ -205,7 +205,6 @@ export function LenderCard({ lender, offer, checks, bestApr, selected, chosen, d
     ['Term', approve && offer.termMonths != null ? `${offer.termMonths} mo` : dash, changed.term],
     ['Amount', approve ? usd(offer.amount) : dash, changed.amount],
     ['Latency', offer.latencyMs != null ? `${offer.latencyMs.toLocaleString('en-US')} ms` : dash, undefined],
-    ['Provider', offer.provider, undefined],
   ]
   const glance = offerGlance(offer, lender, { bestApr, requested, checks })
   const disTone = tone === 'approve' ? 'good' : tone === 'hard' ? 'bad' : tone === 'accent' ? 'muted' : 'info'

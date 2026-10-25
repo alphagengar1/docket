@@ -3,6 +3,7 @@ import { LENDERS } from '../types'
 import { fieldLabel } from '../../../convex/labels'
 import { Disclose, KV, Mono } from './Disclose'
 import '../styles/hardstop.css'
+import { scrubModelText } from '../lib/auditWords'
 
 /**
  * Hard-stop card, progressive-disclosure form.
@@ -72,7 +73,7 @@ export function HardStopCard({ event, events, applicant }: HardStopCardProps) {
         : `${attempts} ${attempts === 1 ? 'attempt' : 'attempts'}, every one blocked. A hard stop has no override path.`
 
   const firedAt = clock(event?.at)
-  const note = event?.note ?? 'A deterministic guardrail halted this file before any underwriter ran.'
+  const note = event?.note ? scrubModelText(event.note) : 'A deterministic guardrail halted this file before any underwriter ran.'
 
   const items = [
     { label: 'Rule', value: ruleLabel },

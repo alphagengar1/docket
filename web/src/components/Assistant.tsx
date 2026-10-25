@@ -18,7 +18,7 @@ interface Msg extends AssistantTurn {
   second?: { pending: boolean; text?: string; meta?: string }
 }
 
-const metaOf = (r: AssistantAnswer) => `${r.model} · ${(r.latencyMs / 1000).toFixed(1)}s${r.stub ? ' · stub' : ''}`
+const metaOf = (r: AssistantAnswer) => `${(r.latencyMs / 1000).toFixed(1)}s`
 
 const SUMMARY_SECOND_QUESTION = 'Summarize this applicant in four bullets: bureau, lenders, what verification withheld, next step'
 
@@ -108,12 +108,12 @@ export function Assistant({ api, applicant, summonKey }: Props) {
               {side ? (
                 <div className="ast-compare">
                   <div className="ast-col">
-                    <div className="ast-col-head mono">{m.meta?.split(' · ')[0] ?? 'Claude'}</div>
+                    <div className="ast-col-head mono">Desk assistant</div>
                     <div className="ast-text">{m.content}</div>
                     {m.meta && <div className="ast-meta mono">{m.meta}</div>}
                   </div>
                   <div className="ast-col">
-                    <div className="ast-col-head mono">{m.second?.meta?.split(' · ')[0] ?? 'GPT'}</div>
+                    <div className="ast-col-head mono">Second opinion</div>
                     <div className="ast-text">{m.second?.pending ? <span className="skel" style={{ width: 160, height: 12 }} /> : m.second?.text}</div>
                     {m.second?.meta && <div className="ast-meta mono">{m.second.meta}</div>}
                   </div>

@@ -8,6 +8,7 @@ import { ReasonList } from './ReasonList'
 import { Num } from './OfferCard'
 import { fieldLabel } from '../../../convex/labels'
 import { narrateTrace } from '../../../convex/narrate'
+import { scrubModelText } from '../lib/auditWords'
 
 export type InspectorTab = 'offer' | 'trace' | 'notice'
 
@@ -289,7 +290,7 @@ function OfferTab({ applicant, offer, decision, offers, checks }: { applicant: A
             {decision.outcome} · by {decision.approvedBy}
           </div>
           <div className="chip">{clock(decision.at)}</div>
-          <div>{decision.note}</div>
+          <div>{scrubModelText(decision.note)}</div>
         </div>
       )}
       {applicant.status === 'hard_stop' && <div className="muted">Hard stop: no offers exist for this file. See the Trace tab for the triggering field.</div>}
@@ -314,10 +315,6 @@ function OfferTab({ applicant, offer, decision, offers, checks }: { applicant: A
             </span>
           </div>
           <div className="kvgrid" style={{ padding: 0, borderBottom: 'none' }}>
-            <span className="k">Provider</span>
-            <span className="v">{show.provider}</span>
-            <span className="k">Run</span>
-            <span className="v">{show.runId ?? '—'}</span>
             <span className="k">Latency</span>
             <span className="v">{secs(show.latencyMs, 2)}</span>
             <span className="k">Classification</span>
@@ -403,7 +400,7 @@ function refOf(e: AuditEvent): string | null {
   return e.ref
 }
 function noteOf(e: AuditEvent): string | null {
-  const n = (e.note ?? '').trim()
+  const n = scrubModelText((e.note ?? '').trim())
   if (!n) return null
   if (e.action === 'step.pull.done') return n.replace(/^source=\w+;\s*/, '')
   return n
@@ -554,7 +551,7 @@ function TraceTab({ applicant, events, noticeText }: { applicant: Applicant; eve
                             <li key={k}>
                               <span>{clock(e.at)}</span> <b>{e.actor}</b> {e.action}
                               {e.ref && !CONVEX_ID.test(e.ref) ? ` · ${e.ref}` : ''}
-                              {e.note ? <div>{e.note}</div> : null}
+                              {e.note ? <div>{scrubModelText(e.note)}</div> : null}
                             </li>
                           ))}
                         </ul>
@@ -578,7 +575,7 @@ function TraceTab({ applicant, events, noticeText }: { applicant: Applicant; eve
           <div className="trace-actions">
             <CopyButton
               label="Copy as JSON"
-              text={() => JSON.stringify(events.slice().sort((a, b) => a.at - b.at).map((e) => ({ at: e.at, actor: e.actor, action: e.action, ref: e.ref, note: e.note })), null, 2)}
+              text={() => JSON.stringify(events.slice().sort((a, b) => a.at - b.at).map((e) => ({ at: e.at, actor: e.actor, action: e.action, ref: e.ref, note: scrubModelText(e.note ?? '') })), null, 2)}
             />
           </div>
         </>

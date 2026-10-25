@@ -19,6 +19,7 @@ import { useApplicantSlice } from '../hooks/useDesk'
 import { useNow } from '../hooks/useNow'
 import { Disclose, KV, Mono, type KVItem } from './Disclose'
 import '../styles/queue.css'
+import { scrubModelText } from '../lib/auditWords'
 
 interface Props {
   applicants: Applicant[]
@@ -254,7 +255,7 @@ function hardItems(facts: Facts, stopReason?: string): KVItem[] {
   return [
     { label: 'Rule', value: ev?.ref ? stopLabel(ev.ref) : fallback },
     ...(ev?.ref ? [{ label: 'Field', value: fieldLabel(ev.ref) }] : []),
-    { label: 'Rule said', value: <q className="qd-quote">{plain(ev?.note ?? fallback)}</q> },
+    { label: 'Rule said', value: <q className="qd-quote">{plain(scrubModelText(ev?.note ?? fallback))}</q> },
     { label: 'Fired at', value: ev ? <Mono>{clock(ev.at)}</Mono> : facts.events === undefined ? 'Not loaded in this view' : 'Time not recorded' },
     { label: 'Lenders asked', value: `0 of ${TOTAL}. The model never saw this file.` },
     { label: 'Notice', value: 'None owed: a hard stop is not a credit decision.' },
@@ -283,7 +284,7 @@ function decidedItems(a: Applicant, offers: Offer[], facts: Facts): KVItem[] {
   else items.push({ label: 'Lenders', value: `${declines} of ${TOTAL} had said no` })
   items.push({ label: 'Decided at', value: d ? <Mono>{clock(d.at)}</Mono> : d === undefined ? 'Not loaded in this view' : 'Not recorded' })
   items.push({ label: 'Decided by', value: 'The loan officer, by hand' })
-  if (d?.note) items.push({ label: 'Note', value: plain(d.note) })
+  if (d?.note) items.push({ label: 'Note', value: plain(scrubModelText(d.note)) })
   return items
 }
 

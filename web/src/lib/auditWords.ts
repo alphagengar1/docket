@@ -77,3 +77,17 @@ export function asSentence(s: string): string {
   const cap = t.charAt(0).toUpperCase() + t.slice(1)
   return /[.!?…]$/.test(cap) ? cap : `${cap}.`
 }
+
+/** Strip anything that names a model or provider from text that reaches the screen. */
+export function scrubModelText(s: string): string {
+  if (!s) return s
+  return s
+    .replace(/\[provider=[^\]]*\]/gi, '')
+    .replace(/\brunId=[^\s;,\]]*[;,]?/gi, '')
+    .replace(/\b(?:model|provider)=[^\s;,\]]*[;,]?/gi, '')
+    .replace(/\bclaude[-a-z0-9.]*/gi, 'the underwriting agent')
+    .replace(/\b(?:haiku|sonnet|opus)[-a-z0-9.]*/gi, 'the underwriting agent')
+    .replace(/(the underwriting agent[\s,]*)+/g, 'the underwriting agent ')
+    .replace(/\s{2,}/g, ' ')
+    .trim()
+}

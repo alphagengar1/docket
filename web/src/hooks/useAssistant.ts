@@ -37,7 +37,7 @@ function useConvexAssistant(): AssistantApi {
 }
 
 const mockAnswer = async (): Promise<AssistantAnswer> => ({
-  text: 'Stub answer: the mock desk has no backend, so the assistant cannot call Claude. A human approves every offer.',
+  text: 'Stub answer: the mock desk has no backend, so the assistant is offline. A human approves every offer.',
   model: 'stub',
   latencyMs: 0,
   scope: 'desk',

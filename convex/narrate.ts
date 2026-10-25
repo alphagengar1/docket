@@ -222,9 +222,8 @@ export function narrateTrace<E extends NarrEvent = NarrEvent>(
         break;
       case "compliance.notice": {
         const ms = /\b(\d+)\s*ms\b/.exec(note);
-        const model = /model=([\w.-]+)/.exec(note)?.[1] ?? /provider=([\w.-]+)/.exec(note)?.[1];
-        const how = /no model/.test(note) ? "from the code template, no model" : [model, ms ? dur(Number(ms[1])) : ""].filter(Boolean).join(", ");
-        say(e.at, `Adverse-action notice drafted${how ? ` (${how})` : ""}, awaiting sign-off.`, "good", [e], ctx.noticeText ? [{ label: "Notice text", value: clean(ctx.noticeText).slice(0, 300) }] : undefined);
+        const how = /no model/.test(note) ? "from the code template" : ms ? dur(Number(ms[1])) : "";
+        say(e.at, `The compliance agent drafted the adverse-action notice${how ? ` (${how})` : ""}, awaiting sign-off.`, "good", [e], ctx.noticeText ? [{ label: "Notice text", value: clean(ctx.noticeText).slice(0, 300) }] : undefined);
         noticeLine = true;
         break;
       }

@@ -58,9 +58,9 @@ test("hard stop names the rule and the notice", () => {
   const t = r.lines.map((l) => l.text);
   assert.ok(t.includes("Hard stop: identity could not be verified. Fraud risk score 88 is at or above the 80 threshold."));
   assert.ok(t.includes("Override refused and logged."));
-  assert.ok(t.some((x) => /^Adverse-action notice drafted \(from the code template, no model\), awaiting sign-off\.$/.test(x)));
+  assert.ok(t.some((x) => /^The compliance agent drafted the adverse-action notice \(from the code template\), awaiting sign-off\.$/.test(x)));
   assert.equal(r.lines.find((l) => l.text.startsWith("Hard stop"))!.tone, "bad");
-  assert.equal(r.lines.find((l) => l.text.startsWith("Adverse-action"))!.details![0].label, "Notice text");
+  assert.equal(r.lines.find((l) => l.text.startsWith("The compliance agent"))!.details![0].label, "Notice text");
   assert.ok(!/identity\.verified|FICO/i.test(r.paragraph));
 });
 
@@ -89,7 +89,7 @@ test("decline with verification and notice", () => {
   assert.ok(d, "lender line");
   assert.ok(d.includes("score") && d.includes("utilization"));
   assert.ok(t.includes("Counterfactual test: 2 of 3 reasons held up; 1 withheld from the notice."));
-  assert.ok(t.includes("Adverse-action notice drafted (creao, 4.6 s), awaiting sign-off."));
+  assert.ok(t.includes("The compliance agent drafted the adverse-action notice (4.6 s), awaiting sign-off."));
   assert.ok(t.includes("Waiting on the loan officer for 20.0 s."));
   assert.ok(t.includes("Declined. Rationale: Thin file."));
   const v = r.lines.find((l) => l.text.startsWith("Counterfactual"))!;

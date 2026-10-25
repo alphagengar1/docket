@@ -11,7 +11,7 @@ import { LENDERS, type Applicant, type AuditEvent, type Bundle, type Decision, t
 import { clock, monthlyPayment, secs as fmtSecs, usd } from '../lib/format'
 import { checkFor, eventsFor, offersFor, stepTimings, type CheckState } from '../lib/select'
 import { describeIdentityFlag } from '../../../convex/labels'
-import { actionWords } from '../lib/auditWords'
+import { actionWords, scrubModelText } from '../lib/auditWords'
 import { reasonLabel } from '../components/ReasonList'
 import { Mark } from '../components/Logo'
 import { Disclose, DiscloseGroup, KV, Mono, type KVItem } from '../components/Disclose'
@@ -554,7 +554,7 @@ function Log({ events }: { events: AuditEvent[] }) {
           <span className="t">{clock(e.at)}</span>
           <span className="tx">
             {e.action === 'override.blocked' && <i className="sq" />}
-            {e.note || actionWords(e.action)}
+            {scrubModelText(e.note ?? '') || actionWords(e.action)}
           </span>
         </div>
       ))}
@@ -611,7 +611,7 @@ function Foot({ kind, a, offers, events, bundle, notice, decision, chosen, marks
       ]
     : [
         { label: 'Decided by', value: decision ? `A person (${decision.approvedBy}) at ${clock(decision.at)}` : 'A person' },
-        { label: 'Note', value: decision?.note ? decision.note : 'No note left' },
+        { label: 'Note', value: decision?.note ? scrubModelText(decision.note) : 'No note left' },
         { label: 'Borrower picked', value: chosen ? `${SHORT[chosen.lender]} · ${chosen.apr != null ? chosen.apr.toFixed(2) : '—'}% APR · ${usd(chosen.amount)}` : 'No offer picked' },
         { label: 'Notice', value: notice ? `Approved · ${n} of ${NOTICE_ELEMENTS.length} required elements` : 'No notice on file' },
       ]

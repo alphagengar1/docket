@@ -62,7 +62,7 @@ export function Waterfall({ applicant, steps, offers, checks, now }: Props) {
         const end = o && o.status !== 'pending' && o.latencyMs != null ? o.createdAt + o.latencyMs : null
         const state: StepTiming['state'] = !o ? (s.state === 'skipped' ? 'skipped' : 'queued') : o.status === 'pending' ? 'running' : 'done'
         const word = !o || o.status === 'pending' ? 'quoting' : o.classification ?? o.decision ?? ''
-        const met = !o ? l.name : o.status === 'pending' ? `${secs(now - o.createdAt, 1)} · ${o.provider} · quoting` : `${secs(o.latencyMs, 2)} · ${o.provider} · ${word}${o.decision === 'decline' ? ` · ${o.reasons.length} reasons` : ''}`
+        const met = !o ? l.name : o.status === 'pending' ? `${secs(now - o.createdAt, 1)} · quoting` : `${secs(o.latencyMs, 2)} · ${word}${o.decision === 'decline' ? ` · ${o.reasons.length} reasons` : ''}`
         rows.push({ key: l.id, name: l.label, metric: met, state, start, end, color: 'var(--actor-underwriter)', child: true })
       }
     }

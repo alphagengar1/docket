@@ -4,7 +4,7 @@ import { LENDERS, PIPELINE_STEPS } from '../types'
 import { clock, clockMs, pct } from '../lib/format'
 import { newestFirst } from '../lib/select'
 import { FIELD_LABELS, fieldLabel } from '../../../convex/labels'
-import { actionWords, asSentence, refWords as sharedRefWords } from '../lib/auditWords'
+import { actionWords, asSentence, scrubModelText, refWords as sharedRefWords } from '../lib/auditWords'
 import { reasonLabel } from './ReasonList'
 import { ACTOR_COLOR } from './Inspector'
 import { Disclose, DiscloseGroup, KV, Mono } from './Disclose'
@@ -146,8 +146,7 @@ function plainNote(note: string): string {
     out = out.replace(new RegExp(`\\b(?:credit\\.)?${esc}\\b`, 'g'), fieldLabel(key))
   }
   out = out.replace(/\bfico\s?9?\b/gi, 'TransUnion score')
-  out = out.replace(/\[provider=[^\]]*\]/g, '').replace(/\s{2,}/g, ' ').trim()
-  return out
+  return scrubModelText(out)
 }
 
 /** Reference column: field paths become labels; ids (Convex or mock) are never printed. */

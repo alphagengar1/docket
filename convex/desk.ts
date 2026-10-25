@@ -20,6 +20,7 @@ import { evaluateHardStops } from "./rules";
 import { stopLabel } from "./labels";
 import { LENDERS } from "./types";
 import { noticeRequired } from "./classify";
+import { demoReplayOn } from "./replay";
 
 export const workflow = new WorkflowManager(components.workflow);
 
@@ -255,7 +256,8 @@ export const createApplicantInternal = internalMutation({
     name: v.optional(v.string()),
   },
   handler: async (ctx, args): Promise<Id<"applicants">> => {
-    return await createAndStart(ctx, args);
+    // eval / recordAll measure the live desk: never replay for them
+    return await createAndStart(ctx, { ...args, live: true });
   },
 });
 
@@ -271,6 +273,7 @@ async function createAndStart(
     replayOf?: Id<"applicants">;
     replayNote?: string;
     dispute?: { fromApplicantId: Id<"applicants">; tradelineIndex: number };
+    live?: boolean;
   },
 ): Promise<Id<"applicants">> {
   const persona = findPersona(args.personaId);
@@ -297,6 +300,14 @@ async function createAndStart(
       ? `replay of ${args.replayOf}: ${args.replayNote ?? ""}`
       : `${name}: $${args.amountRequested} for ${args.purpose}, stated income $${args.statedIncome}, consent recorded`,
   });
+  if (!args.live && !args.dispute && demoReplayOn()) {
+    // DEMO_REPLAY=1: re-create the recorded run for this persona; no live model or bureau call.
+    const rec = await ctx.db.query("recordings").withIndex("by_personaId", (q: any) => q.eq("personaId", args.personaId)).order("desc").first();
+    if (rec) {
+      await ctx.scheduler.runAfter(0, internal.replay.playRecording, { applicantId, recordingId: rec._id });
+      return applicantId;
+    }
+  }
   await startDesk(ctx, applicantId, args.dispute);
   return applicantId;
 }
@@ -311,6 +322,8 @@ export const disputeTradeline = mutation({
   handler: async (ctx, { applicantId, tradelineIndex, note }): Promise<Id<"applicants">> => {
     const original = await ctx.db.get(applicantId);
     if (!original) throw new Error("applicant not found");
+    // A dispute re-runs the live desk on a corrected bureau file; replay mode never goes live.
+    if (demoReplayOn()) throw new Error("Disputes are paused in replay mode: this session is replaying recorded decisions. The dispute re-run is available in live mode.");
     const bundle = await ctx.db
       .query("bundles")
       .withIndex("by_applicantId", (q) => q.eq("applicantId", applicantId))
@@ -875,6 +888,7 @@ export const config = query({
       commit: process.env.GIT_SHA ?? null,
       crsProvider: process.env.CRS_PROVIDER ?? "mock",
       lenderNames: LENDER_NAMES,
+      demoReplay: demoReplayOn(),
       secondOpinionEnabled: Boolean(process.env.OPENAI_API_KEY),
       latestEval: latest && latest.finishedAt ? { cases: latest.cases, agreement: latest.agreement, passed: Math.round(latest.agreement * latest.cases), startedAt: latest.startedAt } : null,
     };

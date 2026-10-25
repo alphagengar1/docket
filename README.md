@@ -1,61 +1,66 @@
 # Docket
 
-Docket is a one-person credit union. One loan officer runs a lending desk through agents, and a person signs every offer and notice. The claim: every denial reason is tested before it is sent.
+One loan officer leading a whole lending desk of agents. Docket is a one-person credit union with six layers and one workflow: code decides what agents may see, agents decide inside written policies, and a person signs. Every reason in a denial letter is tested before it is sent.
 
 ## The problem
 
-Most people who are turned down for a loan get a letter that says "Reason: internal standards." No numbers, no next step.
+Personal loans owed in the U.S. are a record $281 billion, and about 1 in 6 people who apply for credit are turned down. Every one of those turn-downs needs a letter, and most letters say "Reason: internal standards." No numbers, no next step.
 
-The law says the letter must say why. Regulation B requires the principal reasons, specific to your file. The Fair Credit Reporting Act (FCRA) requires the letter to name the bureau that supplied the data, and to say the bureau did not make the decision.
+The law says the letter must say why. Regulation B requires the principal reasons, specific to the file, and rules out "internal standards". The Fair Credit Reporting Act (FCRA) requires the letter to name the bureau that supplied the data, say the bureau did not make the decision, and offer a free report and the right to dispute.
 
-Nobody checks the reason was real. A reason is only lawful if the lender relied on it. Models pad declines with true but irrelevant facts such as "score meets minimum". Docket tests that.
+Nobody checks the reasons. A reason is only lawful if the lender relied on it, and asked to explain a no, an AI pads the letter with true but irrelevant facts such as "score meets minimum". Docket tests every reason.
 
 ## What Docket does
 
-1. **Be the borrower.** Draw a persona card and type its four digits on the phone (`#/borrower`). Docket soft-pulls all three bureaus through the CRS Credit API sandbox. Name, address and SSN never reach a model.
-2. **Five policies read one file in parallel.** Each policy in `policies/*.md` is the prompt its agent receives. Offers are ranked by total cost to borrow.
-3. **A bad day stops in code.** Deceased, unscorable, failed-identity and fraud-score-80 files are stopped by `convex/rules.ts`. Override is refused.
-4. **Every denial reason is tested.** Docket changes only the field behind a reason to a passing value and re-runs the lender. If the decision flips, the reason is real. If not, it is withheld.
-5. **The letter is rewritten from reasons that survived, and a person signs.** The notice carries the FCRA statement and the right to dispute. The loan officer approves it. Dispute a tradeline and all five lenders re-run.
+1. **Be the borrower.** Draw a persona card and type its four digits on the phone (`#/borrower`). One soft pull from the CRS Credit API sandbox returns all three bureaus plus identity, fraud and public records. Name, address, ZIP and SSN never reach a model.
+2. **Hard stops end risky files in code.** Deceased, every bureau file frozen, identity mismatch, and fraud score 80 or higher are stopped by `convex/rules.ts` before any model sees the file. Override is refused and logged.
+3. **Five lenders read one file in parallel.** Each policy in `policies/*.md` is the prompt its agent receives. The agent decides yes, no or counteroffer and names the field behind each reason; prices come from each policy's grid by score band. The borrower picks the cheapest yes.
+4. **Every denial reason is tested.** Docket changes only the field behind a reason to a passing value and re-runs the lender. If the decision flips, the reason is kept. If not, it is withheld.
+5. **The notice uses only tested reasons.** Offer, counteroffer or decline is classified in code. The notice carries the tested reasons with numbers, the FCRA statement, and the free report and dispute rights. Dispute a tradeline and all five lenders re-run.
+6. **A person signs.** Nothing funds until the loan officer signs, and every click is logged with who and when.
 
 ## Proof
 
-The test set is the 20-persona answer key in `personas/map.json`. `eval:runEval` runs all 20 nightly and from the board.
+The test set is the 20-persona answer key in `personas/map.json`. `eval:runEval` runs all 20 applicants through the real desk, in parallel, every night and from the board.
 
-Latest recorded run: 20/20 agreement with the key and 60/60 per-lender agreement, on the three-lender build. It has not yet been re-run on the five-lender build. This shows consistency with our own key. It does not prove fairness; twenty personas cannot.
+Latest cloud eval (five CREAO lenders): 20/20 outcomes right, 96/100 lender calls right (the 4 misses are answer-key loan amounts), 85/85 lender answers valid, 82% of reasons hold up and the rest never reach a letter, and zero offers to fraud or deceased files. One live application took 62 s from card code to the officer's queue, with hard stops in about 5 s. Model cost is about 3 cents per application, an estimate from prompt sizes and list prices.
+
+This shows consistency with our own answer key. It does not prove fairness; twenty personas cannot. Fairness is next: two applicants that differ in one field must get the same answer.
 
 ## Two ways to run it
 
 Inside a company:
 - Your agents call a bearer-authenticated HTTP API (`/api/v1/*`) or an MCP server, and get one DecisionRecord per applicant with a verdict on every denial reason.
-- Bring your own policies and answer key; a benchmark endpoint scores Docket against it.
+- Bring your own policies and answer key; a benchmark endpoint scores Docket against it. A new lender is a new policy file.
 
 On your own:
 - You are the one-person desk: a phone, a board, five lenders. You sign every offer and notice.
 
 ## How it is built
 
-| Step | Who decides | What it guarantees |
-| --- | --- | --- |
-| 1. Credit pull | Code | One soft pull, six CRS sandbox calls, about 3 s |
-| 2. Hard stops | Code | A stopped file reaches no lender |
-| 3. Five underwriters | Agents | Parallel, schema-checked JSON, 20 s timeout per lender |
-| 4. Verify | Code | Each reason survives a one-field flip or is withheld |
-| 5. Notice | Agent | Written from verified reasons; classification done in code |
-| 6. Human | Person | Nothing funds or is sent without a signature |
+Six layers, one workflow: code decides what agents may touch, agents decide inside policies, a person makes the final call.
 
-A durable Convex workflow (`runDesk`) owns the order and audit trail, and live queries feed the console, board and phone. The CRS Credit API supplies bureau data. Claude `claude-haiku-5-5` underwrites and `claude-sonnet-5-5` writes the notice. CREAO hosts the six agents. Every reply, from CREAO or Claude, is validated against the same Zod schema before it touches an offer or a notice; a reply that fails, arrives as prose or misses 90 s is re-run on Claude and the failover is audited.
+| Layer | Who decides | What it guarantees |
+| --- | --- | --- |
+| 1. Credit pull | Code | One soft pull, about 3 s; every lender sees the same file with no identity in it |
+| 2. Hard stops | Code | Risky files stop before any AI sees them |
+| 3. Underwriters x5 | Agents | Five lenders decide in parallel on written policies; prices come from policy, not agents |
+| 4. Verify | Code | Each denial reason is re-tested by flipping only that field; reasons that do not change the decision are withheld |
+| 5. Notice | Agent | Written from tested reasons only; offer, counteroffer or decline is classified in code |
+| 6. Human + platform | Person | Nothing funds until the loan officer signs; override is refused and logged |
+
+A durable Convex workflow (`runDesk`) owns the order and audit trail; every step is an audit row, and live queries feed the console (the loan officer's desk), the board (the judges' live screen) and the phone (the borrower). The CRS Credit API supplies bureau data. CREAO hosts the five underwriter agents and the notice agent, with Claude as fallback. Every reply is validated against the same Zod schema before it touches an offer or a notice; a reply that fails or arrives as prose is re-run on Claude and the failover is audited. If a lender is stuck, the other lenders carry on.
 
 Simulated: the five lenders are fictional, no money moves, and every applicant is a CRS test persona. Scores are VantageScore 4.
 
 ## Sponsor tools, and what each one does here
 
-- **CRS Credit API**: one call per applicant returns TransUnion, Equifax and Experian prequal, identity verification, FraudFinder and PitchPoint public records. The 20 test personas are its sandbox consumers, so the deceased, frozen and synthetic files are real sandbox pulls.
-- **Convex**: the six steps run as one durable workflow with retries and timeouts; live queries drive the phone and the judge board; the scheduler runs the nightly eval; httpActions serve the API and the CREAO webhook.
-- **Claude (Anthropic)**: claude-haiku-5-5 underwrites and re-runs the counterfactual tests; claude-sonnet-5-5 writes the adverse-action notice and powers the desk assistant.
-- **CREAO**: six hosted agents, five underwriters and a compliance writer, with schema-gated failover to Claude.
-- **Hyphenate**: an autonomous finance workflow where agents recommend and a person signs every offer and every notice.
-- **Microsoft, built for the real world**: deterministic hard stops, a 20 s lender timeout, a PII allowlist, an audit row for every step, and a 20-persona eval against an answer key.
+- **CRS Credit API**: one soft pull per applicant returns TransUnion, Equifax and Experian data, identity verification, a fraud score and public records. The 20 test personas are its sandbox consumers, so the deceased, frozen and synthetic files are real sandbox pulls.
+- **Convex**: the six layers run as one durable workflow with retries; live queries drive the console, the board and the phone; the scheduler runs the nightly 20-applicant eval; httpActions serve the API, the health check and agent webhooks.
+- **Claude (Anthropic)**: powers the desk assistant and the counterfactual re-runs behind reason verification.
+- **CREAO**: six hosted agents, five underwriters and a compliance writer.
+- **Hyphenate**: an autonomous finance workflow where agents do the work and a person signs every offer and every notice.
+- **Microsoft, built for the real world**: deterministic hard stops, a PII allowlist, an audit row for every step, and a 20-applicant eval against an answer key.
 
 ## Run it
 
@@ -67,7 +72,7 @@ npm run policies:sync                          # after editing policies/*.md
 cd web && npm install && npm run dev           # set VITE_CONVEX_URL from web/.env.example
 ```
 
-Open `#/borrower` on a phone and `#/board` on a second screen. Env vars (`npx convex env set NAME value`): `ANTHROPIC_API_KEY` (unset runs a labeled stub), `CRS_PROVIDER` (`mock` or `crs`), `CRS_USERNAME`, `CRS_PASSWORD`, `CRS_STRICT`, `LENDER_TIMEOUT_MS`, `GIT_SHA`, `AGENT_PROVIDER_UNDERWRITER`, `AGENT_PROVIDER_COMPLIANCE`, and the optional `CREAO_*` set.
+Open `#/borrower` on a phone and `#/board` on a second screen. Env vars (`npx convex env set NAME value`): `ANTHROPIC_API_KEY` (unset runs a labeled stub), `CRS_PROVIDER` (`mock` or `crs`), `CRS_USERNAME`, `CRS_PASSWORD`, `CRS_STRICT`, `GIT_SHA`, `AGENT_PROVIDER_UNDERWRITER`, `AGENT_PROVIDER_COMPLIANCE`, and the optional `CREAO_*` set.
 
 ## Integrate it
 

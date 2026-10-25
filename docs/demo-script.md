@@ -1,6 +1,6 @@
 # Live demo: 3-minute run of show
 
-Written Sat Oct 24 against commit `8210c95` (deployment reports `e2dafe5`, `CRS_PROVIDER=mock`, lender timeout 20 s, latest eval 20/20). The structure follows the research in `design/demo-day-kit.md`: the judge lives the demo with their own hands, one good day, one bad day, one moment as the human, then proof. A demo that stalls loses to a simpler one that runs, so the live run uses three personas, not five.
+Written Sat Oct 24 against commit `8210c95` (deployment reports `e2dafe5`, `CRS_PROVIDER=mock`, latest eval 20/20). The structure follows the research in `design/demo-day-kit.md`: the judge lives the demo with their own hands, one good day, one bad day, one moment as the human, then proof. A demo that stalls loses to a simpler one that runs, so the live run uses three personas, not five.
 
 Timings below come from live runs on the cloud deployment today, not from guesses.
 
@@ -58,7 +58,7 @@ J = judge. Exact words are in quotes. Stage directions are plain text.
 | 0:52 | B | If J picked Meridian Bank Prime (6.49%, the lowest), press **A**. Otherwise click the offer J picked in the Inspector and press Approve (A always approves the lowest APR, not the judge's pick). "Nothing funds until a person signs. Today that person is me." |
 | 0:58 | A | Phone: APPROVED. "That's a good day." |
 
-If offers are not on the phone by 0:50: A says "Lenders are still quoting; they time out at 20 seconds and the others carry on," and moves to beat 3 at 1:05 anyway. B approves P01 later, in Q&A.
+If offers are not on the phone by 0:50: A says "Lenders are still quoting; the others carry on," and moves to beat 3 at 1:05 anyway. B approves P01 later, in Q&A.
 
 ### Beat 3. A bad day, P13 (1:05 to 1:45)
 
@@ -97,22 +97,22 @@ If P08 is still verifying at 1:45: B says "It's still testing reasons; each chec
 | Time | Who | Says or does |
 |---|---|---|
 | 2:30 | B | Presses **E** on the board for the eval view. |
-| 2:32 | A | Holds up the deck. "This deck is our test suite. All 20 CRS sandbox personas run through the real desk every night. We agree with our answer key on 20 of 20, and 81% of decline reasons survive the test." |
+| 2:32 | A | Holds up the deck. "This deck is our test suite. All 20 CRS sandbox personas run through the real desk every night. We agree with our answer key on 20 of 20, on 96 of 100 lender calls, and 82% of reasons hold up." |
 | 2:42 | A | "What's simulated: the three lenders are agents with written policies, no money moves, and every person here is a sandbox persona." |
 | 2:50 | A | "Agents do the work, a person makes every call, and every step is logged. We're Swaraj and Matthew. Ask us what breaks." Stop at 2:55. Five seconds of buffer. |
 
 ## Words to say and not say
 
 - Say "the CRS sandbox" and, since the deployment runs `CRS_PROVIDER=mock`, "captured sandbox pulls". If you switch the deployment to `CRS_PROVIDER=crs` before judging, say "live sandbox pulls" instead. Never claim live if it isn't.
-- Say "TransUnion score" or "VantageScore". Never say "FICO", even though the endpoint name contains it.
+- Say "TransUnion score" or "VantageScore".
 - Say "soft pull". The endpoints are the prequal products.
-- The lender timeout is 20 seconds, and the other lenders carry on.
+- If a lender is slow, the other lenders carry on.
 
 ## Fallbacks
 
 | What goes wrong | What you see | Who acts | Exact words |
 |---|---|---|---|
-| One lender hangs | Lender card stays on "Quoting" past ~10 s | A | "That's the timeout path. Each lender gets 20 seconds, then it's marked no response and the other two finish without it." Keep talking; do not wait. At 20 s the card fails over. |
+| One lender hangs | Lender card stays on "Quoting" past ~10 s | A | "That one is slow. The other lenders carry on, and a stuck reply is re-run on Claude." Keep talking; do not wait. |
 | All lenders slow (rate limit) | Waterfall stuck at underwrite | A | "Every team in this building is hitting the same APIs right now." Move to the next beat on the clock. B approves the stragglers during Q&A. |
 | Phone loses network or the judge leaves the page | Phone frozen or on another app | B | "Let's run this one from the console." B starts the same persona from **Deck**. Judge watches the big screen. |
 | Judge types a wrong code | Phone: "No card with that code." | J | Types it again. Codes are digits 2 to 9 only. |

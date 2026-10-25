@@ -76,7 +76,6 @@ export function OfferCard({ lender, offer, checks, underwriteStartedAt, now, sel
                 <KV
                   items={[
                     { label: 'Started', value: since ? clock(since) : 'Not yet; waiting for the bureau pull and guardrails to finish.' },
-                    { label: 'Provider', value: offer?.provider ?? 'claude' },
                     { label: 'Policy', value: `${meta.policy} (${meta.label}). ${POLICY_NOTE[lender]}` },
                     { label: 'Must decide', value: 'Approve or decline; if approved, an APR, a term and an amount; if declined, at least two reasons, each then tested with a counterfactual.' },
                   ]}
@@ -104,7 +103,6 @@ export function OfferCard({ lender, offer, checks, underwriteStartedAt, now, sel
         <div className="card-foot">
           <span className="chips">
             <span className="chip">{since ? secs(now - since, 1) : '—'}</span>
-            <span className="chip">{offer?.provider ?? 'claude'}</span>
           </span>
         </div>
       </div>
@@ -238,7 +236,6 @@ export function OfferCard({ lender, offer, checks, underwriteStartedAt, now, sel
               </div>
 
               <span className="chips oc-provider">
-                <span className="chip">provider {offer.provider}</span>
                 <span className="chip">{offer.latencyMs != null ? `${offer.latencyMs.toLocaleString('en-US')} ms` : '—'}</span>
               </span>
             </div>

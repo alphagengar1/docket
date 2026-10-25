@@ -9,6 +9,7 @@
  */
 
 import type * as agents from "../agents.js";
+import type * as api_ from "../api.js";
 import type * as assistant from "../assistant.js";
 import type * as audit from "../audit.js";
 import type * as classify from "../classify.js";
@@ -20,9 +21,11 @@ import type * as evalScore from "../evalScore.js";
 import type * as http from "../http.js";
 import type * as labels from "../labels.js";
 import type * as market from "../market.js";
+import type * as narrate from "../narrate.js";
 import type * as personas from "../personas.js";
 import type * as pii from "../pii.js";
 import type * as policies from "../policies.js";
+import type * as replay from "../replay.js";
 import type * as rules from "../rules.js";
 import type * as stub from "../stub.js";
 import type * as types from "../types.js";
@@ -36,6 +39,7 @@ import type {
 
 declare const fullApi: ApiFromModules<{
   agents: typeof agents;
+  api: typeof api_;
   assistant: typeof assistant;
   audit: typeof audit;
   classify: typeof classify;
@@ -47,9 +51,11 @@ declare const fullApi: ApiFromModules<{
   http: typeof http;
   labels: typeof labels;
   market: typeof market;
+  narrate: typeof narrate;
   personas: typeof personas;
   pii: typeof pii;
   policies: typeof policies;
+  replay: typeof replay;
   rules: typeof rules;
   stub: typeof stub;
   types: typeof types;

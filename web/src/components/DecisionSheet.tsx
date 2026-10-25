@@ -14,7 +14,7 @@ import { clock, clockMs, secs, usd } from '../lib/format'
 import { IN_FLIGHT, STATUS_TONE, STATUS_WORD } from '../lib/status'
 import { hardStopEvent, noticeRequired, stepTimings, type StepState } from '../lib/select'
 import { summarize, type LenderLine } from '../lib/summary'
-import { actionWords, refWords } from '../lib/auditWords'
+import { actionWords, refWords, scrubModelText } from '../lib/auditWords'
 import { reasonLabel } from './ReasonList'
 import { DecisionSummary } from './DecisionSummary'
 import { ApplicantFacts, BureauFacts, bureauConcern, bureauGlance, bureauMissing } from './ApplicantFacts'
@@ -528,7 +528,7 @@ function TraceDetail({ a, events, offers, checks }: { a: Applicant; events: Audi
                   <span className="act">{actionWords(e.action)}</span>
                   {refWord(e.ref)}
                 </span>
-                {e.note && <span className="note">{e.note}</span>}
+                {e.note && <span className="note">{scrubModelText(e.note)}</span>}
               </li>
             ))}
           </ol>
