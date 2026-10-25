@@ -271,3 +271,12 @@
 .queue-row.compact.tone-good .q-outcome { color: var(--accent); }
 .queue-row.compact.tone-warn .q-outcome { color: var(--decline); }
 .queue-row.compact.tone-bad .q-outcome { color: var(--hard); }
+
+/* Spacing fixes (all themes). The section head is a button, and buttons have a fixed control height,
+   so a wrapped hint used to spill over the first row. The three row actions used to overflow the
+   pane; they now share the width and wrap instead of clipping. */
+.q-sec-head { height: auto; min-height: 36px; flex-wrap: wrap; row-gap: 2px; line-height: 1.35; }
+.q-sec-head .q-sec-hint { flex-basis: 100%; padding-left: 18px; }
+.queue-row .queue-actions { flex-wrap: wrap; }
+.queue-row .queue-actions button { flex: 1 1 auto; min-width: 0; padding: 0 10px; white-space: nowrap; }
+.queue-row .queue-actions .q-more { flex: 0 0 auto; }

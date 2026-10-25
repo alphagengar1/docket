@@ -150,3 +150,48 @@
 /* plain wash, no particles or grain behind the work surface */
 :root[data-theme='tag'][data-skin='precision'] { --particles: none; --grain: none; }
 :root[data-theme='tag'][data-skin='precision'] .work, :root[data-theme='tag'][data-skin='precision'] .board-scroll, :root[data-theme='tag'][data-skin='precision'] .board { background: var(--bg); background-image: none; }
+
+/* ---- sidebars: queue, inspector and assistant panes in the precision style ---- */
+:root[data-theme='tag'][data-skin='precision'] .pane { background: var(--surface); }
+:root[data-theme='tag'][data-skin='precision'] .pane-head { background: var(--surface); background-image: none; border-bottom: 2px solid var(--text); min-height: 48px; padding: 0 16px; gap: 10px; }
+:root[data-theme='tag'][data-skin='precision'] .pane-head .section-label, :root[data-theme='tag'][data-skin='precision'] .section-label { font: 600 10px var(--mono); letter-spacing: 1.4px; text-transform: uppercase; color: var(--muted); }
+:root[data-theme='tag'][data-skin='precision'] .pane-head button { font: 600 11px var(--mono); text-transform: uppercase; letter-spacing: 0.3px; border: 1px solid var(--text); background: var(--surface); padding: 7px 10px; height: auto; }
+:root[data-theme='tag'][data-skin='precision'] .pane-head button:hover:not(:disabled) { background: var(--panel); }
+:root[data-theme='tag'][data-skin='precision'] .pane-foot { font: 10px var(--mono) !important; text-transform: uppercase; letter-spacing: 0.5px; color: var(--muted); padding: 10px 16px; border-top: 1px solid var(--hair-2); }
+
+/* section heads: mono eyebrow, the shortcut hint on its own line */
+:root[data-theme='tag'][data-skin='precision'] .queue-section, :root[data-theme='tag'][data-skin='precision'] .q-sec-head { background: var(--panel); background-image: none; border-bottom: 1px solid var(--hair-2); padding: 10px 16px; font: 600 10px var(--mono); letter-spacing: 1.4px; color: var(--text); }
+:root[data-theme='tag'][data-skin='precision'] .q-sec-head .q-sec-hint { font: 10px var(--mono); letter-spacing: 0.5px; color: var(--muted); text-transform: uppercase; }
+
+/* rows: paper cards separated by hairlines, blue rank, mono numbers */
+:root[data-theme='tag'][data-skin='precision'] .queue-row.decide, :root[data-theme='tag'][data-skin='precision'] .queue-row.plain { padding: 16px 16px 16px 18px; gap: 8px; border-bottom: 1px solid var(--hair-2); background: var(--surface); }
+:root[data-theme='tag'][data-skin='precision'] .queue-row.decide:hover, :root[data-theme='tag'][data-skin='precision'] .queue-row.plain:hover { background: #f3f3ec; }
+:root[data-theme='tag'][data-skin='precision'] .queue-row.decide[aria-selected='true'], :root[data-theme='tag'][data-skin='precision'] .queue-row.plain[aria-selected='true'] { background: #f3f4fb; box-shadow: inset 4px 0 0 var(--pv-blue), inset 0 0 0 1px var(--pv-blue); }
+:root[data-theme='tag'][data-skin='precision'] .queue-row::before { width: 3px; }
+:root[data-theme='tag'][data-skin='precision'] .queue-row .q-line1 { gap: 10px; }
+:root[data-theme='tag'][data-skin='precision'] .queue-row .q-rank { min-width: 22px; height: 22px; background: var(--pv-blue); color: #fff; font: 700 11px var(--mono); }
+:root[data-theme='tag'][data-skin='precision'] .queue-row .q-name { font-size: 14px; font-weight: 800; letter-spacing: -0.3px; text-transform: uppercase; }
+:root[data-theme='tag'][data-skin='precision'] .queue-row .q-amt { font: 700 13px var(--mono); }
+:root[data-theme='tag'][data-skin='precision'] .queue-row .q-purpose { font-size: 13px; }
+:root[data-theme='tag'][data-skin='precision'] .queue-row .ax-pill { font: 600 9px var(--mono); letter-spacing: 0.5px; padding: 3px 6px; border: 1px solid var(--muted); color: var(--muted); background: transparent; }
+:root[data-theme='tag'][data-skin='precision'] .queue-row .q-line3 { font: 11px var(--mono); color: var(--muted); }
+:root[data-theme='tag'][data-skin='precision'] .queue-row .q-seg { gap: 2px; }
+:root[data-theme='tag'][data-skin='precision'] .queue-row .q-seg i { width: 18px; height: 8px; border: 1px solid #a7ac9f; }
+:root[data-theme='tag'][data-skin='precision'] .queue-row .q-seg i.on { background: var(--pv-blue); border-color: var(--pv-blue); }
+:root[data-theme='tag'][data-skin='precision'] .queue-row .q-disclose .disclose__row { font-size: 13px; padding: 6px 4px 6px 8px; }
+:root[data-theme='tag'][data-skin='precision'] .queue-row .q-sentence, :root[data-theme='tag'][data-skin='precision'] .queue-row .q-sentence.q-best { font-size: 13px; line-height: 1.45; }
+:root[data-theme='tag'][data-skin='precision'] .queue-row .queue-actions { gap: 6px; margin-top: 2px; }
+:root[data-theme='tag'][data-skin='precision'] .queue-row .queue-actions button, :root[data-theme='tag'][data-skin='precision'] .queue-row .queue-actions .q-more { height: 32px; padding: 0 10px; font: 700 11px var(--mono); text-transform: uppercase; letter-spacing: 0.3px; border: 1px solid var(--text); }
+:root[data-theme='tag'][data-skin='precision'] .queue-row .queue-actions button.approve-pill { background: var(--pv-blue); border-color: var(--pv-blue); color: #fff; }
+:root[data-theme='tag'][data-skin='precision'] .queue-row .queue-actions button.decline-pill { background: var(--surface); color: var(--text); }
+:root[data-theme='tag'][data-skin='precision'] .queue-row .queue-actions button.decline-pill:hover:not(:disabled) { background: var(--panel); }
+:root[data-theme='tag'][data-skin='precision'] .queue-row.compact { padding: 10px 16px 10px 18px; background: var(--surface); }
+:root[data-theme='tag'][data-skin='precision'] .queue-row.compact .q-name { font-size: 13px; font-weight: 700; }
+:root[data-theme='tag'][data-skin='precision'] .queue-row.compact .q-outcome { font: 11px var(--mono); }
+:root[data-theme='tag'][data-skin='precision'] .queue-row .q-stop { border-left: 3px solid var(--hard); border-top: 0; border-right: 0; border-bottom: 0; font-size: 13px; }
+
+/* rails: icon over a mono label, active panel in ink */
+:root[data-theme='tag'][data-skin='precision'] .rail { border-color: var(--hair-2); }
+:root[data-theme='tag'][data-skin='precision'] .rail-btn { gap: 4px; padding: 10px 0; }
+:root[data-theme='tag'][data-skin='precision'] .rail-lbl { font-size: 9px; letter-spacing: 0.8px; }
+:root[data-theme='tag'][data-skin='precision'] .rail-badge { background: var(--pv-blue); color: #fff; border-radius: 0; font-family: var(--mono); }
