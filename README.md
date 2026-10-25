@@ -49,7 +49,7 @@ Six layers, one workflow: code decides what agents may touch, agents decide insi
 | 5. Notice | Agent | Written from tested reasons only; offer, counteroffer or decline is classified in code |
 | 6. Human + platform | Person | Nothing funds until the loan officer signs; override is refused and logged |
 
-A durable Convex workflow (`runDesk`) owns the order and audit trail; every step is an audit row, and live queries feed the console (the loan officer's desk), the board (the judges' live screen) and the phone (the borrower). The CRS Credit API supplies bureau data. CREAO hosts the five underwriter agents and the notice agent, with Claude as fallback.If a lender is stuck, the other lenders carry on.
+A durable Convex workflow (`runDesk`) owns the order and audit trail; every step is an audit row, and live queries feed the console (the loan officer's desk), the board (the judges' live screen) and the phone (the borrower). The CRS Credit API supplies bureau data. CREAO hosts the five underwriter agents and the notice agent.
 
 Simulated: the five lenders are fictional, no money moves, and every applicant is a CRS test persona. Scores are VantageScore 4.
 
