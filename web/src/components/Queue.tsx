@@ -583,12 +583,89 @@ function DecideRow({ r, offers, rank, selected, onSelect, onApproveBest, onDecli
 }
 
 /** Laminar traces table: status bar flush-left, mono numbers. Decision rows ranked on top. */
+
+/** Collapsible section header. Open state is remembered per browser. */
+function useSectionOpen(key: string, fallback: boolean): [boolean, (v: boolean) => void] {
+  const [open, setOpenState] = useState<boolean>(() => {
+    try {
+      const v = localStorage.getItem(`docket.queue.${key}`)
+      return v == null ? fallback : v === 'open'
+    } catch {
+      return fallback
+    }
+  })
+  const setOpen = (v: boolean) => {
+    setOpenState(v)
+    try {
+      localStorage.setItem(`docket.queue.${key}`, v ? 'open' : 'closed')
+    } catch {
+      /* ignore */
+    }
+  }
+  return [open, setOpen]
+}
+
+function Section({ id, title, count, hint, defaultOpen, children }: { id: string; title: string; count: number; hint?: ReactNode; defaultOpen: boolean; children: ReactNode }) {
+  const [open, setOpen] = useSectionOpen(id, defaultOpen)
+  if (count === 0) return null
+  return (
+    <section className={`q-sec ${open ? 'open' : ''}`} aria-label={title}>
+      <button type="button" className="queue-section q-sec-head" aria-expanded={open} onClick={() => setOpen(!open)}>
+        <span className="q-sec-chev" aria-hidden="true">{open ? '▾' : '▸'}</span>
+        <span className="q-sec-title">{title} · {count}</span>
+        {hint && <span className="mono q-sec-hint">{hint}</span>}
+      </button>
+      {open && children}
+    </section>
+  )
+}
+
+/** One-line row for a finished applicant: name, amount, and the outcome in a few words. Click selects. */
+function CompactRow({ a, offers, selected, onSelect, stopReason, tables }: { a: Applicant; offers: Offer[]; selected: boolean; onSelect: () => void; stopReason?: string; tables: Tables }) {
+  const d = tables.decisions?.find((x) => x.applicantId === a._id)
+  const o = chosenOffer(a, offers, d)
+  const lender = o ? LENDERS.find((l) => l.id === o.lender)?.label ?? o.lender : null
+  const outcome =
+    a.status === 'approved'
+      ? `${lender ?? 'Offer'}${o?.apr != null ? ` · ${o.apr.toFixed(2)}%` : ''}`
+      : a.status === 'declined'
+        ? 'Declined'
+        : stopReason
+          ? stopReason
+          : 'Hard stop'
+  const tone = a.status === 'approved' ? 'good' : a.status === 'declined' ? 'warn' : 'bad'
+  return (
+    <div
+      role="option"
+      tabIndex={0}
+      aria-selected={selected}
+      className={`queue-row compact tone-${tone}`}
+      style={{ ['--row-tone' as string]: TONE_VAR[STATUS_TONE[a.status]] }}
+      onClick={onSelect}
+      onKeyDown={(e) => {
+        if (e.key === 'Enter' || e.key === ' ') {
+          e.preventDefault()
+          onSelect()
+        }
+      }}
+      title={`${a.name} · ${a.purpose}`}
+    >
+      <span className="q-name">{a.name}</span>
+      <span className="q-outcome">{outcome}</span>
+      <span className="q-amt mono">{usd(a.amountRequested)}</span>
+    </div>
+  )
+}
+
 export function Queue({ applicants, offers, selectedId, onSelect, onNew, onApproveBest, onDecline, disabled, stopReasons, bundles, notices, decisions, auditEvents, reasonChecks, replaying }: Props) {
   const ranked = rankDecisions(applicants, offers)
   const decidingIds = new Set(ranked.map((r) => r.applicant._id))
   const newest = applicants.slice().sort((a, b) => b.createdAt - a.createdAt)
   const inFlight = newest.filter((a) => IN_FLIGHT.includes(a.status))
   const finished = newest.filter((a) => !IN_FLIGHT.includes(a.status) && !decidingIds.has(a._id))
+  const accepted = finished.filter((a) => a.status === 'approved')
+  const rejected = finished.filter((a) => a.status === 'declined')
+  const stopped = finished.filter((a) => a.status !== 'approved' && a.status !== 'declined')
   const now = useNow(inFlight.length > 0)
   const tables: Tables = { bundles, notices, decisions, auditEvents, reasonChecks, replaying: replaying ?? !!disabled }
   const offersOf = (id: string) => offers.filter((o) => o.applicantId === id)
@@ -602,50 +679,44 @@ export function Queue({ applicants, offers, selectedId, onSelect, onNew, onAppro
       </div>
       <div className="pane-body" role="listbox" aria-label="Applicants">
         {applicants.length === 0 && <div className="empty">No applicants yet. Draw a persona card and submit an application.</div>}
-        {ranked.length > 0 && (
-          <>
-            <div className="queue-section">
-              <span>Needs your decision · {ranked.length}</span>
-              <span className="mono">A approve · X decline</span>
-            </div>
-            {ranked.map((r, i) => (
-              <DecideRow
-                key={r.applicant._id}
-                r={r}
-                offers={offersOf(r.applicant._id)}
-                rank={i + 1}
-                selected={r.applicant._id === selectedId}
-                onSelect={() => onSelect(r.applicant._id)}
-                onApproveBest={() => r.best && onApproveBest(r.applicant._id, r.best._id)}
-                onDecline={() => onDecline(r.applicant._id)}
-                disabled={disabled}
-                tables={tables}
-                original={originalOf(applicants, r.applicant)}
-                now={now}
-              />
-            ))}
-          </>
-        )}
-        {inFlight.length > 0 && (
-          <>
-            <div className="queue-section">
-              <span>In flight · {inFlight.length}</span>
-            </div>
-            {inFlight.map((a) => (
-              <Row key={a._id} a={a} offers={offersOf(a._id)} selected={a._id === selectedId} onSelect={() => onSelect(a._id)} stopReason={stopReasons?.[a._id]} tables={tables} original={originalOf(applicants, a)} now={now} />
-            ))}
-          </>
-        )}
-        {finished.length > 0 && (
-          <>
-            <div className="queue-section">
-              <span>Decided · {finished.length}</span>
-            </div>
-            {finished.map((a) => (
-              <Row key={a._id} a={a} offers={offersOf(a._id)} selected={a._id === selectedId} onSelect={() => onSelect(a._id)} stopReason={stopReasons?.[a._id]} tables={tables} original={originalOf(applicants, a)} now={now} />
-            ))}
-          </>
-        )}
+        <Section id="decide" title="Needs your decision" count={ranked.length} hint="A approve · X decline" defaultOpen>
+          {ranked.map((r, i) => (
+            <DecideRow
+              key={r.applicant._id}
+              r={r}
+              offers={offersOf(r.applicant._id)}
+              rank={i + 1}
+              selected={r.applicant._id === selectedId}
+              onSelect={() => onSelect(r.applicant._id)}
+              onApproveBest={() => r.best && onApproveBest(r.applicant._id, r.best._id)}
+              onDecline={() => onDecline(r.applicant._id)}
+              disabled={disabled}
+              tables={tables}
+              original={originalOf(applicants, r.applicant)}
+              now={now}
+            />
+          ))}
+        </Section>
+        <Section id="flight" title="In flight" count={inFlight.length} defaultOpen>
+          {inFlight.map((a) => (
+            <Row key={a._id} a={a} offers={offersOf(a._id)} selected={a._id === selectedId} onSelect={() => onSelect(a._id)} stopReason={stopReasons?.[a._id]} tables={tables} original={originalOf(applicants, a)} now={now} />
+          ))}
+        </Section>
+        <Section id="accepted" title="Done · accepted" count={accepted.length} defaultOpen={false}>
+          {accepted.map((a) => (
+            <CompactRow key={a._id} a={a} offers={offersOf(a._id)} selected={a._id === selectedId} onSelect={() => onSelect(a._id)} tables={tables} />
+          ))}
+        </Section>
+        <Section id="rejected" title="Done · rejected" count={rejected.length} defaultOpen={false}>
+          {rejected.map((a) => (
+            <CompactRow key={a._id} a={a} offers={offersOf(a._id)} selected={a._id === selectedId} onSelect={() => onSelect(a._id)} tables={tables} />
+          ))}
+        </Section>
+        <Section id="stopped" title="Done · no decision" count={stopped.length} hint="hard stops" defaultOpen={false}>
+          {stopped.map((a) => (
+            <CompactRow key={a._id} a={a} offers={offersOf(a._id)} selected={a._id === selectedId} onSelect={() => onSelect(a._id)} stopReason={stopReasons?.[a._id]} tables={tables} />
+          ))}
+        </Section>
       </div>
       <div className="pane-foot">
         <span>{applicants.length === 0 ? 'no applicants' : `${applicants.length} applicant${applicants.length === 1 ? '' : 's'}`}</span>
