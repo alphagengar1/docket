@@ -1,0 +1,355 @@
+{
+ "fps": 30,
+ "w": 1920,
+ "h": 1080,
+ "out": "/private/tmp/claude-501/-Users-swrj-Downloads-Code-Projects/bbd9f9ff-9947-4eed-a9e5-7dd223aaa458/scratchpad/video/docket-demo.mp4",
+ "clips": [
+  {
+   "card": "title",
+   "dur": 2.8,
+   "title": "A one-person credit union.",
+   "sub": "One loan officer, a desk of agents, and every denial reason tested before it is sent.",
+   "lines": [
+    "Cal Hacks 13.0 \u00b7 Swaraj Adhikari, UCLA \u00b7 Matthew Pun, UC Berkeley"
+   ]
+  },
+  {
+   "src": "/Users/swrj/Downloads/IMG_7824.mov",
+   "in": 0.0,
+   "out": 6.989,
+   "captions": [
+    {
+     "t0": 0.05,
+     "t1": 3.13,
+     "text": "1 in 4 people who applied for a loan last year were rejected."
+    },
+    {
+     "t0": 3.15,
+     "t1": 6.97,
+     "text": "A record high, in a $280 billion personal-loan market."
+    }
+   ],
+   "lower": {
+    "t0": 0.3,
+    "t1": 4.3,
+    "name": "Swaraj Adhikari",
+    "role": "UCLA"
+   }
+  },
+  {
+   "src": "/Users/swrj/Downloads/IMG_7826.mov",
+   "in": 0.314,
+   "out": 5.799,
+   "captions": [
+    {
+     "t0": 0.05,
+     "t1": 5.47,
+     "text": "What they get back: \u201cinternal standards.\u201d Under Regulation B, that is not a legal reason."
+    }
+   ]
+  },
+  {
+   "src": "/Users/swrj/Downloads/IMG_7827.mov",
+   "in": 0.308,
+   "out": 9.219,
+   "captions": [
+    {
+     "t0": 0.05,
+     "t1": 6.78,
+     "text": "Score codes, black-box models, and now AI that writes the letter and pads the list."
+    },
+    {
+     "t0": 6.8,
+     "t1": 8.89,
+     "text": "Nobody checks whether the reason is true."
+    }
+   ]
+  },
+  {
+   "src": "/Users/swrj/Downloads/IMG_7830.mov",
+   "in": 0.964,
+   "out": 13.262,
+   "captions": [
+    {
+     "t0": 0.05,
+     "t1": 12.28,
+     "text": "Docket tests every reason before it is sent. In our tests, 16% of AI-written reasons failed and never reached a borrower. 20 of 20 personas matched our answer key."
+    }
+   ]
+  },
+  {
+   "src": "/Users/swrj/Downloads/IMG_7839.mov",
+   "in": 0.194,
+   "out": 5.641,
+   "captions": [
+    {
+     "t0": 0.05,
+     "t1": 5.43,
+     "text": "Docket: a one-person credit union. One loan officer runs a desk of agents."
+    }
+   ]
+  },
+  {
+   "src": "/Users/swrj/Downloads/IMG_7842.mov",
+   "in": 0.902,
+   "out": 14.312,
+   "captions": [
+    {
+     "t0": 0.05,
+     "t1": 7.56,
+     "text": "Six layers: one soft pull, hard stops in code, five lender quotes."
+    },
+    {
+     "t0": 7.58,
+     "t1": 13.39,
+     "text": "Every decline reason is verified, the notice is written from what survived, and a person signs."
+    }
+   ],
+   "lower": {
+    "t0": 0.3,
+    "t1": 4.3,
+    "name": "Matthew Pun",
+    "role": "UC Berkeley"
+   }
+  },
+  {
+   "src": "/Users/swrj/Downloads/IMG_7843.mov",
+   "in": 0.969,
+   "out": 11.461,
+   "captions": [
+    {
+     "t0": 0.05,
+     "t1": 5.64,
+     "text": "Every applicant is a printed card. Margaret wants $38,000 for a kitchen."
+    },
+    {
+     "t0": 5.66,
+     "t1": 10.47,
+     "text": "Five lenders quote her at once, on five different policies."
+    }
+   ]
+  },
+  {
+   "image": "/Users/swrj/Downloads/Code/Projects/calhacks-13-starter/design/screenshots/disclose-replay.png",
+   "dur": 3.2,
+   "captions": [
+    {
+     "t0": 0.2,
+     "t1": 3.0,
+     "text": "Five written policies read the same file, in parallel. Blue is an offer, amber a decline."
+    }
+   ],
+   "tags": [
+    {
+     "t0": 0.2,
+     "t1": 3.0,
+     "text": "Console"
+    }
+   ]
+  },
+  {
+   "src": "/Users/swrj/Downloads/IMG_7844.mov",
+   "in": 0.938,
+   "out": 6.558,
+   "captions": [
+    {
+     "t0": 0.05,
+     "t1": 5.6,
+     "text": "Nothing funds on its own. The agents do the work and escalate the decision to a person."
+    }
+   ]
+  },
+  {
+   "src": "/Users/swrj/Downloads/IMG_7846.mov",
+   "in": 0.616,
+   "out": 5.264,
+   "captions": [
+    {
+     "t0": 0.05,
+     "t1": 4.63,
+     "text": "Every step is in the audit log. Agents are in the seat; a human holds the pen."
+    }
+   ]
+  },
+  {
+   "src": "/Users/swrj/Downloads/IMG_7850.mov",
+   "in": 1.288,
+   "out": 10.564,
+   "captions": [
+    {
+     "t0": 0.05,
+     "t1": 6.16,
+     "text": "Kayla\u2019s identity does not verify, and her CRS fraud score is 88."
+    },
+    {
+     "t0": 6.18,
+     "t1": 9.26,
+     "text": "Rules in code stop her before any model sees the file. Zero lenders."
+    }
+   ]
+  },
+  {
+   "image": "/Users/swrj/Downloads/Code/Projects/calhacks-13-starter/design/screenshots/board-06-hardstop.png",
+   "dur": 3.0,
+   "captions": [
+    {
+     "t0": 0.2,
+     "t1": 2.8,
+     "text": "Hard stop in code. Zero lenders, zero offers, and the override is refused."
+    }
+   ],
+   "tags": [
+    {
+     "t0": 0.2,
+     "t1": 2.8,
+     "text": "Judge board"
+    }
+   ]
+  },
+  {
+   "src": "/Users/swrj/Downloads/IMG_7851.mov",
+   "in": 1.516,
+   "out": 8.328,
+   "captions": [
+    {
+     "t0": 0.05,
+     "t1": 5.21,
+     "text": "Even the reviewer cannot push it through, and the attempt is logged."
+    },
+    {
+     "t0": 5.23,
+     "t1": 6.79,
+     "text": "She still gets a notice that tells her how to dispute it."
+    }
+   ]
+  },
+  {
+   "src": "/Users/swrj/Downloads/IMG_7852.mov",
+   "in": 1.284,
+   "out": 9.715,
+   "captions": [
+    {
+     "t0": 0.05,
+     "t1": 8.41,
+     "text": "The part nobody does: for every decline reason, change only that one fact and re-run the lender."
+    }
+   ]
+  },
+  {
+   "image": "/Users/swrj/Downloads/Code/Projects/calhacks-13-starter/design/screenshots/console-alloy-sheet.png",
+   "dur": 3.2,
+   "captions": [
+    {
+     "t0": 0.2,
+     "t1": 3.0,
+     "text": "Flip one field, re-run the lender. If the decision does not change, the reason is withheld."
+    }
+   ],
+   "tags": [
+    {
+     "t0": 0.2,
+     "t1": 3.0,
+     "text": "Counterfactual test"
+    }
+   ]
+  },
+  {
+   "src": "/Users/swrj/Downloads/IMG_7855.mov",
+   "in": 0.879,
+   "out": 8.153,
+   "captions": [
+    {
+     "t0": 0.05,
+     "t1": 7.25,
+     "text": "Instead of \u201cinternal standards\u201d, the borrower gets the reason that actually decided it, and knows what to fix."
+    }
+   ]
+  },
+  {
+   "src": "/Users/swrj/Downloads/IMG_7856.mov",
+   "in": 0.406,
+   "out": 6.922,
+   "captions": [
+    {
+     "t0": 0.05,
+     "t1": 6.5,
+     "text": "A freeze at one bureau is not a dead end. We underwrite on the other two."
+    }
+   ]
+  },
+  {
+   "src": "/Users/swrj/Downloads/IMG_7832.mov",
+   "in": 0.704,
+   "out": 10.099,
+   "captions": [
+    {
+     "t0": 0.05,
+     "t1": 3.66,
+     "text": "Powered by CRS: three bureaus, identity and fraud in one call."
+    },
+    {
+     "t0": 3.68,
+     "t1": 6.02,
+     "text": "So we can test the files that break lenders."
+    },
+    {
+     "t0": 6.04,
+     "t1": 9.37,
+     "text": "Deceased, frozen and synthetic identities."
+    }
+   ],
+   "lower": {
+    "t0": 0.3,
+    "t1": 4.3,
+    "name": "Swaraj Adhikari",
+    "role": "UCLA"
+   }
+  },
+  {
+   "src": "/Users/swrj/Downloads/IMG_7835.mov",
+   "in": 0.265,
+   "out": 6.356,
+   "captions": [
+    {
+     "t0": 0.05,
+     "t1": 6.07,
+     "text": "CREAO hosts every lender as its own agent with its own credit policy, plus a compliance agent that writes the notice."
+    }
+   ]
+  },
+  {
+   "src": "/Users/swrj/Downloads/IMG_7836.mov",
+   "in": 0.28,
+   "out": 5.635,
+   "captions": [
+    {
+     "t0": 0.05,
+     "t1": 5.33,
+     "text": "All of it runs as one Convex workflow: retries, timeouts, a live board, a nightly eval."
+    }
+   ]
+  },
+  {
+   "src": "/Users/swrj/Downloads/IMG_7857.mov",
+   "in": 0.686,
+   "out": 3.712,
+   "captions": [
+    {
+     "t0": 0.05,
+     "t1": 3.01,
+     "text": "That is why we built Docket."
+    }
+   ]
+  },
+  {
+   "card": "close",
+   "dur": 3.5,
+   "title": "Draw a card. Ask us what breaks.",
+   "sub": "docket-sepia-ten.vercel.app  \u00b7  github.com/alphagengar1/docket",
+   "lines": [
+    "Swaraj Adhikari, UCLA \u00b7 Matthew Pun, UC Berkeley",
+    "Built on CRS, Convex, Claude and CREAO. A human signs every offer."
+   ]
+  }
+ ]
+}

@@ -1,0 +1,115 @@
+1
+00:00:02,850 --> 00:00:05,930
+1 in 4 people who applied for a loan last year were rejected.
+
+2
+00:00:05,950 --> 00:00:09,770
+A record high, in a $280 billion personal-loan market.
+
+3
+00:00:09,839 --> 00:00:15,259
+What they get back: “internal standards.” Under Regulation B, that is not a legal reason.
+
+4
+00:00:15,324 --> 00:00:22,054
+Score codes, black-box models, and now AI that writes the letter and pads the list.
+
+5
+00:00:22,074 --> 00:00:24,164
+Nobody checks whether the reason is true.
+
+6
+00:00:24,235 --> 00:00:36,465
+Docket tests every reason before it is sent. In our tests, 16% of AI-written reasons failed and never reached a borrower. 20 of 20 personas matched our answer key.
+
+7
+00:00:36,533 --> 00:00:41,913
+Docket: a one-person credit union. One loan officer runs a desk of agents.
+
+8
+00:00:41,980 --> 00:00:49,490
+Six layers: one soft pull, hard stops in code, five lender quotes.
+
+9
+00:00:49,510 --> 00:00:55,320
+Every decline reason is verified, the notice is written from what survived, and a person signs.
+
+10
+00:00:55,390 --> 00:01:00,980
+Every applicant is a printed card. Margaret wants $38,000 for a kitchen.
+
+11
+00:01:01,000 --> 00:01:05,810
+Five lenders quote her at once, on five different policies.
+
+12
+00:01:06,032 --> 00:01:08,832
+Five written policies read the same file, in parallel. Blue is an offer, amber a decline.
+
+13
+00:01:09,082 --> 00:01:14,632
+Nothing funds on its own. The agents do the work and escalate the decision to a person.
+
+14
+00:01:14,702 --> 00:01:19,282
+Every step is in the audit log. Agents are in the seat; a human holds the pen.
+
+15
+00:01:19,350 --> 00:01:25,460
+Kayla’s identity does not verify, and her CRS fraud score is 88.
+
+16
+00:01:25,480 --> 00:01:28,560
+Rules in code stop her before any model sees the file. Zero lenders.
+
+17
+00:01:28,776 --> 00:01:31,376
+Hard stop in code. Zero lenders, zero offers, and the override is refused.
+
+18
+00:01:31,626 --> 00:01:36,786
+Even the reviewer cannot push it through, and the attempt is logged.
+
+19
+00:01:36,806 --> 00:01:38,366
+She still gets a notice that tells her how to dispute it.
+
+20
+00:01:38,438 --> 00:01:46,798
+The part nobody does: for every decline reason, change only that one fact and re-run the lender.
+
+21
+00:01:47,019 --> 00:01:49,819
+Flip one field, re-run the lender. If the decision does not change, the reason is withheld.
+
+22
+00:01:50,069 --> 00:01:57,269
+Instead of “internal standards”, the borrower gets the reason that actually decided it, and knows what to fix.
+
+23
+00:01:57,343 --> 00:02:03,793
+A freeze at one bureau is not a dead end. We underwrite on the other two.
+
+24
+00:02:03,859 --> 00:02:07,469
+Powered by CRS: three bureaus, identity and fraud in one call.
+
+25
+00:02:07,489 --> 00:02:09,829
+So we can test the files that break lenders.
+
+26
+00:02:09,849 --> 00:02:13,179
+Deceased, frozen and synthetic identities.
+
+27
+00:02:13,254 --> 00:02:19,274
+CREAO hosts every lender as its own agent with its own credit policy, plus a compliance agent that writes the notice.
+
+28
+00:02:19,345 --> 00:02:24,625
+All of it runs as one Convex workflow: retries, timeouts, a live board, a nightly eval.
+
+29
+00:02:24,700 --> 00:02:27,660
+That is why we built Docket.
