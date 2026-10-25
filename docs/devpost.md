@@ -77,3 +77,6 @@ Items:
 - [ ] Create six public CREAO run links and paste into README
 - [ ] Project image: design/devpost/thumbnail.png (1280x720); cover.png is 1920x1080
 - [ ] Check in at the venue
+
+
+Video: https://youtu.be/MmCWVIkHxjI

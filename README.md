@@ -96,7 +96,7 @@ Docket is a drop-in underwriting layer: a bearer-authenticated HTTP API (`/api/v
 ### CRS
 - Endpoints used: `/transunion/credit-report/standard/tu-prequal-fico9`, `/equifax/credit-report/standard/efx-prequal-vantage4`, `/experian/credit-report/standard/exp-prequal-vantage4`, `/transunion/identity-manager-verification/basic`, `/fraud-finder/fraud-finder`, `/pp/fcrablj/data`.
 - Personas: CRS test personas P01 to P20, including a deceased file, frozen file, no-file and thin-file cases.
-- Live demo: https://docket-sepia-ten.vercel.app. Judge draws a card and types its 4-digit code on the phone. Live pulls need `CRS_PROVIDER=crs`; say out loud which mode is on.
+- Live demo: https://docket-sepia-ten.vercel.app. Video: https://youtu.be/MmCWVIkHxjI. Judge draws a card and types its 4-digit code on the phone. Live pulls need `CRS_PROVIDER=crs`; say out loud which mode is on.
 
 ### Convex
 - Tables: applicants, bundles, offers, notices, reasonChecks, decisions, auditEvents, evalCases, evalRuns, recordings, marketRates, plus internal agentRuns and secretsCache.
