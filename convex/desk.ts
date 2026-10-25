@@ -24,7 +24,7 @@ import { noticeRequired } from "./classify";
 export const workflow = new WorkflowManager(components.workflow);
 
 const PENDING_POLL_MS = 5_000;
-const PENDING_MAX_POLLS = 48; // 4 minutes for async (CREAO) agents
+const PENDING_MAX_POLLS = 18; // 90 s for async (CREAO) agents; after that the run is re-done on Claude
 
 // ---------------------------------------------------------------------------
 // Workflow
@@ -85,6 +85,7 @@ export const runDeskWorkflow = workflow.define({
     }
     if (pending > 0) {
       await step.runMutation(internal.agents.failPending, { applicantId, role: "underwriter", why: "timed out waiting for async agent" });
+      await step.runAction(internal.agents.fallbackFailedRuns, { applicantId, role: "underwriter" }, { name: "fallback-underwriters" });
     }
     const summary = await step.runQuery(internal.desk.offerSummary, { applicantId });
     await step.runMutation(internal.desk.mark, {
@@ -125,6 +126,7 @@ export const runDeskWorkflow = workflow.define({
       }
       if (cPending > 0) {
         await step.runMutation(internal.agents.failPending, { applicantId, role: "compliance", why: "timed out waiting for async agent" });
+        await step.runAction(internal.agents.fallbackFailedRuns, { applicantId, role: "compliance" }, { name: "fallback-compliance" });
       }
       await step.runMutation(internal.desk.mark, { applicantId, status: null, action: "step.compliance.done", note: c.note });
     } else {

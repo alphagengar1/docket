@@ -603,6 +603,32 @@ export const noteFallback = internalMutation({
   },
 });
 
+
+/** After a timeout, every failed CREAO run for the applicant is re-done on Claude (schema-gated provider failover). */
+export const fallbackFailedRuns = internalAction({
+  args: { applicantId: v.id("applicants"), role: v.union(v.literal("underwriter"), v.literal("compliance")) },
+  handler: async (ctx, { applicantId, role }): Promise<number> => {
+    const runs = await ctx.runQuery(internal.agents.failedRuns, { applicantId, role });
+    let n = 0;
+    for (const run of runs) {
+      await fallbackToClaude(ctx, run);
+      n++;
+    }
+    return n;
+  },
+});
+
+export const failedRuns = internalQuery({
+  args: { applicantId: v.id("applicants"), role: v.union(v.literal("underwriter"), v.literal("compliance")) },
+  handler: async (ctx, { applicantId, role }) => {
+    const runs = await ctx.db
+      .query("agentRuns")
+      .withIndex("by_applicantId", (q) => q.eq("applicantId", applicantId))
+      .collect();
+    return runs.filter((r) => r.role === role && r.status === "failed");
+  },
+});
+
 /** Re-fetch a run from CREAO (webhooks are unsigned, so we never trust the payload) and complete it. */
 export const verifyAndCompleteRun = internalAction({
   args: { runId: v.string() },
