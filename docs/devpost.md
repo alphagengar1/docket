@@ -24,7 +24,7 @@ Docket also works inside a company: your agents call a bearer-authenticated HTTP
 Simulated: the lenders are ours, no money moves, and every applicant is one of 20 CRS test personas.
 
 ## How we built it
-A durable Convex workflow runs the six layers, every step is an audit row, and live queries drive the phone, the board and the console. CREAO hosts the five underwriter agents and the compliance agent. Every reply is validated against a Zod schema, and a reply that fails is re-run on Claude and audited. If a lender is stuck, the others carry on. The scheduler runs the 20-applicant eval every night.
+A durable Convex workflow runs the six layers, every step is an audit row, and live queries drive the phone, the board and the console. CREAO hosts the five underwriter agents and the compliance agent.If a lender is stuck, the others carry on. The scheduler runs the 20-applicant eval every night.
 
 ## Challenges
 - The sandbox's TransUnion product returns VantageScore 4, so we label scores VantageScore.

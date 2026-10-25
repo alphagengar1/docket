@@ -112,7 +112,7 @@ If P08 is still verifying at 1:45: B says "It's still testing reasons; each chec
 
 | What goes wrong | What you see | Who acts | Exact words |
 |---|---|---|---|
-| One lender hangs | Lender card stays on "Quoting" past ~10 s | A | "That one is slow. The other lenders carry on, and a stuck reply is re-run on Claude." Keep talking; do not wait. |
+| One lender hangs | Lender card stays on "Quoting" past ~10 s | A | "That one is slow." Keep talking; do not wait. |
 | All lenders slow (rate limit) | Waterfall stuck at underwrite | A | "Every team in this building is hitting the same APIs right now." Move to the next beat on the clock. B approves the stragglers during Q&A. |
 | Phone loses network or the judge leaves the page | Phone frozen or on another app | B | "Let's run this one from the console." B starts the same persona from **Deck**. Judge watches the big screen. |
 | Judge types a wrong code | Phone: "No card with that code." | J | Types it again. Codes are digits 2 to 9 only. |
