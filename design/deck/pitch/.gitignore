@@ -1,0 +1,4 @@
+# Side outputs of the v7 build (build_native.py and build_benchmarks.py also write their own decks)
+docket-deck-v4.pptx
+docket-benchmarks.pptx
+__pycache__/
