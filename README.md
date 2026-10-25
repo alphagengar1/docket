@@ -4,6 +4,9 @@ One loan officer leading a whole lending desk of agents. Docket is a one-person 
 
 ## The problem
 
+Someone close to us applied for a loan this year with a good credit score and a steady job, and got back one word: rejected. No reason, no field to fix, nobody to ask. Docket exists so that letter says what decided it.
+
+
 Personal loans owed in the U.S. are a record $281 billion, and about 1 in 6 people who apply for credit are turned down. Every one of those turn-downs needs a letter, and most letters say "Reason: internal standards." No numbers, no next step.
 
 The law says the letter must say why. Regulation B requires the principal reasons, specific to the file, and rules out "internal standards". The Fair Credit Reporting Act (FCRA) requires the letter to name the bureau that supplied the data, say the bureau did not make the decision, and offer a free report and the right to dispute.

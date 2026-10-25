@@ -7,7 +7,11 @@ Docket
 A one-person credit union with tested denial reasons
 
 ## Inspiration
-Personal loans owed in the U.S. are a record $281 billion, and about 1 in 6 people who apply for credit are turned down. Every one of those turn-downs needs a letter, and most say "Reason: internal standards." Regulation B and the FCRA say the letter must give the principal reasons, name the bureau, and say the bureau did not make the decision. Nobody checks whether the reasons were real, and asked to explain a no, an AI pads the letter with true but irrelevant facts. We wanted one loan officer, leading a whole lending desk of agents, to send a no a borrower can act on.
+Someone close to us applied for a loan this year. They work hard, they had built a good credit score, and the answer came back as one word: rejected. No reason they could act on, no field they could fix, nobody to ask. They still do not know why.
+
+That is the normal experience. Personal loans owed in the U.S. are a record $281 billion, about 1 in 6 applicants are turned down, and most of the letters say "Reason: internal standards." Regulation B and the FCRA require the principal reasons, the bureau's name, and the statement that the bureau did not decide. In practice nobody checks whether the stated reasons were the real ones, and an AI asked to explain a no pads the letter with true but irrelevant facts.
+
+We built Docket for that person: a lending desk where every denial reason is tested before the letter goes out, so the no says what actually decided it and what would change it.
 
 ## What it does
 You are the borrower: draw a persona card, type its four digits, and one soft pull from the CRS Credit API sandbox returns TransUnion, Equifax and Experian data plus identity, fraud and public records. Docket is a six-layer workflow: code decides what agents may see, agents decide inside written policies, a person signs.
