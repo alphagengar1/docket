@@ -12,6 +12,8 @@ Timings below come from live runs on the cloud deployment today, not from guesse
 | P15 | 3659 | Nicole Farragut, $15,000, home improvement | ~13 s, 3 offers | none | Backup good day; Q&A on identity |
 | P05 | 3239 | Ricky Dalton, $7,000, debt consolidation | phone sits on "Checking" ~34 s | ~34 s | Video only. Too slow live |
 
+> **Judging-day rules (Cal Hacks email, Oct 25 01:23):** personal hotspots are banned and enforced, so the demo phone and laptop use the venue Wi-Fi. A locally stored demo video is required: `~/Desktop/docket-backup/docket-demo.mp4` (2:22, captions burned in). Be at the assigned table from 10:30 to 12:30 with the whole team; three judges minimum, five minutes each, live demo required. If the Wi-Fi fails, play the local video and walk the printed deck.
+
 ## Roles and positions
 
 | Who | Where | Holds | Job |
@@ -28,7 +30,7 @@ Two judges: Judge 1 holds the phone for P01 and P08. Hand the P13 card and the r
 1. B clicks **Reset** in the console top bar and confirms. Queue and board are empty.
 2. B runs a warm-up (Claude round trip, last measured 0.75 s): console warm-up if wired, or `curl` `desk:warmup`. If it takes more than 3 s, plan on the slow-lender line below.
 3. B checks the board shows the title card, full screen, no notifications (Do Not Disturb on, Slack and Messages quit).
-4. A taps **Start over** on the phone so it shows "Type the code on your card." Phone is on the hotspot, Guided Access on.
+4. A taps **Start over** on the phone so it shows "Type the code on your card." Phone is on the venue Wi-Fi (hotspots are banned), Guided Access on.
 5. A stacks the deck: P01 on top, P13 second. The rest of the deck sits underneath so the fan looks real. A forces the top card on the first draw ("take the top one"). If the judge insists on a random draw, use the branches at the bottom.
 6. A starts the timer when the judge arrives, not before.
 
